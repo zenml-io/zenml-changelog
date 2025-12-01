@@ -7,7 +7,7 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
-## 0.12.19
+## 0.12.19 (2025-11-19)
 
 See what's new and improved in version 0.12.19.
 
@@ -24,7 +24,7 @@ See what's new and improved in version 0.12.19.
 
 ***
 
-## 0.12.18
+## 0.12.18 (2025-11-12)
 
 See what's new and improved in version 0.12.18.
 
@@ -41,7 +41,7 @@ See what's new and improved in version 0.12.18.
 
 ***
 
-## 0.12.17
+## 0.12.17 (2025-11-05)
 
 See what's new and improved in version 0.12.17.
 
@@ -52,28 +52,20 @@ See what's new and improved in version 0.12.17.
 * Updated Python version for Lambda functions
 * Improved performance and compatibility
 
-[PR #450](https://github.com/zenml-io/zenml-cloud-api/pull/450)
-
 **Authentication Enhancements**
 
 * API keys and PATs can be used as bearer tokens
 * Configurable expiration for API keys
-
-[PR #453](https://github.com/zenml-io/zenml-cloud-api/pull/453) | [PR #454](https://github.com/zenml-io/zenml-cloud-api/pull/454)
 
 **Vault Secret Store**
 
 * Support for new Hashicorp Vault secret store auth method settings
 * Enhanced security options
 
-[PR #452](https://github.com/zenml-io/zenml-cloud-api/pull/452)
-
 **Codespaces**
 
 * JupyterLab support added to Codespaces
 * Enhanced development environment
-
-[PR #455](https://github.com/zenml-io/zenml-cloud-api/pull/455)
 
 ### Improved
 
@@ -83,7 +75,7 @@ See what's new and improved in version 0.12.17.
 
 ***
 
-## 0.12.16
+## 0.12.16 (2025-10-27)
 
 See what's new and improved in version 0.12.16.
 
@@ -100,7 +92,7 @@ See what's new and improved in version 0.12.16.
 
 ***
 
-## 0.12.15
+## 0.12.15 (2025-10-16)
 
 See what's new and improved in version 0.12.15.
 
@@ -117,7 +109,7 @@ See what's new and improved in version 0.12.15.
 
 ***
 
-## 0.12.14
+## 0.12.14 (2025-10-02)
 
 See what's new and improved in version 0.12.14.
 
@@ -134,7 +126,7 @@ See what's new and improved in version 0.12.14.
 
 ***
 
-## 0.12.12
+## 0.12.12 (2025-09-16)
 
 See what's new and improved in version 0.12.12.
 
@@ -145,11 +137,9 @@ See what's new and improved in version 0.12.12.
 * Service accounts can now invite users
 * Improved automation capabilities
 
-[PR #440](https://github.com/zenml-io/zenml-cloud-api/pull/440)
-
 ***
 
-## 0.12.11
+## 0.12.11 (2025-09-15)
 
 See what's new and improved in version 0.12.11.
 
@@ -160,11 +150,9 @@ See what's new and improved in version 0.12.11.
 * Service accounts can invite users
 * Enhanced collaboration capabilities
 
-[PR #438](https://github.com/zenml-io/zenml-cloud-api/pull/438)
-
 ***
 
-## 0.12.10
+## 0.12.10 (2025-08-28)
 
 See what's new and improved in version 0.12.10.
 
@@ -174,8 +162,6 @@ See what's new and improved in version 0.12.10.
 
 * Service accounts can authenticate to workspaces
 * Better team resource management
-
-[PR #433](https://github.com/zenml-io/zenml-cloud-api/pull/433)
 
 ### Improved
 
@@ -214,8 +200,6 @@ See what's new and improved in version 0.12.8.
 * Workspaces can now be renamed
 * Improved workspace management
 
-[PR #428](https://github.com/zenml-io/zenml-cloud-api/pull/428)
-
 ***
 
 ## 0.12.7
@@ -228,8 +212,6 @@ See what's new and improved in version 0.12.7.
 
 * Schedule RBAC enabled
 * Team viewer default role added
-
-[PR #423](https://github.com/zenml-io/zenml-cloud-api/pull/423) | [PR #426](https://github.com/zenml-io/zenml-cloud-api/pull/426)
 
 ***
 
@@ -244,14 +226,10 @@ See what's new and improved in version 0.12.6.
 * Specify initial service account role
 * New fields in service account schema and models
 
-[PR #416](https://github.com/zenml-io/zenml-cloud-api/pull/416) | [PR #419](https://github.com/zenml-io/zenml-cloud-api/pull/419)
-
 **Workspace Controls**
 
 * Prevent users from creating/updating workspaces to older ZenML releases
 * Prevent users from updating the onboarded flag
-
-[PR #421](https://github.com/zenml-io/zenml-cloud-api/pull/421) | [PR #422](https://github.com/zenml-io/zenml-cloud-api/pull/422)
 
 ### Improved
 
@@ -276,8 +254,6 @@ See what's new and improved in version 0.12.5.
 * User onboarded flag implementation
 * Better user experience tracking
 
-[PR #414](https://github.com/zenml-io/zenml-cloud-api/pull/414)
-
 ### Improved
 
 * User onboarding tracking (#414)
@@ -295,8 +271,6 @@ See what's new and improved in version 0.12.3.
 
 * Delete codespaces when cleaning up expired tenants
 * Improved resource management
-
-[PR #403](https://github.com/zenml-io/zenml-cloud-api/pull/403)
 
 ### Improved
 
@@ -316,14 +290,10 @@ See what's new and improved in version 0.12.2.
 * Add `zenml_active_project_id` to CodespaceCreate model
 * Delete Codespaces on Workspace Delete
 
-[PR #400](https://github.com/zenml-io/zenml-cloud-api/pull/400) | [PR #401](https://github.com/zenml-io/zenml-cloud-api/pull/401)
-
 **Workspace Storage**
 
 * Workspace storage usage count, limiting, and cleanup
 * Better resource management
-
-[PR #402](https://github.com/zenml-io/zenml-cloud-api/pull/402)
 
 ***
 
@@ -338,28 +308,20 @@ See what's new and improved in version 0.12.0.
 * Introducing Codespaces to Cloud API
 * Enhanced development environment support
 
-[PR #380](https://github.com/zenml-io/zenml-cloud-api/pull/380)
-
 **Workspace Storage**
 
 * Workspace storage usage count, limiting, and cleanup
 * Better resource management
-
-[PR #402](https://github.com/zenml-io/zenml-cloud-api/pull/402)
 
 **Infrastructure**
 
 * Provision shared workspace bucket with Terraform
 * Improved infrastructure as code support
 
-[PR #396](https://github.com/zenml-io/zenml-cloud-api/pull/396)
-
 **RBAC**
 
 * More permissions handling for internal users
 * Enhanced access control
-
-[PR #392](https://github.com/zenml-io/zenml-cloud-api/pull/392)
 
 ### Improved
 

@@ -7,7 +7,7 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
-## 0.91.2
+## 0.91.2 (2025-11-19)
 
 See what's new and improved in version 0.91.2.
 
@@ -50,7 +50,7 @@ See what's new and improved in version 0.91.2.
 </details>
 
 ***
-## 0.91.1
+## 0.91.1 (2025-11-11)
 
 See what's new and improved in version 0.91.1.
 
@@ -107,7 +107,7 @@ See what's new and improved in version 0.91.1.
 </details>
 
 ***
-## 0.91.0
+## 0.91.0 (2025-10-25)
 
 See what's new and improved in version 0.91.0.
 
@@ -171,7 +171,7 @@ See what's new and improved in version 0.91.0.
 ### Breaking Changes
 
 * Dropped Python 3.9 support - upgrade to Python 3.10+ ([#4053](https://github.com/zenml-io/zenml/pull/4053))
-## 0.90.0
+## 0.90.0 (2025-10-02)
 
 See what's new and improved in version 0.90.0.
 
@@ -220,7 +220,7 @@ See what's new and improved in version 0.90.0.
 * Client-Server compatibility: Must upgrade both simultaneously
 * Run templates need to be recreated
 * Base package no longer includes local database dependencies - install `zenml[local]` if needed ([#3916](https://github.com/zenml-io/zenml/pull/3916))
-## 0.85.0
+## 0.85.0 (2025-09-12)
 
 See what's new and improved in version 0.85.0.
 
@@ -269,7 +269,8 @@ See what's new and improved in version 0.85.0.
 * Local orchestrator now continues execution after step failures
 * Docker package installer default switched from pip to uv ([#3935](https://github.com/zenml-io/zenml/pull/3935))
 * Log endpoint format changed ([#3845](https://github.com/zenml-io/zenml/pull/3845))
-## 0.84.3
+
+## 0.84.3 (2025-08-27)
 
 See what's new and improved in version 0.84.3.
 
@@ -297,7 +298,9 @@ See what's new and improved in version 0.84.3.
 * Enhanced Kubernetes resource name sanitization ([#3887](https://github.com/zenml-io/zenml/pull/3887))
 * Relaxed Click dependency version constraints ([#3905](https://github.com/zenml-io/zenml/pull/3905))
 
-</details>## 0.84.2
+</details>
+
+## 0.84.2 (2025-08-06)
 
 See what's new and improved in version 0.84.2.
 
@@ -326,7 +329,9 @@ See what's new and improved in version 0.84.2.
 * Faster pipeline compilation for large pipelines ([#3873](https://github.com/zenml-io/zenml/pull/3873))
 * Better logging performance ([#3872](https://github.com/zenml-io/zenml/pull/3872))
 
-</details>## 0.84.1
+</details>
+
+## 0.84.1 (2025-07-30)
 
 See what's new and improved in version 0.84.1.
 
@@ -397,7 +402,9 @@ See what's new and improved in version 0.84.1.
 * Logging race conditions ([#3855](https://github.com/zenml-io/zenml/pull/3855))
 * Kubernetes secret cleanup when orchestrator pods fail ([#3846](https://github.com/zenml-io/zenml/pull/3846))
 
-</details>## 0.84.0
+</details>
+
+## 0.84.0 (2025-07-11)
 
 See what's new and improved in version 0.84.0.
 
