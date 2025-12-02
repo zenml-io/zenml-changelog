@@ -1,0 +1,62 @@
+---
+name: Process release
+
+on:
+  repository_dispatch:
+    types: [release-published]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Run changelog update script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SOURCE_REPO: ${{ github.event.client_payload.repo }}
+          REPO_NAME: ${{ github.event.client_payload.repo_name }}
+          RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+          RELEASE_NAME: ${{ github.event.client_payload.release_name }}
+          RELEASE_URL: ${{ github.event.client_payload.release_url }}
+          RELEASE_BODY: ${{ github.event.client_payload.release_body }}
+          PUBLISHED_AT: ${{ github.event.client_payload.published_at }}
+          IS_PRERELEASE: ${{ github.event.client_payload.is_prerelease }}
+        run: uv run scripts/update_changelog.py
+
+      - name: Validate changelog.json
+        uses: cardinalby/schema-validator-action@v3
+        with:
+          file: ./changelog.json
+          schema: ./changelog_schema/announcement-schema.json
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: add release notes for ${{ github.event.client_payload.repo }}@${{ github.event.client_payload.release_tag }}"
+          branch: changelog/${{ github.event.client_payload.repo_name }}-${{ github.event.client_payload.release_tag }}
+          base: main
+          title: "Release notes: ${{ github.event.client_payload.repo_name }} ${{ github.event.client_payload.release_tag }}"
+          body: |
+            Automated changelog update triggered by release:
+            - **Repository:** ${{ github.event.client_payload.repo }}
+            - **Tag:** ${{ github.event.client_payload.release_tag }}
+            - **Release URL:** ${{ github.event.client_payload.release_url }}
+
+            **Please review:**
+            - [ ] LLM-generated summaries are accurate
+            - [ ] changelog.json entries have correct labels
+            - [ ] Markdown formatting looks good
+            - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
+          labels: automated,changelog
+          reviewers: htahir1,strickvl
