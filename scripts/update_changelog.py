@@ -36,7 +36,7 @@ REPO_CONFIG: Dict[str, Dict[str, str]] = {
     "zenml-io/zenml": {
         "type": "oss",
         "markdown_file": "gitbook-release-notes/oss.md",
-        "default_branch": "main",
+        "default_branch": "develop",
         "audience": "oss",
     },
     "zenml-io/zenml-dashboard": {
