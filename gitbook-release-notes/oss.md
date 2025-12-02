@@ -7,6 +7,39 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.92.0 (2025-12-02)
+
+See what's new and improved in version 0.92.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/1.jpg" align="left" alt="ZenML 0.92.0" width="800">
+
+#### Dynamic Pipeline Support Expanded
+
+This release brings comprehensive support for dynamic pipelines across multiple orchestrators, enabling more flexible and efficient pipeline execution:
+
+* **AWS Sagemaker Orchestrator** now supports dynamic pipelines with seamless transition from existing settings and faster execution through direct use of training jobs. [PR #4232](https://github.com/zenml-io/zenml/pull/4232)
+* **Vertex AI Orchestrator** now supports dynamic pipelines, bringing the same flexibility to Google Cloud users. [PR #4246](https://github.com/zenml-io/zenml/pull/4246)
+* **Dynamic pipeline snapshots** can now be run from the server with support for specifying pipeline parameters when running a snapshot. [PR #4253](https://github.com/zenml-io/zenml/pull/4253)
+
+<details><summary>Improved</summary>
+
+* Kubernetes orchestrator pods no longer restart for dynamic pipelines, improving execution efficiency. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+* Enhanced placeholder run handling to prevent potential issues in dynamic pipeline execution. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+* `step.map(...)` and `step.product(...)` now return a single future object instead of a list of futures, simplifying the API and improving usability. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+
+</details>
+
+#### Integration Updates
+
+* **Evidently integration** updated to version >=0.5.0, adding support for NumPy 2.0 and resolving compatibility issues with packages requiring NumPy 2.0+. [PR #4243](https://github.com/zenml-io/zenml/pull/4243)
+
+#### Infrastructure Enhancements
+
+* **GCP Image Builder** now supports regional Cloud Build locations through an optional `location` parameter, enabling users to specify regions while maintaining backward compatibility with the global endpoint. [PR #4268](https://github.com/zenml-io/zenml/pull/4268)
+* Improved typing for Docker build options with a new class to help with conversions between SDK and CLI. [PR #4262](https://github.com/zenml-io/zenml/pull/4262)
+
+***
+
 ## 0.91.2 (2025-11-19)
 
 See what's new and improved in version 0.91.2.

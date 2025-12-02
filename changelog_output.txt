@@ -1,0 +1,19 @@
+Downloading pydantic-core (2.0MiB)
+Downloading pynacl (1.3MiB)
+Downloading cryptography (4.3MiB)
+ Downloaded pydantic-core
+ Downloaded pynacl
+ Downloaded cryptography
+Installed 33 packages in 26ms
+Fetching release info from GitHub for zenml-io/zenml@0.92.0...
+Processing zenml-io/zenml 0.92.0 (previous: 0.91.2)
+Found 7 PRs with release-notes label
+Created changelog entry #4: AWS Sagemaker orchestrator now supports dynamic pipelines
+Created changelog entry #5: Evidently integration now supports NumPy 2.0
+Created changelog entry #7: Improved type safety for Docker build options
+Created changelog entry #6: Run dynamic pipeline snapshots with custom parameters
+Created changelog entry #8: Dynamic pipelines support for Vertex AI orchestrator
+Created changelog entry #9: Enhanced dynamic pipeline execution and step mapping
+Created changelog entry #10: Add regional location support to GCP Image Builder
+Validated changelog.json with 10 entries.
+Updated changelog.json (+7 entries) and gitbook-release-notes/oss.md (image 1).
