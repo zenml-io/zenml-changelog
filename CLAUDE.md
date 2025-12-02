@@ -34,7 +34,7 @@ This repo is the canonical source of ZenML release metadata:
 
 - Trigger: `repository_dispatch` with `event_type: release-published` from source repos.
 - Workflow: `.github/workflows/process-release.yml`
-  - Installs Python deps (`requests`, `PyGithub`, `anthropic`, `jsonschema`, `pydantic`, `python-slugify`).
+  - Uses `uv run` to execute the script (deps declared inline via PEP 723).
   - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
   - Opens a PR on branch `changelog/{repo_name}-{release_tag}` with labels `automated,changelog` and reviewers `htahir1,strickvl`.
@@ -68,6 +68,14 @@ This repo is the canonical source of ZenML release metadata:
 
 - `ANTHROPIC_API_KEY` (required) — Used by `scripts/update_changelog.py` for LLM summarization.
 - `PRIVATE_REPO_TOKEN` (optional) — Use when the source repo is private (e.g., `zenml-cloud-ui`, `zenml-cloud-api`). If absent, the script falls back to `GITHUB_TOKEN` but will lack private repo access.
+
+## Running Scripts Locally
+
+This repo uses [uv](https://docs.astral.sh/uv/) with PEP 723 inline dependencies—no `requirements.txt` needed:
+
+```bash
+uv run scripts/update_changelog.py
+```
 
 ## Tips for Working Here
 
