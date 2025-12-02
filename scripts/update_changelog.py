@@ -21,7 +21,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from anthropic import Anthropic, APIError
+from anthropic import Anthropic, APIError, RateLimitError
 from github import Auth, Github, GithubException
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
@@ -176,9 +176,9 @@ def slugify_title(title: str) -> str:
 
 @retry(
     reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=8),
-    retry=retry_if_exception_type(APIError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=2, max=60),
+    retry=retry_if_exception_type((APIError, RateLimitError)),
 )
 def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
     if anthropic_client is None:
@@ -210,9 +210,9 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
 
 @retry(
     reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=1, max=8),
-    retry=retry_if_exception_type(APIError),
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=2, max=60),
+    retry=retry_if_exception_type((APIError, RateLimitError)),
 )
 def llm_generate_markdown_section(
     prs: List[Dict[str, Any]],
@@ -414,7 +414,7 @@ def main() -> None:
 
     new_entries: List[Dict[str, Any]] = []
     needs_attention: List[Dict[str, str]] = []
-    with ThreadPoolExecutor(max_workers=min(4, len(pr_with_ids))) as executor:
+    with ThreadPoolExecutor(max_workers=min(2, len(pr_with_ids))) as executor:
         future_map = {
             executor.submit(create_changelog_entry, pr, source_repo, published_at, next_id): pr
             for pr, next_id in pr_with_ids
