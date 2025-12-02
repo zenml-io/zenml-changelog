@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from anthropic import Anthropic, APIError
-from github import Github, GithubException
+from github import Auth, Github, GithubException
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
 from pydantic import BaseModel, Field
@@ -363,7 +363,7 @@ def main() -> None:
     github_token = os.environ.get("PRIVATE_REPO_TOKEN") or env["GITHUB_TOKEN"]
     global anthropic_client
     anthropic_client = Anthropic(api_key=env["ANTHROPIC_API_KEY"])
-    gh = Github(github_token)
+    gh = Github(auth=Auth.Token(github_token))
 
     # Fetch release info from GitHub if not provided (for manual triggers)
     release_url = os.environ.get("RELEASE_URL") or ""
@@ -377,8 +377,9 @@ def main() -> None:
     prs = get_release_prs(gh, source_repo, previous_tag, env["RELEASE_TAG"])
     print(f"Found {len(prs)} PRs with release-notes label")
     if not prs:
-        print("No release-notes PRs found; exiting without changes.")
-        return
+        print("ERROR: No release-notes PRs found for this release.")
+        print("This likely means no PRs were labeled with 'release-notes' between the releases.")
+        raise SystemExit(1)
 
     changelog_path = Path("changelog.json")
     existing_changelog = json.loads(changelog_path.read_text())
