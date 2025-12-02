@@ -19,7 +19,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from anthropic import Anthropic, APIError
 from github import Auth, Github, GithubException
@@ -279,8 +279,31 @@ def map_labels(pr_labels: List[str], suggested: List[ChangelogLabel]) -> List[st
     return sorted(set(mapped))
 
 
-def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: str, next_id: int) -> Dict[str, Any]:
+def is_short_body(pr_body: str, threshold: int = 50) -> bool:
+    return len((pr_body or "").strip()) < threshold
+
+
+def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: str, next_id: int) -> Tuple[Dict[str, Any], Optional[Dict[str, str]]]:
     config = REPO_CONFIG[source_repo]
+    if is_short_body(pr["body"]):
+        labels = map_labels(pr["labels"], [])
+        entry = {
+            "id": next_id,
+            "slug": slugify_title(pr["title"]),
+            "title": pr["title"][:60],
+            "description": "**[Needs review]** See PR for details.",
+            "published_at": published_at,
+            "published": True,
+            "audience": config["audience"],
+            "labels": labels,
+        }
+        needs_attention = {
+            "number": str(pr["number"]),
+            "title": pr["title"][:60],
+            "url": pr["url"],
+        }
+        return entry, needs_attention
+
     changelog_copy = llm_generate_changelog_copy(
         pr_title=pr["title"],
         pr_body=pr["body"],
@@ -288,16 +311,19 @@ def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: s
         repo_type=config["type"],
     )
     labels = map_labels(pr["labels"], changelog_copy.suggested_labels)
-    return {
-        "id": next_id,
-        "slug": slugify_title(pr["title"]),
-        "title": changelog_copy.title,
-        "description": changelog_copy.description,
-        "published_at": published_at,
-        "published": True,
-        "audience": config["audience"],
-        "labels": labels,
-    }
+    return (
+        {
+            "id": next_id,
+            "slug": slugify_title(pr["title"]),
+            "title": changelog_copy.title,
+            "description": changelog_copy.description,
+            "published_at": published_at,
+            "published": True,
+            "audience": config["audience"],
+            "labels": labels,
+        },
+        None,
+    )
 
 
 def update_markdown_file(md_path: Path, new_section: str) -> None:
@@ -387,14 +413,17 @@ def main() -> None:
     pr_with_ids = [(pr, max_existing_id + idx + 1) for idx, pr in enumerate(prs)]
 
     new_entries: List[Dict[str, Any]] = []
+    needs_attention: List[Dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=min(4, len(pr_with_ids))) as executor:
         future_map = {
             executor.submit(create_changelog_entry, pr, source_repo, published_at, next_id): pr
             for pr, next_id in pr_with_ids
         }
         for future in as_completed(future_map):
-            entry = future.result()
+            entry, attention = future.result()
             new_entries.append(entry)
+            if attention:
+                needs_attention.append(attention)
             print(f"Created changelog entry #{entry['id']}: {entry['title']}")
 
     new_entries.sort(key=lambda entry: entry["id"], reverse=True)
@@ -417,6 +446,13 @@ def main() -> None:
         f"Updated changelog.json (+{len(new_entries)} entries) and "
         f"{REPO_CONFIG[source_repo]['markdown_file']} (image {image_number})."
     )
+
+    if needs_attention:
+        print()
+        print("NEEDS_ATTENTION")
+        print("The following PRs had empty or insufficient descriptions and need manual review:")
+        for pr in needs_attention:
+            print(f"- PR #{pr['number']}: {pr['title']} ({pr['url']})")
 
 
 if __name__ == "__main__":

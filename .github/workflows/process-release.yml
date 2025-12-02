@@ -43,13 +43,23 @@ jobs:
           # These are optional - script fetches from GitHub API if not provided
           RELEASE_URL: ${{ github.event.client_payload.release_url || '' }}
           PUBLISHED_AT: ${{ github.event.client_payload.published_at || '' }}
-        run: uv run scripts/update_changelog.py
+        run: uv run scripts/update_changelog.py 2>&1 | tee changelog_output.txt
 
       - name: Validate changelog.json
         uses: cardinalby/schema-validator-action@v3
         with:
           file: ./changelog.json
           schema: ./changelog_schema/announcement-schema.json
+
+      - name: Extract attention items
+        id: extract
+        run: |
+          attention=$(awk 'flag{print} /NEEDS_ATTENTION/{flag=1}' changelog_output.txt)
+          {
+            echo "needs_attention<<EOF"
+            echo "${attention}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Pull Request
         env:
@@ -72,4 +82,7 @@ jobs:
             - [ ] changelog.json entries have correct labels
             - [ ] Markdown formatting looks good
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
+
+            ${{ steps.extract.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
+            ${{ steps.extract.outputs.needs_attention }}
           reviewers: htahir1,strickvl
