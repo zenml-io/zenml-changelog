@@ -185,7 +185,7 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
         raise RuntimeError("Anthropic client not initialized")
     audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
     response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250514",
+        model="claude-sonnet-4-5-20250929",
         betas=["structured-outputs-2025-11-13"],
         max_tokens=700,
         temperature=0,
@@ -235,7 +235,7 @@ def llm_generate_markdown_section(
         else "Do not include PR links; keep the prose concise for Pro audiences."
     )
     response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250514",
+        model="claude-sonnet-4-5-20250929",
         betas=["structured-outputs-2025-11-13"],
         max_tokens=2000,
         temperature=0,
