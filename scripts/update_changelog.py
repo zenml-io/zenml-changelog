@@ -341,9 +341,21 @@ def ensure_required_env(vars_list: List[str]) -> Dict[str, str]:
     return values
 
 
+def get_release_info(gh: Github, repo_name: str, tag: str) -> tuple[str, str]:
+    """Fetch release URL and published_at from GitHub API."""
+    repo = gh.get_repo(repo_name)
+    release = repo.get_release(tag)
+    published_at = release.published_at or release.created_at
+    if published_at:
+        published_at_str = published_at.strftime("%Y-%m-%dT%H:%M:%SZ")
+    else:
+        published_at_str = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return release.html_url, published_at_str
+
+
 def main() -> None:
     env = ensure_required_env(
-        ["SOURCE_REPO", "RELEASE_TAG", "RELEASE_URL", "PUBLISHED_AT", "GITHUB_TOKEN", "ANTHROPIC_API_KEY"]
+        ["SOURCE_REPO", "RELEASE_TAG", "GITHUB_TOKEN", "ANTHROPIC_API_KEY"]
     )
     source_repo = env["SOURCE_REPO"]
     if source_repo not in REPO_CONFIG:
@@ -352,6 +364,13 @@ def main() -> None:
     global anthropic_client
     anthropic_client = Anthropic(api_key=env["ANTHROPIC_API_KEY"])
     gh = Github(github_token)
+
+    # Fetch release info from GitHub if not provided (for manual triggers)
+    release_url = os.environ.get("RELEASE_URL") or ""
+    published_at = os.environ.get("PUBLISHED_AT") or ""
+    if not release_url or not published_at:
+        print(f"Fetching release info from GitHub for {source_repo}@{env['RELEASE_TAG']}...")
+        release_url, published_at = get_release_info(gh, source_repo, env["RELEASE_TAG"])
 
     previous_tag = find_previous_tag(gh, source_repo, env["RELEASE_TAG"])
     print(f"Processing {source_repo} {env['RELEASE_TAG']} (previous: {previous_tag or 'first release'})")
@@ -369,7 +388,7 @@ def main() -> None:
     new_entries: List[Dict[str, Any]] = []
     with ThreadPoolExecutor(max_workers=min(4, len(pr_with_ids))) as executor:
         future_map = {
-            executor.submit(create_changelog_entry, pr, source_repo, env["PUBLISHED_AT"], next_id): pr
+            executor.submit(create_changelog_entry, pr, source_repo, published_at, next_id): pr
             for pr, next_id in pr_with_ids
         }
         for future in as_completed(future_map):
@@ -386,8 +405,8 @@ def main() -> None:
     md_section = llm_generate_markdown_section(
         prs=prs,
         release_tag=env["RELEASE_TAG"],
-        release_url=env["RELEASE_URL"],
-        published_at=env["PUBLISHED_AT"],
+        release_url=release_url,
+        published_at=published_at,
         repo_type=REPO_CONFIG[source_repo]["type"],
         source_repo=source_repo,
         image_number=image_number,

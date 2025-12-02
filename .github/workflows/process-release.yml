@@ -4,6 +4,21 @@ name: Process release
 on:
   repository_dispatch:
     types: [release-published]
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: 'Source repository (e.g., zenml-io/zenml)'
+        required: true
+        type: choice
+        options:
+          - zenml-io/zenml
+          - zenml-io/zenml-dashboard
+          - zenml-io/zenml-cloud-ui
+          - zenml-io/zenml-cloud-api
+      release_tag:
+        description: 'Release tag (e.g., 0.75.0)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -14,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
@@ -23,14 +38,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SOURCE_REPO: ${{ github.event.client_payload.repo }}
-          REPO_NAME: ${{ github.event.client_payload.repo_name }}
-          RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
-          RELEASE_NAME: ${{ github.event.client_payload.release_name }}
-          RELEASE_URL: ${{ github.event.client_payload.release_url }}
-          RELEASE_BODY: ${{ github.event.client_payload.release_body }}
-          PUBLISHED_AT: ${{ github.event.client_payload.published_at }}
-          IS_PRERELEASE: ${{ github.event.client_payload.is_prerelease }}
+          SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag }}
+          # These are optional - script fetches from GitHub API if not provided
+          RELEASE_URL: ${{ github.event.client_payload.release_url || '' }}
+          PUBLISHED_AT: ${{ github.event.client_payload.published_at || '' }}
         run: uv run scripts/update_changelog.py
 
       - name: Validate changelog.json
@@ -40,23 +52,24 @@ jobs:
           schema: ./changelog_schema/announcement-schema.json
 
       - name: Create Pull Request
+        env:
+          SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
+          RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: add release notes for ${{ github.event.client_payload.repo }}@${{ github.event.client_payload.release_tag }}"
-          branch: changelog/${{ github.event.client_payload.repo_name }}-${{ github.event.client_payload.release_tag }}
+          commit-message: "chore: add release notes for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
+          branch: changelog/${{ env.RELEASE_TAG }}
           base: main
-          title: "Release notes: ${{ github.event.client_payload.repo_name }} ${{ github.event.client_payload.release_tag }}"
+          title: "Release notes: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
           body: |
             Automated changelog update triggered by release:
-            - **Repository:** ${{ github.event.client_payload.repo }}
-            - **Tag:** ${{ github.event.client_payload.release_tag }}
-            - **Release URL:** ${{ github.event.client_payload.release_url }}
+            - **Repository:** ${{ env.SOURCE_REPO }}
+            - **Tag:** ${{ env.RELEASE_TAG }}
 
             **Please review:**
             - [ ] LLM-generated summaries are accurate
             - [ ] changelog.json entries have correct labels
             - [ ] Markdown formatting looks good
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
-          labels: automated,changelog
           reviewers: htahir1,strickvl
