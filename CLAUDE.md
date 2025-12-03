@@ -6,7 +6,7 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 
 This repo is the canonical source of ZenML release metadata:
 - `changelog.json` feeds the ZenML dashboard "What’s New" widget.
-- `gitbook-release-notes/oss.md` and `gitbook-release-notes/pro.md` power GitBook docs for OSS and Pro.
+- `gitbook-release-notes/server-sdk.md` and `gitbook-release-notes/pro-control-plane.md` power GitBook docs for OSS and Pro.
 - `.github/workflows/` orchestrates automated changelog generation from upstream releases.
 - `changelog_schema/` defines and documents the JSON schema for announcements.
 
@@ -15,8 +15,8 @@ This repo is the canonical source of ZenML release metadata:
 - `changelog.json` — Array of announcements consumed by the dashboard.
 - `.image_state` — Persists rotating image index (1–49) for release note headers.
 - `gitbook-release-notes/`
-  - `oss.md` — OSS/UI release notes (zenml, zenml-dashboard).
-  - `pro.md` — Pro/Cloud release notes (zenml-cloud-ui, zenml-cloud-api).
+  - `server-sdk.md` — OSS/UI release notes (zenml, zenml-dashboard).
+  - `pro-control-plane.md` — Pro/Cloud release notes (zenml-cloud-ui, zenml-cloud-api).
   - `README.md` — Notes for GitBook syncing.
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
@@ -53,8 +53,8 @@ This repo is the canonical source of ZenML release metadata:
    - Add a new object with required fields: `id` (next sequential number), `slug`, `title`, `description`, `published_at` (ISO8601 with `Z`), `audience` (`oss|pro|all`), `labels` (`bugfix|deprecation|improvement|feature`).
    - Optional fields: `feature_image_url`, `learn_more_url`, `docs_url`, `highlight_until`, `should_highlight`, `video_url`, `published`.
 2. Update release notes:
-   - OSS: insert a new section at the top of `gitbook-release-notes/oss.md` after frontmatter.
-   - Pro: insert at the top of `gitbook-release-notes/pro.md` after frontmatter.
+   - OSS: insert a new section at the top of `gitbook-release-notes/server-sdk.md` after frontmatter.
+   - Pro: insert at the top of `gitbook-release-notes/pro-control-plane.md` after frontmatter.
 3. Validate locally (recommended): use `cardinalby/schema-validator-action@v3` or run a local `jsonschema` check against `changelog_schema/announcement-schema.json`.
 4. Open a PR; `validate-changelog.yml` will re-validate `changelog.json`.
 

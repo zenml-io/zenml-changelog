@@ -22,7 +22,7 @@ jobs:
         continue-on-error: true
         with:
           file: ./changelog.json
-          schema: ./changelog-items/announcement-schema.json
+          schema: ./changelog_schema/announcement-schema.json
       - name: Capture validation outcome
         id: capture-outcome
         run: |

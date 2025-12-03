@@ -49,6 +49,8 @@ See what's new and improved in version 0.91.2.
 
 </details>
 
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.91.2)
+
 ***
 ## 0.91.1 (2025-11-11)
 
@@ -105,6 +107,8 @@ See what's new and improved in version 0.91.1.
 * Case-sensitivity issues when updating entity names ([#4140](https://github.com/zenml-io/zenml/pull/4140))
 
 </details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.91.1)
 
 ***
 ## 0.91.0 (2025-10-25)
@@ -171,6 +175,10 @@ See what's new and improved in version 0.91.0.
 ### Breaking Changes
 
 * Dropped Python 3.9 support - upgrade to Python 3.10+ ([#4053](https://github.com/zenml-io/zenml/pull/4053))
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.91.0)
+
+***
 ## 0.90.0 (2025-10-02)
 
 See what's new and improved in version 0.90.0.
@@ -220,6 +228,10 @@ See what's new and improved in version 0.90.0.
 * Client-Server compatibility: Must upgrade both simultaneously
 * Run templates need to be recreated
 * Base package no longer includes local database dependencies - install `zenml[local]` if needed ([#3916](https://github.com/zenml-io/zenml/pull/3916))
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.90.0)
+
+***
 ## 0.85.0 (2025-09-12)
 
 See what's new and improved in version 0.85.0.
@@ -270,6 +282,10 @@ See what's new and improved in version 0.85.0.
 * Docker package installer default switched from pip to uv ([#3935](https://github.com/zenml-io/zenml/pull/3935))
 * Log endpoint format changed ([#3845](https://github.com/zenml-io/zenml/pull/3845))
 
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.85.0)
+
+***
+
 ## 0.84.3 (2025-08-27)
 
 See what's new and improved in version 0.84.3.
@@ -299,6 +315,10 @@ See what's new and improved in version 0.84.3.
 * Relaxed Click dependency version constraints ([#3905](https://github.com/zenml-io/zenml/pull/3905))
 
 </details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.84.3)
+
+***
 
 ## 0.84.2 (2025-08-06)
 
@@ -330,6 +350,10 @@ See what's new and improved in version 0.84.2.
 * Better logging performance ([#3872](https://github.com/zenml-io/zenml/pull/3872))
 
 </details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.84.2)
+
+***
 
 ## 0.84.1 (2025-07-30)
 
@@ -404,6 +428,10 @@ See what's new and improved in version 0.84.1.
 
 </details>
 
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.84.1)
+
+***
+
 ## 0.84.0 (2025-07-11)
 
 See what's new and improved in version 0.84.0.
@@ -469,3 +497,7 @@ See what's new and improved in version 0.84.0.
 ### Breaking Changes
 
 * Kubernetes Orchestrator Compatibility: Client and orchestrator pod versions must match exactly
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.84.0)
+
+***

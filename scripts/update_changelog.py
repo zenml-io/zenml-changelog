@@ -35,25 +35,25 @@ MAX_IMAGE_NUMBER = 49
 REPO_CONFIG: Dict[str, Dict[str, str]] = {
     "zenml-io/zenml": {
         "type": "oss",
-        "markdown_file": "gitbook-release-notes/oss.md",
+        "markdown_file": "gitbook-release-notes/server-sdk.md",
         "default_branch": "develop",
         "audience": "oss",
     },
     "zenml-io/zenml-dashboard": {
         "type": "oss",
-        "markdown_file": "gitbook-release-notes/oss.md",
+        "markdown_file": "gitbook-release-notes/server-sdk.md",
         "default_branch": "staging",
         "audience": "oss",
     },
     "zenml-io/zenml-cloud-ui": {
         "type": "pro",
-        "markdown_file": "gitbook-release-notes/pro.md",
+        "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "default_branch": "staging",
         "audience": "pro",
     },
     "zenml-io/zenml-cloud-api": {
         "type": "pro",
-        "markdown_file": "gitbook-release-notes/pro.md",
+        "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "default_branch": "develop",
         "audience": "pro",
     },
@@ -200,7 +200,10 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
                     f"PR Body:\n{pr_body[:3500]}\n\n"
                     f"The audience is {audience}. Focus on what users can now do or benefit from.\n"
                     "Generate a concise title (max 60 characters, no PR number), a 1-3 sentence markdown-friendly "
-                    "description, and suggest appropriate labels."
+                    "description, and suggest appropriate labels. "
+                    "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
+                    "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
+                    "Prefer linking to GitHub repos when available."
                 ),
             }
         ],
@@ -234,6 +237,15 @@ def llm_generate_markdown_section(
         if repo_type == "oss"
         else "Do not include PR links; keep the prose concise for Pro audiences."
     )
+    compatibility_instruction = (
+        "Append at the end:\n"
+        f"[View full release on GitHub]({release_url})\n\n"
+        "***"
+        if repo_type == "oss"
+        else "Append at the end:\n"
+        f"> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.\n\n"
+        "***"
+    )
     response = anthropic_client.beta.messages.parse(
         model="claude-sonnet-4-5-20250929",
         betas=["structured-outputs-2025-11-13"],
@@ -258,7 +270,11 @@ def llm_generate_markdown_section(
                     "Use <details><summary>Fixed</summary>...</details> for bug fixes and "
                     "<details><summary>Improved</summary>...</details> for minor improvements when appropriate. "
                     f"{include_links_instruction} "
-                    "Highlight the top user-facing improvements first. End the section with *** on its own line."
+                    "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
+                    "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
+                    "Prefer linking to GitHub repos when available. "
+                    "Highlight the top user-facing improvements first. End the section with *** on its own line. "
+                    f"{compatibility_instruction}"
                 ),
             }
         ],
@@ -292,7 +308,13 @@ def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: s
             "slug": slugify_title(pr["title"]),
             "title": pr["title"][:60],
             "description": "**[Needs review]** See PR for details.",
+            "feature_image_url": "",
+            "learn_more_url": "",
+            "docs_url": "",
             "published_at": published_at,
+            "highlight_until": "",
+            "should_highlight": False,
+            "video_url": "",
             "published": True,
             "audience": config["audience"],
             "labels": labels,
@@ -317,7 +339,13 @@ def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: s
             "slug": slugify_title(pr["title"]),
             "title": changelog_copy.title,
             "description": changelog_copy.description,
+            "feature_image_url": "",
+            "learn_more_url": "",
+            "docs_url": "",
             "published_at": published_at,
+            "highlight_until": "",
+            "should_highlight": False,
+            "video_url": "",
             "published": True,
             "audience": config["audience"],
             "labels": labels,
