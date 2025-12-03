@@ -22,6 +22,8 @@ See what's new and improved in version 0.12.19.
 
 * General maintenance and release preparation (#462)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.18 (2025-11-12)
@@ -38,6 +40,8 @@ See what's new and improved in version 0.12.18.
 ### What's Changed
 
 * General maintenance and release preparation (#460)
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -73,6 +77,8 @@ See what's new and improved in version 0.12.17.
 * Enhanced authentication flexibility (#453, #454)
 * Better Codespace development experience (#455)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.16 (2025-10-27)
@@ -89,6 +95,8 @@ See what's new and improved in version 0.12.16.
 ### What's Changed
 
 * General maintenance and release preparation (#449)
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -107,6 +115,8 @@ See what's new and improved in version 0.12.15.
 
 * Filter long user avatar URLs at source for older workspace versions (<= 0.90.0) (#447)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.14 (2025-10-02)
@@ -124,6 +134,8 @@ See what's new and improved in version 0.12.14.
 
 * General maintenance and release preparation (#446)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.12 (2025-09-16)
@@ -137,6 +149,8 @@ See what's new and improved in version 0.12.12.
 * Service accounts can now invite users
 * Improved automation capabilities
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.11 (2025-09-15)
@@ -149,6 +163,8 @@ See what's new and improved in version 0.12.11.
 
 * Service accounts can invite users
 * Enhanced collaboration capabilities
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -170,6 +186,8 @@ See what's new and improved in version 0.12.10.
 * Default workspace version updates (#434)
 * Run template resource improvements (#435)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.9
@@ -187,6 +205,8 @@ See what's new and improved in version 0.12.9.
 
 * General maintenance and release preparation (#431)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.8
@@ -200,6 +220,8 @@ See what's new and improved in version 0.12.8.
 * Workspaces can now be renamed
 * Improved workspace management
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.7
@@ -212,6 +234,8 @@ See what's new and improved in version 0.12.7.
 
 * Schedule RBAC enabled
 * Team viewer default role added
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -241,6 +265,8 @@ See what's new and improved in version 0.12.6.
 
 * Service account fixes and membership filtering (#424)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.5
@@ -258,6 +284,8 @@ See what's new and improved in version 0.12.5.
 
 * User onboarding tracking (#414)
 * Dependency updates (#418)
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -277,6 +305,8 @@ See what's new and improved in version 0.12.3.
 * Codespace cleanup automation (#403)
 * Workspace default version updates (#407)
 
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
 ***
 
 ## 0.12.2
@@ -294,6 +324,8 @@ See what's new and improved in version 0.12.2.
 
 * Workspace storage usage count, limiting, and cleanup
 * Better resource management
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
 
 ***
 
@@ -330,3 +362,13 @@ See what's new and improved in version 0.12.0.
 * Terraform infrastructure support (#396)
 * RBAC improvements (#392)
 * Team member management (#397)
+
+</details>
+
+### Breaking Changes
+
+* Kubernetes Orchestrator Compatibility: Client and orchestrator pod versions must match exactly
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
+***

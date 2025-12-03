@@ -9,8 +9,8 @@ zenml-changelog/
 ├── changelog.json                  # Announcement entries consumed by the dashboard
 ├── .image_state                    # Tracks rotating header image (1-49)
 ├── gitbook-release-notes/
-│   ├── oss.md                      # OSS + dashboard release notes
-│   ├── pro.md                      # Pro/Cloud release notes
+│   ├── server-sdk.md               # OSS + dashboard release notes
+│   ├── pro-control-plane.md        # Pro/Cloud release notes
 │   └── README.md
 ├── changelog_schema/
 │   ├── announcement-schema.json    # JSON Schema for changelog.json
@@ -31,7 +31,7 @@ flowchart TD
     A[Source repo release] -->|repository_dispatch<br/>event_type: release-published| B[process-release.yml]
     B --> C[Run update_changelog.py]
     C --> D[changelog.json]
-    C --> E[gitbook-release-notes/oss.md or pro.md]
+    C --> E[gitbook-release-notes/server-sdk.md or pro-control-plane.md]
     D --> F[Schema validation]
     B --> G[Create PR<br/>changelog/{repo}-{tag}]
 ```
@@ -44,15 +44,15 @@ flowchart TD
 
 | Source repository | Type | Files updated here |
 | --- | --- | --- |
-| `zenml-io/zenml` | OSS core | `changelog.json`, `gitbook-release-notes/oss.md` |
-| `zenml-io/zenml-dashboard` | OSS UI | `changelog.json`, `gitbook-release-notes/oss.md` |
-| `zenml-io/zenml-cloud-ui` | Pro UI | `changelog.json`, `gitbook-release-notes/pro.md` |
-| `zenml-io/zenml-cloud-api` | Pro API | `changelog.json`, `gitbook-release-notes/pro.md` |
+| `zenml-io/zenml` | OSS core | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
+| `zenml-io/zenml-dashboard` | OSS UI | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
+| `zenml-io/zenml-cloud-ui` | Pro UI | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
+| `zenml-io/zenml-cloud-api` | Pro API | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
 
 ## Manual vs Automated Entries
 
 - **Automated** (preferred): Triggered by releases; creates a PR with new JSON entries and markdown sections. Reviewers verify summaries, labels, and formatting before merge.
-- **Manual**: Edit `changelog.json` (add new object with required fields) and prepend a section to `gitbook-release-notes/oss.md` or `pro.md` after frontmatter. Run validation before opening a PR.
+- **Manual**: Edit `changelog.json` (add new object with required fields) and prepend a section to `gitbook-release-notes/server-sdk.md` or `pro-control-plane.md` after frontmatter. Run validation before opening a PR.
 
 ## Required Secrets and Setup
 
