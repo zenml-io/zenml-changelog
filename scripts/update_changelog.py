@@ -32,32 +32,55 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 IMAGE_STATE_FILE = Path(".image_state")
 MAX_IMAGE_NUMBER = 49
 
-REPO_CONFIG: Dict[str, Dict[str, str]] = {
+REPO_CONFIG: Dict[str, Dict[str, Any]] = {
     "zenml-io/zenml": {
         "type": "oss",
         "markdown_file": "gitbook-release-notes/server-sdk.md",
         "default_branch": "develop",
         "audience": "oss",
+        "include_release_link": True,
+        "include_compatibility_note": False,
+        "github_tag_prefix": "",
     },
     "zenml-io/zenml-dashboard": {
         "type": "oss",
         "markdown_file": "gitbook-release-notes/server-sdk.md",
         "default_branch": "staging",
         "audience": "oss",
+        "include_release_link": False,
+        "include_compatibility_note": False,
+        "github_tag_prefix": "v",
     },
     "zenml-io/zenml-cloud-ui": {
         "type": "pro",
         "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "default_branch": "staging",
         "audience": "pro",
+        "include_release_link": False,
+        "include_compatibility_note": False,
+        "github_tag_prefix": "",
     },
     "zenml-io/zenml-cloud-api": {
         "type": "pro",
         "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "default_branch": "develop",
         "audience": "pro",
+        "include_release_link": False,
+        "include_compatibility_note": True,
+        "github_tag_prefix": "",
     },
 }
+
+def with_prefix(repo_name: str, tag: str) -> str:
+    config = REPO_CONFIG.get(repo_name, {})
+    return f"{config.get('github_tag_prefix', '')}{tag}"
+
+def strip_prefix(repo_name: str, tag: str) -> str:
+    config = REPO_CONFIG.get(repo_name, {})
+    prefix = config.get("github_tag_prefix", "")
+    if prefix and tag.startswith(prefix):
+        return tag[len(prefix) :]
+    return tag
 
 LABEL_MAPPING: Dict[str, str] = {
     "bug": "bugfix",
@@ -117,23 +140,26 @@ def find_previous_tag(gh: Github, repo_name: str, current_tag: str) -> Optional[
     releases = list(repo.get_releases())
     if not releases:
         return None
+    prefixed_current_tag = with_prefix(repo_name, current_tag)
     releases_sorted = sorted(
         releases,
         key=lambda r: (r.published_at or r.created_at or datetime.min.replace(tzinfo=timezone.utc)),
     )
-    tag_index = next((i for i, rel in enumerate(releases_sorted) if rel.tag_name == current_tag), None)
+    tag_index = next((i for i, rel in enumerate(releases_sorted) if rel.tag_name == prefixed_current_tag), None)
     if tag_index is None:
-        raise RuntimeError(f"Release tag {current_tag} not found in {repo_name}")
+        raise RuntimeError(f"Release tag {prefixed_current_tag} not found in {repo_name}")
     if tag_index == 0:
         return None
-    return releases_sorted[tag_index - 1].tag_name
+    previous_prefixed = releases_sorted[tag_index - 1].tag_name
+    return strip_prefix(repo_name, previous_prefixed)
 
 
-def _release_date(repo, tag: str) -> datetime:
-    release = repo.get_release(tag)
+def _release_date(repo, prefixed_tag: str) -> datetime:
+    """Return release timestamp for a tag that already includes any repo-specific prefix."""
+    release = repo.get_release(prefixed_tag)
     published = release.published_at or release.created_at
     if not published:
-        raise RuntimeError(f"Release {tag} in {repo.full_name} has no published/created date")
+        raise RuntimeError(f"Release {prefixed_tag} in {repo.full_name} has no published/created date")
     if not published.tzinfo:
         published = published.replace(tzinfo=timezone.utc)
     return published
@@ -142,8 +168,10 @@ def _release_date(repo, tag: str) -> datetime:
 def get_release_prs(gh: Github, repo_name: str, since_tag: Optional[str], until_tag: str) -> List[Dict[str, Any]]:
     repo = gh.get_repo(repo_name)
     config = REPO_CONFIG[repo_name]
-    until_date = _release_date(repo, until_tag)
-    since_date = _release_date(repo, since_tag) if since_tag else datetime(2020, 1, 1, tzinfo=timezone.utc)
+    prefixed_until_tag = with_prefix(repo_name, until_tag)
+    prefixed_since_tag = with_prefix(repo_name, since_tag) if since_tag else None
+    until_date = _release_date(repo, prefixed_until_tag)
+    since_date = _release_date(repo, prefixed_since_tag) if prefixed_since_tag else datetime(2020, 1, 1, tzinfo=timezone.utc)
     query = (
         f"repo:{repo_name} is:pr is:merged label:release-notes "
         f"base:{config['default_branch']} "
@@ -222,12 +250,13 @@ def llm_generate_markdown_section(
     release_tag: str,
     release_url: str,
     published_at: str,
-    repo_type: str,
     source_repo: str,
     image_number: int,
 ) -> str:
     if anthropic_client is None:
         raise RuntimeError("Anthropic client not initialized")
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
     pr_summaries = "\n".join(
         f"- {pr['title']} (#{pr['number']}): {pr['url']} — {pr['body'][:300].replace(chr(10), ' ')}"
         for pr in prs
@@ -237,15 +266,15 @@ def llm_generate_markdown_section(
         if repo_type == "oss"
         else "Do not include PR links; keep the prose concise for Pro audiences."
     )
-    compatibility_instruction = (
-        "Append at the end:\n"
-        f"[View full release on GitHub]({release_url})\n\n"
-        "***"
-        if repo_type == "oss"
-        else "Append at the end:\n"
-        f"> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.\n\n"
-        "***"
-    )
+    footer_parts: List[str] = []
+    if config.get("include_release_link"):
+        footer_parts.append(f"[View full release on GitHub]({release_url})")
+    if config.get("include_compatibility_note"):
+        footer_parts.append("> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.")
+    if footer_parts:
+        footer_instruction = "Append at the end:\n" + "\n\n".join(footer_parts) + "\n\n***"
+    else:
+        footer_instruction = "End the section with *** on its own line."
     response = anthropic_client.beta.messages.parse(
         model="claude-sonnet-4-5-20250929",
         betas=["structured-outputs-2025-11-13"],
@@ -273,8 +302,8 @@ def llm_generate_markdown_section(
                     "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
                     "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
                     "Prefer linking to GitHub repos when available. "
-                    "Highlight the top user-facing improvements first. End the section with *** on its own line. "
-                    f"{compatibility_instruction}"
+                    "Highlight the top user-facing improvements first. "
+                    f"{footer_instruction}"
                 ),
             }
         ],
@@ -398,7 +427,8 @@ def ensure_required_env(vars_list: List[str]) -> Dict[str, str]:
 def get_release_info(gh: Github, repo_name: str, tag: str) -> tuple[str, str]:
     """Fetch release URL and published_at from GitHub API."""
     repo = gh.get_repo(repo_name)
-    release = repo.get_release(tag)
+    prefixed_tag = with_prefix(repo_name, tag)
+    release = repo.get_release(prefixed_tag)
     published_at = release.published_at or release.created_at
     if published_at:
         published_at_str = published_at.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -465,7 +495,6 @@ def main() -> None:
         release_tag=env["RELEASE_TAG"],
         release_url=release_url,
         published_at=published_at,
-        repo_type=REPO_CONFIG[source_repo]["type"],
         source_repo=source_repo,
         image_number=image_number,
     )
