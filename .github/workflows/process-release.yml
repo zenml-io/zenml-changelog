@@ -86,3 +86,4 @@ jobs:
             ${{ steps.extract.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
             ${{ steps.extract.outputs.needs_attention }}
           reviewers: htahir1,strickvl
+          labels: internal,x-squad
