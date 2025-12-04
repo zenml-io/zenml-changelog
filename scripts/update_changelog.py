@@ -93,6 +93,10 @@ LABEL_MAPPING: Dict[str, str] = {
     "breaking": "deprecation",
 }
 
+# Placeholder URLs that pass schema validation but are clearly marked for review
+PLACEHOLDER_LEARN_MORE_URL = "https://example.com/REPLACE-ME"
+PLACEHOLDER_DOCS_URL = "https://docs.zenml.io/REPLACE-ME"
+
 
 class ChangelogLabel(str, Enum):
     BUGFIX = "bugfix"
@@ -337,16 +341,16 @@ def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: s
             "slug": slugify_title(pr["title"]),
             "title": pr["title"][:60],
             "description": "**[Needs review]** See PR for details.",
-            "feature_image_url": "",
-            "learn_more_url": "",
-            "docs_url": "",
             "published_at": published_at,
-            "highlight_until": "",
-            "should_highlight": False,
-            "video_url": "",
             "published": True,
             "audience": config["audience"],
             "labels": labels,
+            # Optional fields below - replace placeholders as needed
+            "feature_image_url": "",
+            "video_url": "",
+            "learn_more_url": PLACEHOLDER_LEARN_MORE_URL,
+            "docs_url": PLACEHOLDER_DOCS_URL,
+            "should_highlight": False,
         }
         needs_attention = {
             "number": str(pr["number"]),
@@ -368,16 +372,16 @@ def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: s
             "slug": slugify_title(pr["title"]),
             "title": changelog_copy.title,
             "description": changelog_copy.description,
-            "feature_image_url": "",
-            "learn_more_url": "",
-            "docs_url": "",
             "published_at": published_at,
-            "highlight_until": "",
-            "should_highlight": False,
-            "video_url": "",
             "published": True,
             "audience": config["audience"],
             "labels": labels,
+            # Optional fields below - replace placeholders as needed
+            "feature_image_url": "",
+            "video_url": "",
+            "learn_more_url": PLACEHOLDER_LEARN_MORE_URL,
+            "docs_url": PLACEHOLDER_DOCS_URL,
+            "should_highlight": False,
         },
         None,
     )
