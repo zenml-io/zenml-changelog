@@ -78,7 +78,7 @@ jobs:
             - **Tag:** ${{ env.RELEASE_TAG }}
 
             **Please review:**
-            - [ ] LLM-generated summaries are accurate
+            - [ ] LLM-generated grouped summaries (2-3 per release) are accurate and reflect the most important changes
             - [ ] changelog.json entries have correct labels
             - [ ] Markdown formatting looks good
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable

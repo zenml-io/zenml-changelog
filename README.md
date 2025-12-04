@@ -38,7 +38,7 @@ flowchart TD
 
 - Trigger: Source repos emit `repository_dispatch` (`release-published`).
 - Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens a PR with reviewers and labels.
-- Script tasks: fetch `release-notes` PRs between releases, generate changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
+- Script tasks: fetch `release-notes` PRs between releases, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
 
 ## Source Repositories and Targets
 

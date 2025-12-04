@@ -15,14 +15,13 @@ from __future__ import annotations
 
 import json
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from anthropic import Anthropic, APIError, RateLimitError
-from github import Auth, Github, GithubException
+from github import Auth, Github
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
 from pydantic import BaseModel, Field
@@ -116,6 +115,33 @@ class ChangelogCopy(BaseModel):
     description: str = Field(..., description="1-3 sentences explaining the user-facing value, markdown allowed")
     suggested_labels: List[ChangelogLabel] = Field(default_factory=list, description="Suggested labels based on the PR content")
 
+class GroupedChangelogEntry(BaseModel):
+    title: str = Field(
+        ...,
+        max_length=60,
+        description="User-facing title for a group of related PRs, no PR numbers.",
+    )
+    description: str = Field(
+        ...,
+        description="1-3 sentences summarizing the grouped theme in user terms, markdown allowed.",
+    )
+    suggested_labels: List[ChangelogLabel] = Field(
+        default_factory=list,
+        description="Suggested labels based on all PRs in this group.",
+    )
+    pr_numbers: List[int] = Field(
+        ...,
+        min_length=1,
+        description="List of PR numbers covered by this group.",
+    )
+
+class GroupedChangelogOutput(BaseModel):
+    entries: List[GroupedChangelogEntry] = Field(
+        ...,
+        min_length=1,
+        max_length=3,
+        description="2-3 grouped changelog entries summarizing the release.",
+    )
 
 class MarkdownSection(BaseModel):
     content: str = Field(..., description="Complete markdown section for the release notes")
@@ -213,6 +239,8 @@ def slugify_title(title: str) -> str:
     retry=retry_if_exception_type((APIError, RateLimitError)),
 )
 def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
+    # NOTE: This helper is primarily intended for ad-hoc or manual usage.
+    # The main automation flow uses llm_generate_grouped_changelog_entries to create grouped entries per release.
     if anthropic_client is None:
         raise RuntimeError("Anthropic client not initialized")
     audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
@@ -242,6 +270,70 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
     )
     return response.parsed_output
 
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=2, max=60),
+    retry=retry_if_exception_type((APIError, RateLimitError)),
+)
+def llm_generate_grouped_changelog_entries(
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+) -> GroupedChangelogOutput:
+    if anthropic_client is None:
+        raise RuntimeError("Anthropic client not initialized")
+
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
+
+    if not prs:
+        raise RuntimeError("No PRs provided to llm_generate_grouped_changelog_entries")
+
+    pr_summaries = "\n".join(
+        (
+            f"- #{pr['number']}: {pr['title']}\n"
+            f"  Labels: {', '.join(pr['labels']) or 'none'}\n"
+            f"  URL: {pr['url']}\n"
+            f"  Body (truncated): {(pr['body'] or '')[:400].replace(chr(10), ' ')}"
+        )
+        for pr in prs
+    )
+
+    response = anthropic_client.beta.messages.parse(
+        model="claude-sonnet-4-5-20250929",
+        betas=["structured-outputs-2025-11-13"],
+        max_tokens=1200,
+        temperature=0,
+        output_format=GroupedChangelogOutput,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    "You are helping write grouped changelog entries for ZenML, an MLOps platform.\n\n"
+                    "Here is the list of merged PRs with the `release-notes` label for this release. "
+                    "Each PR includes its number, title, labels, URL, and a truncated body:\n\n"
+                    f"{pr_summaries}\n\n"
+                    f"The audience is {audience}. Focus on what users can now do or benefit from.\n\n"
+                    "Your task:\n"
+                    "- Group these PRs into 2-3 thematic user-facing changelog entries when possible. "
+                    "For very small releases, 1 entry is acceptable.\n"
+                    "- Each entry should summarize a coherent theme or area of improvement.\n"
+                    "- Every PR must appear in exactly one group.\n"
+                    "- Do not include PR numbers in the titles or descriptions.\n"
+                    "- Use markdown-friendly prose in the descriptions (1-3 sentences).\n\n"
+                    "Output format rules:\n"
+                    "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
+                    "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
+                    "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
+                    "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
+                    "feature, improvement, bugfix, deprecation.\n"
+                    "Avoid low-level implementation details and emphasize user-facing value."
+                ),
+            }
+        ],
+    )
+    return response.parsed_output
 
 @retry(
     reraise=True,
@@ -331,60 +423,89 @@ def map_labels(pr_labels: List[str], suggested: List[ChangelogLabel]) -> List[st
 def is_short_body(pr_body: str, threshold: int = 50) -> bool:
     return len((pr_body or "").strip()) < threshold
 
+def collect_needs_attention(
+    prs: List[Dict[str, Any]],
+    threshold: int = 50,
+) -> List[Dict[str, str]]:
+    """Identify PRs with insufficient bodies that should be highlighted for manual review."""
+    needs_attention: List[Dict[str, str]] = []
+    for pr in prs:
+        if is_short_body(pr.get("body", ""), threshold=threshold):
+            needs_attention.append(
+                {
+                    "number": str(pr["number"]),
+                    "title": pr["title"][:60],
+                    "url": pr["url"],
+                }
+            )
+    return needs_attention
 
-def create_changelog_entry(pr: Dict[str, Any], source_repo: str, published_at: str, next_id: int) -> Tuple[Dict[str, Any], Optional[Dict[str, str]]]:
+def build_grouped_changelog_entries(
+    grouped_output: GroupedChangelogOutput,
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+    published_at: str,
+    starting_id: int,
+) -> List[Dict[str, Any]]:
+    """Convert grouped LLM output into schema-compliant changelog entries."""
+    pr_by_number: Dict[int, Dict[str, Any]] = {pr["number"]: pr for pr in prs}
+    all_known_numbers = set(pr_by_number.keys())
+    assigned_numbers: set[int] = set()
+
+    for entry in grouped_output.entries:
+        for pr_number in entry.pr_numbers:
+            if pr_number not in pr_by_number:
+                raise RuntimeError(
+                    f"Grouped changelog entry references unknown PR number #{pr_number}"
+                )
+            if pr_number in assigned_numbers:
+                raise RuntimeError(
+                    f"PR #{pr_number} appears in more than one grouped changelog entry"
+                )
+            assigned_numbers.add(pr_number)
+
+    unassigned = all_known_numbers - assigned_numbers
+    if unassigned:
+        missing_str = ", ".join(f"#{n}" for n in sorted(unassigned))
+        raise RuntimeError(
+            f"The following PRs were not assigned to any grouped changelog entry: {missing_str}"
+        )
+
     config = REPO_CONFIG[source_repo]
-    if is_short_body(pr["body"]):
-        labels = map_labels(pr["labels"], [])
-        entry = {
-            "id": next_id,
-            "slug": slugify_title(pr["title"]),
-            "title": pr["title"][:60],
-            "description": "**[Needs review]** See PR for details.",
-            "published_at": published_at,
-            "published": True,
-            "audience": config["audience"],
-            "labels": labels,
-            # Optional fields below - replace placeholders as needed
-            "feature_image_url": "",
-            "video_url": "",
-            "learn_more_url": PLACEHOLDER_LEARN_MORE_URL,
-            "docs_url": PLACEHOLDER_DOCS_URL,
-            "should_highlight": False,
-        }
-        needs_attention = {
-            "number": str(pr["number"]),
-            "title": pr["title"][:60],
-            "url": pr["url"],
-        }
-        return entry, needs_attention
+    entries: List[Dict[str, Any]] = []
+    group_count = len(grouped_output.entries)
+    base_id = starting_id - 1
 
-    changelog_copy = llm_generate_changelog_copy(
-        pr_title=pr["title"],
-        pr_body=pr["body"],
-        pr_url=pr["url"],
-        repo_type=config["type"],
-    )
-    labels = map_labels(pr["labels"], changelog_copy.suggested_labels)
-    return (
-        {
-            "id": next_id,
-            "slug": slugify_title(pr["title"]),
-            "title": changelog_copy.title,
-            "description": changelog_copy.description,
-            "published_at": published_at,
-            "published": True,
-            "audience": config["audience"],
-            "labels": labels,
-            # Optional fields below - replace placeholders as needed
-            "feature_image_url": "",
-            "video_url": "",
-            "learn_more_url": PLACEHOLDER_LEARN_MORE_URL,
-            "docs_url": PLACEHOLDER_DOCS_URL,
-            "should_highlight": False,
-        },
-        None,
-    )
+    for index, entry in enumerate(grouped_output.entries):
+        aggregate_labels: List[str] = []
+        for pr_number in entry.pr_numbers:
+            aggregate_labels.extend(pr_by_number[pr_number].get("labels", []))
+        labels = map_labels(aggregate_labels, entry.suggested_labels)
+
+        # Assign IDs so that the first group gets the highest ID, preserving LLM order
+        # when new entries are later sorted in descending ID order.
+        entry_id = base_id + (group_count - index)
+
+        entries.append(
+            {
+                "id": entry_id,
+                "slug": slugify_title(entry.title),
+                "title": entry.title,
+                "description": entry.description,
+                "published_at": published_at,
+                "published": True,
+                "audience": config["audience"],
+                "labels": labels,
+                # Optional fields below - replace placeholders as needed
+                "feature_image_url": "",
+                "video_url": "",
+                "learn_more_url": PLACEHOLDER_LEARN_MORE_URL,
+                "docs_url": PLACEHOLDER_DOCS_URL,
+                "should_highlight": False,
+            }
+        )
+
+    return entries
 
 
 def update_markdown_file(md_path: Path, new_section: str) -> None:
@@ -472,21 +593,26 @@ def main() -> None:
     changelog_path = Path("changelog.json")
     existing_changelog = json.loads(changelog_path.read_text())
     max_existing_id = max((entry.get("id", 0) for entry in existing_changelog), default=0)
-    pr_with_ids = [(pr, max_existing_id + idx + 1) for idx, pr in enumerate(prs)]
+    starting_id = max_existing_id + 1
 
-    new_entries: List[Dict[str, Any]] = []
-    needs_attention: List[Dict[str, str]] = []
-    with ThreadPoolExecutor(max_workers=min(2, len(pr_with_ids))) as executor:
-        future_map = {
-            executor.submit(create_changelog_entry, pr, source_repo, published_at, next_id): pr
-            for pr, next_id in pr_with_ids
-        }
-        for future in as_completed(future_map):
-            entry, attention = future.result()
-            new_entries.append(entry)
-            if attention:
-                needs_attention.append(attention)
-            print(f"Created changelog entry #{entry['id']}: {entry['title']}")
+    # Identify PRs with insufficient descriptions that should be reviewed manually
+    needs_attention = collect_needs_attention(prs)
+
+    # Use a single LLM call to create 2-3 grouped, thematic changelog entries
+    grouped_output = llm_generate_grouped_changelog_entries(
+        prs=prs,
+        source_repo=source_repo,
+    )
+    new_entries = build_grouped_changelog_entries(
+        grouped_output=grouped_output,
+        prs=prs,
+        source_repo=source_repo,
+        published_at=published_at,
+        starting_id=starting_id,
+    )
+
+    for entry in new_entries:
+        print(f"Created grouped changelog entry #{entry['id']}: {entry['title']}")
 
     new_entries.sort(key=lambda entry: entry["id"], reverse=True)
     updated_changelog = new_entries + existing_changelog
