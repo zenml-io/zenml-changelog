@@ -32,23 +32,6 @@
     "should_highlight": false
   },
   {
-    "id": 4,
-    "slug": "numpy-2-0-compatibility-for-evidently-integration",
-    "title": "NumPy 2.0 Compatibility for Evidently Integration",
-    "description": "Updated the Evidently integration to version 0.5.0+, removing the NumPy version constraint and enabling full compatibility with NumPy 2.0. Users can now install packages requiring NumPy 2.0+ alongside ZenML's Evidently integration without conflicts.",
-    "published_at": "2025-12-02T06:42:19Z",
-    "published": true,
-    "audience": "oss",
-    "labels": [
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
     "id": 3,
     "slug": "panels-are-now-resizable",
     "title": "Panels are now resizable",
