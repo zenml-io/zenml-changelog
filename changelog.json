@@ -1,5 +1,124 @@
 [
   {
+    "id": 10,
+    "slug": "add-regional-location-support-to-gcp-image-builder",
+    "title": "GCP Image Builder now supports regional Cloud Build",
+    "description": "The GCP Image Builder now allows you to specify a regional location for Cloud Build operations via the optional `location` parameter. This enables you to run builds in specific regions for compliance, latency, or cost optimization requirements while maintaining backward compatibility with existing global endpoint configurations.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 9,
+    "slug": "misc-dynamic-pipeline-improvements",
+    "title": "Enhanced dynamic pipeline execution and step mapping",
+    "description": "Improved dynamic pipeline execution by eliminating unnecessary Kubernetes orchestrator pod restarts and enhancing placeholder run handling. The `step.map()` and `step.product()` methods now return a future object with an `unpack()` method for more intuitive list-like behavior and tuple unpacking support.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 8,
+    "slug": "add-support-for-dynamic-pipelines-to-the-vertex-orchestrator",
+    "title": "Dynamic pipelines support for Vertex AI orchestrator",
+    "description": "The [Vertex AI](https://cloud.google.com/vertex-ai) orchestrator now supports dynamic pipelines, allowing you to create pipeline structures that adapt at runtime based on previous step outputs. This enables more flexible workflows where the number and configuration of steps can be determined dynamically during execution.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 7,
+    "slug": "better-typing-for-docker-build-options",
+    "title": "Improved type safety for Docker build options",
+    "description": "Enhanced type safety and validation for Docker build options in the SDK and CLI. This improvement provides better IDE support and catches configuration errors earlier in the development process.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 6,
+    "slug": "enable-running-dynamic-snapshots",
+    "title": "Run dynamic pipeline snapshots with custom parameters",
+    "description": "You can now run snapshots of dynamic pipelines from the ZenML server by specifying pipeline parameters at runtime. This enables you to reuse and execute previously captured pipeline configurations with different parameter values, making it easier to reproduce and iterate on dynamic pipeline runs.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 5,
+    "slug": "update-evidently-integration-to-support-numpy-2-0",
+    "title": "Evidently integration now supports NumPy 2.0",
+    "description": "The [Evidently](https://github.com/evidentlyai/evidently) integration has been updated to version 0.5.0+, enabling compatibility with NumPy 2.0. This resolves installation conflicts when using packages that require NumPy 2.0+ alongside ZenML's Evidently integration, while maintaining full backward compatibility through Evidently's legacy API.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 4,
+    "slug": "aws-sagemaker-dynamic-pipelines",
+    "title": "AWS Sagemaker Orchestrator supports dynamic pipelines",
+    "description": "The AWS Sagemaker Orchestrator now supports running dynamic pipelines with faster execution times by using training or processing jobs directly instead of Sagemaker pipelines. All existing Sagemaker Orchestrator settings work seamlessly with dynamic pipelines, though scheduling is not yet supported for this mode.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 3,
     "slug": "panels-are-now-resizable",
     "title": "Panels are now resizable",
@@ -9,20 +128,24 @@
     "published_at": "2025-10-23T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   },
   {
     "id": 2,
     "slug": "introducing-pipeline-deployments",
     "title": "Introducing Pipeline Deployments",
-    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10–100x while maintaining full traceability. Learn more in our blog post.",
+    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10\u2013100x while maintaining full traceability. Learn more in our blog post.",
     "video_url": "https://www.youtube-nocookie.com/embed/whQytRE7kC8",
     "learn_more_url": "https://www.zenml.io/blog/why-pipelines-are-the-right-abstraction-for-real-time-ai-agents-included",
     "published": true,
     "published_at": "2025-10-02T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   },
   {
     "id": 1,
@@ -35,6 +158,8 @@
     "published_at": "2025-09-12T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   }
 ]
