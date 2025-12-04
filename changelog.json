@@ -49,7 +49,7 @@
     "id": 2,
     "slug": "introducing-pipeline-deployments",
     "title": "Introducing Pipeline Deployments",
-    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10\u2013100x while maintaining full traceability. Learn more in our blog post.",
+    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10-100x while maintaining full traceability. Learn more in our blog post.",
     "video_url": "https://www.youtube-nocookie.com/embed/whQytRE7kC8",
     "learn_more_url": "https://www.zenml.io/blog/why-pipelines-are-the-right-abstraction-for-real-time-ai-agents-included",
     "published": true,
