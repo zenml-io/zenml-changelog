@@ -28,10 +28,7 @@
     "labels": [
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/image-builders/gcp#how-to-use-it",
     "should_highlight": false
   },
   {
