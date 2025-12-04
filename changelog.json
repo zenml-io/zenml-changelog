@@ -1,5 +1,57 @@
 [
   {
+    "id": 6,
+    "slug": "dynamic-pipeline-support-across-cloud-orchestrators",
+    "title": "Dynamic Pipeline Support Across Cloud Orchestrators",
+    "description": "ZenML now supports dynamic pipelines on AWS Sagemaker and Google Cloud Vertex orchestrators, enabling faster execution and more flexible workflow patterns. Dynamic pipelines can now be run from snapshots with configurable parameters, and include improvements to Kubernetes orchestrator handling and step mapping operations that return future objects with an `unpack()` method for better control flow.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 5,
+    "slug": "enhanced-cloud-infrastructure-configuration",
+    "title": "Enhanced Cloud Infrastructure Configuration",
+    "description": "Added regional location support to the GCP Image Builder, allowing users to specify Cloud Build regions for compliance and performance requirements. Improved Docker build options with better typing support for more reliable container image configuration across the SDK and CLI.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 4,
+    "slug": "numpy-2-0-compatibility-for-evidently-integration",
+    "title": "NumPy 2.0 Compatibility for Evidently Integration",
+    "description": "Updated the Evidently integration to version 0.5.0+, removing the NumPy version constraint and enabling full compatibility with NumPy 2.0. Users can now install packages requiring NumPy 2.0+ alongside ZenML's Evidently integration without conflicts.",
+    "published_at": "2025-12-02T06:42:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 3,
     "slug": "panels-are-now-resizable",
     "title": "Panels are now resizable",
@@ -9,20 +61,24 @@
     "published_at": "2025-10-23T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   },
   {
     "id": 2,
     "slug": "introducing-pipeline-deployments",
     "title": "Introducing Pipeline Deployments",
-    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10–100x while maintaining full traceability. Learn more in our blog post.",
+    "description": "Pipeline Deployments turn pipelines into persistent HTTP services with warm state, reducing cold start latency by 10\u2013100x while maintaining full traceability. Learn more in our blog post.",
     "video_url": "https://www.youtube-nocookie.com/embed/whQytRE7kC8",
     "learn_more_url": "https://www.zenml.io/blog/why-pipelines-are-the-right-abstraction-for-real-time-ai-agents-included",
     "published": true,
     "published_at": "2025-10-02T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   },
   {
     "id": 1,
@@ -35,6 +91,8 @@
     "published_at": "2025-09-12T00:00:00Z",
     "should_highlight": false,
     "audience": "all",
-    "labels": ["feature"]
+    "labels": [
+      "feature"
+    ]
   }
 ]

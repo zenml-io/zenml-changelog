@@ -7,6 +7,48 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.92.0 (2025-12-02)
+
+See what's new and improved in version 0.92.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/1.jpg" align="left" alt="ZenML 0.92.0" width="800">
+
+#### Dynamic Pipeline Support Expansion
+
+This release significantly expands support for dynamic pipelines across multiple orchestrators:
+
+- **AWS Sagemaker Orchestrator**: Added full support for running dynamic pipelines with seamless transition from existing settings and faster execution through direct use of training jobs. [PR #4232](https://github.com/zenml-io/zenml/pull/4232)
+- **Vertex AI Orchestrator**: Dynamic pipelines are now fully supported on Google Cloud's Vertex AI platform. [PR #4246](https://github.com/zenml-io/zenml/pull/4246)
+- **Kubernetes Orchestrator**: Improved dynamic pipeline handling by eliminating unnecessary pod restarts. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+- **Snapshot Execution**: Enabled running snapshots of dynamic pipelines from the server with support for specifying pipeline parameters. [PR #4253](https://github.com/zenml-io/zenml/pull/4253)
+
+<details><summary>Improved</summary>
+
+- Enhanced `step.map(...)` and `step.product(...)` to return a single future object instead of a list of futures, simplifying the API for step invocations. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+- Improved placeholder run handling to prevent potential issues in dynamic pipeline execution. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
+- Added better typing for Docker build options with a new class to help with conversions between SDK and CLI. [PR #4262](https://github.com/zenml-io/zenml/pull/4262)
+
+</details>
+
+#### GCP Image Builder Regional Support
+
+Added regional location support to the GCP Image Builder, allowing you to specify Cloud Build regions for improved performance and compliance:
+
+- Optional `location` parameter for specifying Cloud Build region
+- Uses regional Cloud Build endpoint (`{location}-cloudbuild.googleapis.com`) when location is set
+- Maintains backward compatibility with global endpoint as default
+- Includes input validation for location parameter
+
+[PR #4268](https://github.com/zenml-io/zenml/pull/4268)
+
+#### Integration Updates
+
+- **Evidently Integration**: Updated to version >=0.5.0 to support [NumPy](https://github.com/numpy/numpy) 2.0, resolving compatibility issues when installing packages requiring NumPy 2.0+ alongside ZenML. [PR #4243](https://github.com/zenml-io/zenml/pull/4243)
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.92.0)
+
+***
+
 ## 0.91.2 (2025-11-19)
 
 See what's new and improved in version 0.91.2.
