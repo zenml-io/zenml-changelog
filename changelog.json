@@ -2,7 +2,7 @@
   {
     "id": 6,
     "slug": "dynamic-pipeline-support-across-cloud-orchestrators",
-    "title": "Dynamic Pipeline Support Across Cloud Orchestrators",
+    "title": "More orchestrators support for dynamic pipelines",
     "description": "ZenML now supports dynamic pipelines on AWS Sagemaker and Google Cloud Vertex orchestrators, enabling faster execution and more flexible workflow patterns. Dynamic pipelines can now be run from snapshots with configurable parameters, and include improvements to Kubernetes orchestrator handling and step mapping operations that return future objects with an `unpack()` method for better control flow.",
     "published_at": "2025-12-02T06:42:19Z",
     "published": true,
