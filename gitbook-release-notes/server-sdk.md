@@ -20,7 +20,7 @@ This release significantly expands support for dynamic pipelines across multiple
 - **AWS Sagemaker Orchestrator**: Added full support for running dynamic pipelines with seamless transition from existing settings and faster execution through direct use of training jobs. [PR #4232](https://github.com/zenml-io/zenml/pull/4232)
 - **Vertex AI Orchestrator**: Dynamic pipelines are now fully supported on Google Cloud's Vertex AI platform. [PR #4246](https://github.com/zenml-io/zenml/pull/4246)
 - **Kubernetes Orchestrator**: Improved dynamic pipeline handling by eliminating unnecessary pod restarts. [PR #4261](https://github.com/zenml-io/zenml/pull/4261)
-- **Snapshot Execution**: Enabled running snapshots of dynamic pipelines from the server with support for specifying pipeline parameters. [PR #4253](https://github.com/zenml-io/zenml/pull/4253)
+- **Snapshot Execution**: For Pro users, the new release enabled running snapshots of dynamic pipelines from the server with support for specifying pipeline parameters. [PR #4253](https://github.com/zenml-io/zenml/pull/4253)
 
 <details><summary>Improved</summary>
 
