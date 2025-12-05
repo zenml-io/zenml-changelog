@@ -16,17 +16,18 @@
   },
   {
     "id": 5,
-    "slug": "enhanced-cloud-infrastructure-configuration",
-    "title": "Enhanced Cloud Infrastructure Configuration",
-    "description": "Added regional location support to the GCP Image Builder, allowing users to specify Cloud Build regions for compliance and performance requirements. Improved Docker build options with better typing support for more reliable container image configuration across the SDK and CLI.",
-    "published_at": "2025-12-02T06:42:19Z",
+    "slug": "dynamic-pipelines",
+    "title": "Dynamic pipelines are now available",
+    "description": "Introduced Dynamic Pipelines as an experimental feature, allowing you to generate DAG structures at runtime using native Python control flow (loops, conditionals). Key capabilities include dynamic parallelization, Map/Reduce patterns over collections, and granular runtime configuration (inline vs. isolated). Currently supported on local, kubernetes, sagemaker, and vertex orchestrators.",
+    "published_at": "2025-12-05T06:42:19Z",
     "published": true,
     "audience": "oss",
     "labels": [
-      "improvement"
+      "feature",
+      "experimental"
     ],
-    "docs_url": "https://docs.zenml.io/stacks/stack-components/image-builders/gcp#how-to-use-it",
-    "should_highlight": false
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/dynamic_pipelines",
+    "should_highlight": true
   },
   {
     "id": 3,
