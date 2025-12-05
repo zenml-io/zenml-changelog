@@ -8,8 +8,7 @@
     "published": true,
     "audience": "oss",
     "labels": [
-      "feature",
-      "experimental"
+      "feature"
     ],
     "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/dynamic_pipelines",
     "should_highlight": true
