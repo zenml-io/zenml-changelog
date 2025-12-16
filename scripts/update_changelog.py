@@ -158,25 +158,128 @@ class BreakingChangesOutput(BaseModel):
         description="List of breaking change bullet points, one per significant breaking change.",
     )
 
+class ImageState(BaseModel):
+    last_image_number: int = Field(default=0, ge=0, le=MAX_IMAGE_NUMBER)
+    last_release_tag: Optional[str] = None
+    last_markdown_file: Optional[str] = None
+    updated_at: Optional[str] = None
+
 class MarkdownSection(BaseModel):
     content: str = Field(..., description="Complete markdown section for the release notes")
 
 
 anthropic_client: Optional[Anthropic] = None
 
+def read_image_state(path: Path = IMAGE_STATE_FILE) -> ImageState:
+    if not path.exists():
+        return ImageState()
+
+    raw = path.read_text().strip()
+    if not raw:
+        return ImageState()
+
+    # We support both a legacy integer file and a JSON object so older runs don't break
+    # and we can gradually roll out richer metadata without manual intervention.
+    try:
+        loaded = json.loads(raw)
+        if isinstance(loaded, int):
+            return ImageState(last_image_number=loaded)
+        if isinstance(loaded, dict):
+            if hasattr(ImageState, "model_validate"):
+                return ImageState.model_validate(loaded)
+            return ImageState.parse_obj(loaded)  # type: ignore[attr-defined]
+    except json.JSONDecodeError:
+        pass
+    except Exception:
+        return ImageState()
+
+    try:
+        return ImageState(last_image_number=int(raw))
+    except ValueError:
+        return ImageState()
+
+def write_image_state(state: ImageState, path: Path = IMAGE_STATE_FILE) -> None:
+    payload = state.model_dump() if hasattr(state, "model_dump") else state.dict()  # type: ignore[attr-defined]
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+
+def infer_latest_image_from_markdown(md_path: Path) -> Optional[int]:
+    try:
+        text = md_path.read_text()
+    except FileNotFoundError:
+        return None
+
+    match = re.search(r"projects/(\d+)\.jpg", text)
+    if not match:
+        return None
+
+    number = int(match.group(1))
+    if 0 <= number <= MAX_IMAGE_NUMBER:
+        return number
+    return None
+
+def infer_latest_release_tag_from_markdown(md_path: Path) -> Optional[str]:
+    try:
+        text = md_path.read_text()
+    except FileNotFoundError:
+        return None
+
+    match = re.search(r"^##\s+(\d+\.\d+\.\d+)\b", text, flags=re.MULTILINE)
+    if not match:
+        return None
+    return match.group(1)
+
+def compare_semver_tags(a: str, b: str) -> Optional[int]:
+    a_parsed = parse_semver(a)
+    b_parsed = parse_semver(b)
+    if not a_parsed or not b_parsed:
+        return None
+    if a_parsed < b_parsed:
+        return -1
+    if a_parsed > b_parsed:
+        return 1
+    return 0
 
 
 
+def get_next_image_number(release_tag: str, markdown_file: str) -> int:
+    state = read_image_state()
 
-def get_next_image_number() -> int:
-    current = 0
-    if IMAGE_STATE_FILE.exists():
-        try:
-            current = int(IMAGE_STATE_FILE.read_text().strip() or "0")
-        except ValueError:
-            current = 0
-    next_num = (current % MAX_IMAGE_NUMBER) + 1
-    IMAGE_STATE_FILE.write_text(str(next_num))
+    md_path = Path(markdown_file)
+    inferred_tag = infer_latest_release_tag_from_markdown(md_path)
+    inferred_img = infer_latest_image_from_markdown(md_path)
+
+    # If the markdown already contains a newer release than our state, it means the state
+    # file is stale (e.g., merge order across PRs). In that case, we snap to the markdown
+    # reality so we don't re-use or regress image numbers.
+    if inferred_tag and inferred_img is not None:
+        should_snap = False
+        if state.last_release_tag:
+            cmp = compare_semver_tags(inferred_tag, state.last_release_tag)
+            should_snap = cmp == 1
+        else:
+            should_snap = True
+
+        if should_snap:
+            state = ImageState(
+                last_image_number=inferred_img,
+                last_release_tag=inferred_tag,
+                last_markdown_file=markdown_file,
+                updated_at=datetime.now(timezone.utc).isoformat(),
+            )
+
+    # Idempotency: if we're re-running for the same release and target markdown file,
+    # return the existing image number without advancing.
+    if state.last_release_tag == release_tag and state.last_markdown_file == markdown_file:
+        return state.last_image_number
+
+    next_num = (state.last_image_number % MAX_IMAGE_NUMBER) + 1
+    new_state = ImageState(
+        last_image_number=next_num,
+        last_release_tag=release_tag,
+        last_markdown_file=markdown_file,
+        updated_at=datetime.now(timezone.utc).isoformat(),
+    )
+    write_image_state(new_state)
     return next_num
 
 
@@ -973,7 +1076,11 @@ def main() -> None:
     changelog_path.write_text(json.dumps(updated_changelog, indent=2) + "\n")
     validate_changelog(changelog_path, Path("changelog_schema/announcement-schema.json"))
 
-    image_number = get_next_image_number()
+    markdown_file = config["markdown_file"]
+    image_number = get_next_image_number(
+        release_tag=env["RELEASE_TAG"],
+        markdown_file=markdown_file,
+    )
     header = render_release_header(env["RELEASE_TAG"], published_at, image_number, source_repo)
     breaking_section = render_breaking_section(
         breaking_bullets, force_placeholder=False, is_major_bump=major_bump
@@ -982,7 +1089,7 @@ def main() -> None:
     footer = render_release_footer(source_repo, release_url)
     md_section = header + breaking_section + body + "\n\n" + footer
 
-    update_markdown_file(Path(config["markdown_file"]), md_section)
+    update_markdown_file(Path(markdown_file), md_section)
     print(
         f"Updated changelog.json (+{len(new_entries)} entries) and "
         f"{config['markdown_file']} (image {image_number})."
@@ -1005,6 +1112,10 @@ def main() -> None:
         for pr in needs_attention:
             print(f"- PR #{pr['number']}: {pr['title']} ({pr['url']})")
 
+    print()
+    print("UPDATED_MARKDOWN_FILE")
+    print(config["markdown_file"])
+    print("END_UPDATED_MARKDOWN_FILE")
 
 if __name__ == "__main__":
     main()

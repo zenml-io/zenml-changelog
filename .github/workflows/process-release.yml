@@ -1,4 +1,3 @@
----
 name: Process release
 
 on:
@@ -7,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       source_repo:
-        description: 'Source repository (e.g., zenml-io/zenml)'
+        description: "Source repository (e.g., zenml-io/zenml)"
         required: true
         type: choice
         options:
@@ -16,7 +15,7 @@ on:
           - zenml-io/zenml-cloud-ui
           - zenml-io/zenml-cloud-api
       release_tag:
-        description: 'Release tag (e.g., 0.75.0)'
+        description: "Release tag (e.g., 0.75.0)"
         required: true
         type: string
 
@@ -24,9 +23,19 @@ permissions:
   contents: write
   pull-requests: write
 
+env:
+  SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
+  RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag }}
+  RELEASE_URL: ${{ github.event.client_payload.release_url || '' }}
+  PUBLISHED_AT: ${{ github.event.client_payload.published_at || '' }}
+
 jobs:
-  update-changelog:
+  generate:
     runs-on: ubuntu-latest
+    outputs:
+      markdown_file: ${{ steps.extract_md.outputs.markdown_file }}
+      breaking_changes: ${{ steps.extract_breaking.outputs.breaking_changes }}
+      needs_attention: ${{ steps.extract_attention.outputs.needs_attention }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,12 +47,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
-          RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag }}
-          # These are optional - script fetches from GitHub API if not provided
-          RELEASE_URL: ${{ github.event.client_payload.release_url || '' }}
-          PUBLISHED_AT: ${{ github.event.client_payload.published_at || '' }}
-        run: uv run scripts/update_changelog.py 2>&1 | tee changelog_output.txt
+          SOURCE_REPO: ${{ env.SOURCE_REPO }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
+          RELEASE_URL: ${{ env.RELEASE_URL }}
+          PUBLISHED_AT: ${{ env.PUBLISHED_AT }}
+        run: |
+          set -euo pipefail
+          uv run scripts/update_changelog.py | tee changelog_output.txt
 
       - name: Validate changelog.json
         uses: cardinalby/schema-validator-action@v3
@@ -51,54 +61,185 @@ jobs:
           file: ./changelog.json
           schema: ./changelog_schema/announcement-schema.json
 
-      - name: Extract attention items
-        id: extract
+      - name: Extract updated markdown file
+        id: extract_md
         run: |
-          attention=$(awk 'flag{print} /NEEDS_ATTENTION/{flag=1}' changelog_output.txt)
-          {
-            echo "needs_attention<<EOF"
-            echo "${attention}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          md=$(awk '/^UPDATED_MARKDOWN_FILE$/{flag=1;next}/^END_UPDATED_MARKDOWN_FILE$/{flag=0}flag{print; exit}' changelog_output.txt | tr -d '\r')
+          if [ -z "$md" ]; then
+            echo "ERROR: UPDATED_MARKDOWN_FILE marker not found in changelog_output.txt" >&2
+            exit 1
+          fi
+          echo "markdown_file=$md" >> "$GITHUB_OUTPUT"
 
       - name: Extract breaking changes
         id: extract_breaking
         run: |
-          # Extract lines between BREAKING_CHANGES and END_BREAKING_CHANGES
-          breaking=$(awk '/^BREAKING_CHANGES$/,/^END_BREAKING_CHANGES$/' changelog_output.txt | grep -v '^BREAKING_CHANGES$' | grep -v '^END_BREAKING_CHANGES$')
+          set -euo pipefail
+          breaking=$(awk '/^BREAKING_CHANGES$/{flag=1;next}/^END_BREAKING_CHANGES$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
           {
             echo "breaking_changes<<EOF"
             echo "${breaking}"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Create Pull Request
+      - name: Extract attention items
+        id: extract_attention
+        run: |
+          set -euo pipefail
+          attention=$(awk '/^NEEDS_ATTENTION$/{flag=1;next}/^UPDATED_MARKDOWN_FILE$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
+          {
+            echo "needs_attention<<EOF"
+            echo "${attention}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create widget patch
+        run: |
+          set -euo pipefail
+          git diff --binary -- changelog.json .image_state > widget.patch
+
+      - name: Create gitbook patch
         env:
-          SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
-          RELEASE_TAG: ${{ inputs.release_tag || github.event.client_payload.release_tag }}
+          MARKDOWN_FILE: ${{ steps.extract_md.outputs.markdown_file }}
+        run: |
+          set -euo pipefail
+          git diff --binary -- "$MARKDOWN_FILE" > gitbook.patch
+
+      - name: Upload widget patch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: widget-patch
+          path: widget.patch
+          if-no-files-found: error
+
+      - name: Upload gitbook patch artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitbook-patch
+          path: gitbook.patch
+          if-no-files-found: error
+
+  pr-widget:
+    runs-on: ubuntu-latest
+    needs: generate
+    steps:
+      - name: Checkout repository (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Compute SOURCE_REPO_SLUG
+        run: |
+          set -euo pipefail
+          echo "SOURCE_REPO_SLUG=${SOURCE_REPO//\//-}" >> "$GITHUB_ENV"
+
+      - name: Download widget patch artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: widget-patch
+          path: .
+
+      - name: Apply widget patch
+        run: |
+          set -euo pipefail
+          git apply widget.patch
+
+      - name: Create Pull Request (widget)
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: add release notes for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
-          branch: changelog/${{ env.RELEASE_TAG }}
+          commit-message: "chore: update changelog widget for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
+          branch: changelog/${{ env.SOURCE_REPO_SLUG }}/${{ env.RELEASE_TAG }}
           base: main
-          title: "Release notes: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
+          title: "Changelog widget: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
           body: |
-            Automated changelog update triggered by release:
+            Automated changelog widget update triggered by release:
             - **Repository:** ${{ env.SOURCE_REPO }}
             - **Tag:** ${{ env.RELEASE_TAG }}
 
-            ${{ steps.extract_breaking.outputs.breaking_changes && '### ⚠️ Breaking Changes' || '' }}
-            ${{ steps.extract_breaking.outputs.breaking_changes }}
+            ${{ needs.generate.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
+            ${{ needs.generate.outputs.needs_attention }}
 
             **Please review:**
             - [ ] LLM-generated grouped summaries (2-3 per release) are accurate and reflect the most important changes
             - [ ] changelog.json entries have correct labels
-            - [ ] Markdown formatting looks good
+            - [ ] Schema validation passes
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
-            ${{ steps.extract_breaking.outputs.breaking_changes && '- [ ] Breaking changes are accurately described and migration guidance is clear' || '' }}
-
-            ${{ steps.extract.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
-            ${{ steps.extract.outputs.needs_attention }}
-          reviewers: htahir1,strickvl,znegrin
+          reviewers: htahir1,znegrin,strickvl
           labels: internal,x-squad
+          add-paths: |
+            changelog.json
+            .image_state
+
+  pr-gitbook:
+    runs-on: ubuntu-latest
+    needs: generate
+    steps:
+      - name: Checkout repository (main)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Compute SOURCE_REPO_SLUG
+        run: |
+          set -euo pipefail
+          echo "SOURCE_REPO_SLUG=${SOURCE_REPO//\//-}" >> "$GITHUB_ENV"
+
+      - name: Download gitbook patch artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gitbook-patch
+          path: .
+
+      - name: Apply gitbook patch
+        run: |
+          set -euo pipefail
+          git apply gitbook.patch
+
+      - name: Select reviewers and labels
+        id: routing
+        env:
+          MARKDOWN_FILE: ${{ needs.generate.outputs.markdown_file }}
+        run: |
+          set -euo pipefail
+          if [ "$MARKDOWN_FILE" = "gitbook-release-notes/server-sdk.md" ]; then
+            echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
+            echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
+          else
+            echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
+            echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request (gitbook)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update release notes for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
+          branch: release-notes/${{ env.SOURCE_REPO_SLUG }}/${{ env.RELEASE_TAG }}
+          base: main
+          title: "Release notes: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
+          body: |
+            <!--
+            ZENML_CHANGELOG_SYNC_META
+            source_repo=${{ env.SOURCE_REPO }}
+            release_tag=${{ env.RELEASE_TAG }}
+            markdown_file=${{ needs.generate.outputs.markdown_file }}
+            END_ZENML_CHANGELOG_SYNC_META
+            -->
+
+            Automated release notes update triggered by release:
+            - **Repository:** ${{ env.SOURCE_REPO }}
+            - **Tag:** ${{ env.RELEASE_TAG }}
+            - **Markdown file:** `${{ needs.generate.outputs.markdown_file }}`
+
+            ${{ needs.generate.outputs.breaking_changes && '### ⚠️ Breaking Changes' || '' }}
+            ${{ needs.generate.outputs.breaking_changes }}
+
+            **Please review:**
+            - [ ] Markdown formatting looks good in GitBook
+            - [ ] Breaking changes are accurately described and migration guidance is clear (if applicable)
+          reviewers: ${{ steps.routing.outputs.reviewers }}
+          labels: ${{ steps.routing.outputs.labels }}
+          add-paths: |
+            ${{ needs.generate.outputs.markdown_file }}
