@@ -7,6 +7,52 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.93.0 (2025-12-16)
+
+See what's new and improved in version 0.93.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/2.jpg" align="left" alt="ZenML 0.93.0" width="800">
+
+#### Dynamic Pipeline Support
+
+- **Dynamic pipelines can now be deployed**: Enable dynamic pipelines to be deployed and run in production environments. The dynamic pipeline runner has been updated to support deployment invocations with proper handling of init and cleanup hooks. [PR #4300](https://github.com/zenml-io/zenml/pull/4300)
+- **Local Docker orchestrator now supports dynamic pipelines**: Added support for dynamic pipelines to the local docker orchestrator, including the ability to run asynchronously when executing dynamic pipelines. [PR #4294](https://github.com/zenml-io/zenml/pull/4294)
+
+#### Logging Infrastructure Overhaul
+
+- **New log store abstraction**: Introduced a comprehensive log store abstraction that replaces the previous root logger handler approach. This provides better control over log capture, storage, and retrieval across different logging backends. [PR #4111](https://github.com/zenml-io/zenml/pull/4111)
+- **Generic OTEL log store**: Added a generic OTEL log store flavor that can connect to any OTEL/HTTP/JSON compatible log intake endpoint for storing logs. [PR #4309](https://github.com/zenml-io/zenml/pull/4309)
+- **Improved Datadog log fetching**: Enhanced the Datadog log store with pagination support using cursor-based iteration to handle the API's 1000 logs per request limit. [PR #4314](https://github.com/zenml-io/zenml/pull/4314)
+- **Non-blocking log flushing for deployments**: Deployment invocations no longer block waiting for logs to be flushed, improving responsiveness and preventing potential deadlocks during process exit. [PR #4354](https://github.com/zenml-io/zenml/pull/4354)
+
+#### Orchestrator Enhancements
+
+- **Graceful step stopping with heartbeat monitoring**: Extended the step-heartbeat logic to support graceful stopping of steps. Users can now set a maximum heartbeat threshold before steps are deemed unhealthy, with automatic health evaluation from heartbeat signals. [PR #4247](https://github.com/zenml-io/zenml/pull/4247)
+- **AzureML shared memory configuration**: Added shared memory size configuration options to both the AzureML orchestrator and step operator for better resource management. [PR #4334](https://github.com/zenml-io/zenml/pull/4334)
+
+#### CLI Improvements
+
+- **Enhanced CLI table rendering**: Refactored the CLI table rendering system to enable pipeable output formats (JSON/YAML/CSV/TSV) by properly separating stdout and stderr. Tables now feature intelligent column sizing and improved aesthetics with consolidated rendering logic. [PR #4241](https://github.com/zenml-io/zenml/pull/4241)
+
+#### New Integrations
+
+- **Alibaba Cloud storage support**: Added a new Alibaba Cloud storage artifact-store integration for storing artifacts on Alibaba Cloud Object Storage Service (OSS). [PR #4289](https://github.com/zenml-io/zenml/pull/4289)
+
+#### Pipeline Run Tracking
+
+- **Pipeline run index attribute**: Added an `index` attribute to each pipeline run that specifies the run's index within its pipeline, making it easier to track and reference specific runs. The redundant `pipeline` attribute was removed from `PipelineRunRequest` as this information is already included in the snapshot. [PR #4288](https://github.com/zenml-io/zenml/pull/4288)
+
+<details><summary>Fixed</summary>
+
+- **MLflow experiment tracker crash prevention**: Fixed the [MLflow](https://github.com/mlflow/mlflow) experiment tracker crashing with `RESOURCE_DOES_NOT_EXIST` error when attempting to resume runs on Azure ML. The tracker now validates cached run IDs exist on the MLflow server before resuming and gracefully creates new runs if needed. [PR #4227](https://github.com/zenml-io/zenml/pull/4227)
+- **KFP requirements compatibility**: Resolved failures in the ZenML server related to the Kubernetes service connector caused by incompatible [urllib3](https://github.com/urllib3/urllib3) and [KFP](https://github.com/kubeflow/pipelines) requirements. [PR #4312](https://github.com/zenml-io/zenml/pull/4312)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.93.0)
+
+***
+
 ## 0.92.0 (2025-12-02)
 
 See what's new and improved in version 0.92.0.
