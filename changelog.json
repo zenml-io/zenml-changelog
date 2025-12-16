@@ -6,15 +6,11 @@
     "description": "ZenML now supports dynamic pipelines across local Docker and deployment scenarios, enabling more flexible workflow execution. The Kubernetes orchestrator includes graceful stopping for unhealthy steps via heartbeat monitoring, while the AzureML orchestrator and step operator now allow shared memory size configuration for better resource control.",
     "published_at": "2025-12-16T09:19:32Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
-      "bugfix",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "learn_more_url": "https://docs.zenml.io/concepts/steps_and_pipelines/advanced_features#step-heartbeat",
     "should_highlight": false
   },
   {
@@ -24,16 +20,12 @@
     "description": "A comprehensive overhaul of the logging system introduces a new log store abstraction with support for multiple backends including OTEL-compatible endpoints and Datadog with pagination. The MLflow experiment tracker now gracefully handles non-existent runs instead of crashing, and deployment invocations no longer block waiting for logs to flush.",
     "published_at": "2025-12-16T09:19:32Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
-      "bugfix",
-      "deprecation",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/otel-logs-backend.png",
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/log-stores",
     "should_highlight": false
   },
   {
@@ -43,15 +35,12 @@
     "description": "The CLI now features improved table rendering with pipeable output formats (JSON/YAML/CSV/TSV), better column sizing, and cleaner command implementations. Additional improvements include pipeline run indexing for better tracking, Alibaba Cloud storage support, and fixes for Kubernetes service connector compatibility issues.",
     "published_at": "2025-12-16T09:19:32Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
-      "bugfix",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/cli-columns.png",
+    "docs_url": "https://docs.zenml.io/user-guides/best-practices/quick-wins#id-15-export-cli-data-in-multiple-formats",
     "should_highlight": false
   },
   {
@@ -61,7 +50,7 @@
     "description": "Introduced Dynamic Pipelines as an experimental feature, allowing you to generate DAG structures at runtime using native Python control flow (loops, conditionals). Key capabilities include dynamic parallelization, Map/Reduce patterns over collections, and granular runtime configuration (inline vs. isolated). Supported on local, Kubernetes, AWS Sagemaker, and Google Cloud Vertex orchestrators. Dynamic pipelines can be run from snapshots with configurable parameters, and include improvements to Kubernetes orchestrator handling and step mapping operations that return future objects with an `unpack()` method for better control flow.",
     "published_at": "2025-12-05T06:42:19Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "feature"
     ],
