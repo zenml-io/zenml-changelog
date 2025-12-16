@@ -7,6 +7,56 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.93.0 (2025-12-16)
+
+See what's new and improved in version 0.93.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/2.jpg" align="left" alt="ZenML 0.93.0" width="800">
+
+### Breaking Changes
+
+* The logging system has been completely redesigned with a new log store abstraction that now captures stdout, stderr, and all logger outputs more comprehensively. If you have custom integrations that relied on the previous logging behavior or accessed logs directly from the artifact store, you may need to update your code to use the new log store APIs. [PR #4111](https://github.com/zenml-io/zenml/pull/4111)
+* The REST API endpoint `/api/v1/pipelines/<ID>/runs` has been removed. Use `/api/v1/runs?pipeline_id=<ID>` instead to fetch runs for a specific pipeline. [PR #4350](https://github.com/zenml-io/zenml/pull/4350)
+* The `logs` field has been removed from the response models of pipeline runs and steps. Additionally, RBAC checks for fetching logs, downloading artifacts, and visualizations have been tightened. If you were accessing logs through these response models, you will need to use the dedicated log fetching endpoints instead. [PR #4347](https://github.com/zenml-io/zenml/pull/4347)
+
+#### Enhanced CLI Experience
+
+The ZenML CLI now provides a more flexible and user-friendly experience with improved table rendering and output options. Tables are now more aesthetically pleasing with intelligent column sizing, and you can pipe CLI output in multiple formats (JSON, YAML, CSV, TSV) by properly separating stdout and stderr streams. This makes it easier to integrate ZenML commands into scripts and automation workflows. [PR #4241](https://github.com/zenml-io/zenml/pull/4241)
+
+#### Dynamic Pipeline Support
+
+Dynamic pipelines can now be deployed and run with the local Docker orchestrator, including support for asynchronous execution. This expands the flexibility of local development and testing workflows, allowing you to leverage dynamic pipeline patterns without requiring cloud infrastructure. [PR #4294](https://github.com/zenml-io/zenml/pull/4294), [PR #4300](https://github.com/zenml-io/zenml/pull/4300)
+
+#### Pipeline Run Tracking
+
+Each pipeline run now includes an `index` attribute that tracks its position within the pipeline's execution history, making it easier to identify and reference specific runs in a sequence. [PR #4288](https://github.com/zenml-io/zenml/pull/4288)
+
+#### Orchestrator Health Monitoring
+
+The Kubernetes orchestrator now includes enhanced health monitoring capabilities with configurable heartbeat thresholds. Steps that become unhealthy are preemptively stopped, and pipeline tokens are automatically invalidated when pipelines enter an unhealthy state, improving reliability and resource management. [PR #4247](https://github.com/zenml-io/zenml/pull/4247)
+
+#### New Integrations
+
+- **Alibaba Cloud Storage**: Added support for Alibaba Cloud OSS as an artifact store, expanding ZenML's cloud storage options. [PR #4289](https://github.com/zenml-io/zenml/pull/4289)
+- **Generic OTEL Log Store**: Introduced a new log store flavor that can connect to any OTEL/HTTP/JSON compatible log intake endpoint, enabling integration with a wider range of observability platforms. [PR #4309](https://github.com/zenml-io/zenml/pull/4309)
+
+#### Azure ML Enhancements
+
+The AzureML orchestrator and step operator now support shared memory size configuration, giving you more control over resource allocation for your workloads. [PR #4334](https://github.com/zenml-io/zenml/pull/4334)
+
+<details><summary>Fixed</summary>
+
+- **MLflow Experiment Tracker**: Fixed crashes when attempting to resume non-existent runs on Azure ML. The tracker now validates cached run IDs and gracefully creates new runs when necessary. [PR #4227](https://github.com/zenml-io/zenml/pull/4227)
+- **Kubernetes Service Connector**: Resolved failures in the ZenML server related to the Kubernetes service connector caused by incompatible urllib3 and kubernetes client library versions. [PR #4312](https://github.com/zenml-io/zenml/pull/4312)
+- **Datadog Log Store**: Improved log fetching with proper pagination support, handling the Datadog API's 1000-log limit per request through cursor-based iteration. [PR #4314](https://github.com/zenml-io/zenml/pull/4314)
+- **Deployment Log Flushing**: Eliminated blocking behavior when flushing logs during deployment invocations, preventing potential hangs at pipeline completion. [PR #4354](https://github.com/zenml-io/zenml/pull/4354)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.93.0)
+
+***
+
 ## 0.92.0 (2025-12-02)
 
 See what's new and improved in version 0.92.0.
