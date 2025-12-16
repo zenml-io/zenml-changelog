@@ -1,5 +1,60 @@
 [
   {
+    "id": 7,
+    "slug": "enhanced-pipeline-orchestration-and-deployment-capabilities",
+    "title": "Enhanced Pipeline Orchestration and Deployment Capabilities",
+    "description": "ZenML now supports dynamic pipelines across local Docker and deployment scenarios, enabling more flexible workflow execution. The Kubernetes orchestrator includes graceful stopping for unhealthy steps via heartbeat monitoring, while the AzureML orchestrator and step operator now allow shared memory size configuration for better resource control.",
+    "published_at": "2025-12-16T09:19:32Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 6,
+    "slug": "improved-logging-infrastructure-and-integrations",
+    "title": "Improved Logging Infrastructure and Integrations",
+    "description": "A comprehensive overhaul of the logging system introduces a new log store abstraction with support for multiple backends including OTEL-compatible endpoints and Datadog with pagination. The MLflow experiment tracker now gracefully handles non-existent runs instead of crashing, and deployment invocations no longer block waiting for logs to flush.",
+    "published_at": "2025-12-16T09:19:32Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "deprecation",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 5,
+    "slug": "cli-enhancements-and-platform-improvements",
+    "title": "CLI Enhancements and Platform Improvements",
+    "description": "The CLI now features improved table rendering with pipeable output formats (JSON/YAML/CSV/TSV), better column sizing, and cleaner command implementations. Additional improvements include pipeline run indexing for better tracking, Alibaba Cloud storage support, and fixes for Kubernetes service connector compatibility issues.",
+    "published_at": "2025-12-16T09:19:32Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 4,
     "slug": "dynamic-pipelines",
     "title": "Dynamic pipelines are now available",
