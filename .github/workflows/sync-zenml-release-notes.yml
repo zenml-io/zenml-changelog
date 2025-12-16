@@ -1,0 +1,81 @@
+name: Sync ZenML release notes to GitHub Releases
+
+on:
+  pull_request:
+    types: [closed]
+    paths:
+      - gitbook-release-notes/server-sdk.md
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: Sync release notes
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'core-squad') }}
+    steps:
+      - name: Parse sync meta from PR body
+        id: meta
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          # PR body is free-form; we rely on a delimited HTML comment block for machine parsing.
+          body_file="$(mktemp)"
+          printf "%s" "${PR_BODY:-}" | tr -d '\r' > "$body_file"
+
+          meta_block="$(sed -n '/ZENML_CHANGELOG_SYNC_META/,/END_ZENML_CHANGELOG_SYNC_META/p' "$body_file" || true)"
+          if [ -z "$meta_block" ]; then
+            echo "ERROR: ZENML_CHANGELOG_SYNC_META block not found in PR body." >&2
+            exit 1
+          fi
+
+          source_repo="$(printf "%s\n" "$meta_block" | grep -E '^source_repo=' | head -n 1 | sed -E 's/^source_repo=//')"
+          release_tag="$(printf "%s\n" "$meta_block" | grep -E '^release_tag=' | head -n 1 | sed -E 's/^release_tag=//')"
+          markdown_file="$(printf "%s\n" "$meta_block" | grep -E '^markdown_file=' | head -n 1 | sed -E 's/^markdown_file=//')"
+
+          if [ -z "$source_repo" ] || [ -z "$release_tag" ] || [ -z "$markdown_file" ]; then
+            echo "ERROR: Missing required meta keys. Parsed values:" >&2
+            echo "source_repo=$source_repo" >&2
+            echo "release_tag=$release_tag" >&2
+            echo "markdown_file=$markdown_file" >&2
+            exit 1
+          fi
+
+          echo "source_repo=$source_repo" >> "$GITHUB_OUTPUT"
+          echo "release_tag=$release_tag" >> "$GITHUB_OUTPUT"
+          echo "markdown_file=$markdown_file" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether this PR should sync OSS release notes
+        id: gate
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.meta.outputs.source_repo }}" != "zenml-io/zenml" ]; then
+            echo "should_sync=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping: source_repo is '${{ steps.meta.outputs.source_repo }}' (only sync zenml-io/zenml)." >&2
+            exit 0
+          fi
+          echo "should_sync=true" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repository at merge commit
+        if: ${{ steps.gate.outputs.should_sync == 'true' }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+
+      - name: Set up uv
+        if: ${{ steps.gate.outputs.should_sync == 'true' }}
+        uses: astral-sh/setup-uv@v7
+
+      - name: Sync release notes to zenml-io/zenml GitHub Release
+        if: ${{ steps.gate.outputs.should_sync == 'true' }}
+        env:
+          ZENML_RELEASE_SYNC_TOKEN: ${{ secrets.ZENML_RELEASE_SYNC_TOKEN }}
+          RELEASE_TAG: ${{ steps.meta.outputs.release_tag }}
+          TARGET_REPO: zenml-io/zenml
+          MARKDOWN_FILE: gitbook-release-notes/server-sdk.md
+        run: |
+          set -euo pipefail
+          uv run scripts/sync_zenml_github_release_notes.py
