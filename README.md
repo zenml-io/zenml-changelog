@@ -39,6 +39,7 @@ flowchart TD
 - Trigger: Source repos emit `repository_dispatch` (`release-published`).
 - Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens a PR with reviewers and labels.
 - Script tasks: fetch `release-notes` PRs between releases, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
+- Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
 
 ## Source Repositories and Targets
 

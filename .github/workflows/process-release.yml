@@ -61,6 +61,17 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Extract breaking changes
+        id: extract_breaking
+        run: |
+          # Extract lines between BREAKING_CHANGES and END_BREAKING_CHANGES
+          breaking=$(awk '/^BREAKING_CHANGES$/,/^END_BREAKING_CHANGES$/' changelog_output.txt | grep -v '^BREAKING_CHANGES$' | grep -v '^END_BREAKING_CHANGES$')
+          {
+            echo "breaking_changes<<EOF"
+            echo "${breaking}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create Pull Request
         env:
           SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
@@ -77,11 +88,15 @@ jobs:
             - **Repository:** ${{ env.SOURCE_REPO }}
             - **Tag:** ${{ env.RELEASE_TAG }}
 
+            ${{ steps.extract_breaking.outputs.breaking_changes && '### ⚠️ Breaking Changes' || '' }}
+            ${{ steps.extract_breaking.outputs.breaking_changes }}
+
             **Please review:**
             - [ ] LLM-generated grouped summaries (2-3 per release) are accurate and reflect the most important changes
             - [ ] changelog.json entries have correct labels
             - [ ] Markdown formatting looks good
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
+            ${{ steps.extract_breaking.outputs.breaking_changes && '- [ ] Breaking changes are accurately described and migration guidance is clear' || '' }}
 
             ${{ steps.extract.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
             ${{ steps.extract.outputs.needs_attention }}
