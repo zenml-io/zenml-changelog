@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
@@ -90,7 +91,15 @@ LABEL_MAPPING: Dict[str, str] = {
     "improvement": "improvement",
     "deprecation": "deprecation",
     "breaking": "deprecation",
+    "breaking-change": "deprecation",
+    "breaking changes": "deprecation",
 }
+
+BREAKING_CHANGE_LABELS: List[str] = [
+    "breaking-change",
+    "breaking changes",
+    "breaking",
+]
 
 # Placeholder URLs that pass schema validation but are clearly marked for review
 PLACEHOLDER_LEARN_MORE_URL = "https://example.com/REPLACE-ME"
@@ -141,6 +150,12 @@ class GroupedChangelogOutput(BaseModel):
         min_length=1,
         max_length=3,
         description="2-3 grouped changelog entries summarizing the release.",
+    )
+
+class BreakingChangesOutput(BaseModel):
+    bullets: List[str] = Field(
+        default_factory=list,
+        description="List of breaking change bullet points, one per significant breaking change.",
     )
 
 class MarkdownSection(BaseModel):
@@ -194,25 +209,60 @@ def _release_date(repo, prefixed_tag: str) -> datetime:
         published = published.replace(tzinfo=timezone.utc)
     return published
 
+def get_release_window(
+    gh: Github,
+    repo_name: str,
+    since_tag: Optional[str],
+    until_tag: str,
+) -> Tuple[datetime, datetime]:
+    """Compute the date range between two release tags.
 
-def get_release_prs(gh: Github, repo_name: str, since_tag: Optional[str], until_tag: str) -> List[Dict[str, Any]]:
+    Returns (since_date, until_date) where since_date defaults to 2020-01-01 if no previous tag.
+    """
     repo = gh.get_repo(repo_name)
-    config = REPO_CONFIG[repo_name]
     prefixed_until_tag = with_prefix(repo_name, until_tag)
-    prefixed_since_tag = with_prefix(repo_name, since_tag) if since_tag else None
     until_date = _release_date(repo, prefixed_until_tag)
-    since_date = _release_date(repo, prefixed_since_tag) if prefixed_since_tag else datetime(2020, 1, 1, tzinfo=timezone.utc)
-    query = (
-        f"repo:{repo_name} is:pr is:merged label:release-notes "
-        f"base:{config['default_branch']} "
-        f"merged:{since_date.strftime('%Y-%m-%dT%H:%M:%SZ')}..{until_date.strftime('%Y-%m-%dT%H:%M:%SZ')}"
-    )
+
+    if since_tag is None:
+        since_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
+    else:
+        prefixed_since_tag = with_prefix(repo_name, since_tag)
+        since_date = _release_date(repo, prefixed_since_tag)
+
+    return since_date, until_date
+
+def search_merged_prs(
+    gh: Github,
+    repo_name: str,
+    base_branch: str,
+    since_date: datetime,
+    until_date: datetime,
+    label: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Search for merged PRs in a date range, optionally filtered by label."""
+    repo = gh.get_repo(repo_name)
+
+    since_utc = since_date.astimezone(timezone.utc) if since_date.tzinfo else since_date.replace(tzinfo=timezone.utc)
+    until_utc = until_date.astimezone(timezone.utc) if until_date.tzinfo else until_date.replace(tzinfo=timezone.utc)
+
+    since_str = since_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    until_str = until_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    query = f"repo:{repo_name} is:pr is:merged base:{base_branch} merged:{since_str}..{until_str}"
+    if label:
+        query = f'{query} label:"{label}"'
+
     search_results = gh.search_issues(query)
     prs: List[Dict[str, Any]] = []
     for issue in search_results:
         pr = repo.get_pull(issue.number)
         if not pr.merged_at:
             continue
+
+        merged_at = pr.merged_at
+        if merged_at.tzinfo is None:
+            merged_at = merged_at.replace(tzinfo=timezone.utc)
+
         prs.append(
             {
                 "number": pr.number,
@@ -220,12 +270,80 @@ def get_release_prs(gh: Github, repo_name: str, since_tag: Optional[str], until_
                 "url": pr.html_url,
                 "author": pr.user.login if pr.user else "unknown",
                 "body": pr.body or "",
-                "labels": [label.name for label in pr.labels],
-                "merged_at": pr.merged_at,
+                "labels": [label_item.name for label_item in pr.labels],
+                "merged_at": merged_at,
             }
         )
+
     prs.sort(key=lambda pr_item: pr_item["merged_at"])
     return prs
+
+def dedupe_prs_by_number(prs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Remove duplicate PRs by number, keeping first occurrence, then sort by merged_at."""
+    seen: set[int] = set()
+    unique: List[Dict[str, Any]] = []
+    for pr in prs:
+        number = int(pr["number"])
+        if number in seen:
+            continue
+        seen.add(number)
+        unique.append(pr)
+
+    def merged_at_key(pr_item: Dict[str, Any]) -> datetime:
+        merged_at = pr_item.get("merged_at")
+        if not isinstance(merged_at, datetime):
+            return datetime.min.replace(tzinfo=timezone.utc)
+        if merged_at.tzinfo is None:
+            return merged_at.replace(tzinfo=timezone.utc)
+        return merged_at
+
+    unique.sort(key=merged_at_key)
+    return unique
+
+
+def parse_semver(tag: str) -> Optional[Tuple[int, int, int]]:
+    """Parse a semver tag like '0.91.0' or '1.0.0' into (major, minor, patch).
+
+    Returns None if the tag doesn't match semver pattern.
+    Handles tags with or without 'v' prefix.
+    """
+    match = re.match(r"^v?(\d+)\.(\d+)\.(\d+)$", (tag or "").strip())
+    if not match:
+        return None
+    major, minor, patch = (int(part) for part in match.groups())
+    return major, minor, patch
+
+def is_major_bump(previous_tag: Optional[str], current_tag: str) -> bool:
+    """Check if the version change represents a major version bump.
+
+    Returns True only if current_major > previous_major.
+    Returns False if either tag can't be parsed or if previous_tag is None.
+    """
+    if previous_tag is None:
+        return False
+    previous = parse_semver(previous_tag)
+    current = parse_semver(current_tag)
+    if not previous or not current:
+        return False
+    return current[0] > previous[0]
+
+def get_release_prs(gh: Github, repo_name: str, since_tag: Optional[str], until_tag: str) -> List[Dict[str, Any]]:
+    config = REPO_CONFIG[repo_name]
+    since_date, until_date = get_release_window(
+        gh=gh,
+        repo_name=repo_name,
+        since_tag=since_tag,
+        until_tag=until_tag,
+    )
+    prs = search_merged_prs(
+        gh=gh,
+        repo_name=repo_name,
+        base_branch=config["default_branch"],
+        since_date=since_date,
+        until_date=until_date,
+        label="release-notes",
+    )
+    return dedupe_prs_by_number(prs)
 
 
 def slugify_title(title: str) -> str:
@@ -334,6 +452,201 @@ def llm_generate_grouped_changelog_entries(
         ],
     )
     return response.parsed_output
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=2, max=60),
+    retry=retry_if_exception_type((APIError, RateLimitError)),
+)
+def llm_generate_breaking_changes_bullets(
+    breaking_prs: List[Dict[str, Any]],
+    source_repo: str,
+    include_pr_links: bool,
+) -> List[str]:
+    """Generate user-facing bullet points summarizing breaking changes from PRs."""
+    if not breaking_prs:
+        return []
+
+    if anthropic_client is None:
+        raise RuntimeError("Anthropic client not initialized")
+
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
+
+    pr_summaries = "\n".join(
+        (
+            f"- #{pr['number']}: {pr['title']}\n"
+            f"  Labels: {', '.join(pr.get('labels', [])) or 'none'}\n"
+            f"  URL: {pr['url']}\n"
+            f"  Body (truncated): {(pr.get('body') or '')[:700].replace(chr(10), ' ')}"
+        )
+        for pr in breaking_prs
+    )
+
+    link_instruction = (
+        "Include a markdown link to the PR in each bullet using the exact format "
+        "[PR #<number>](<url>). If you combine closely related breaking PRs into one bullet, "
+        "include all relevant PR links in that bullet."
+        if include_pr_links
+        else "Do not include PR links, URLs, or PR numbers in the bullets; keep the prose concise."
+    )
+
+    response = anthropic_client.beta.messages.parse(
+        model="claude-sonnet-4-5-20250929",
+        betas=["structured-outputs-2025-11-13"],
+        max_tokens=900,
+        temperature=0,
+        output_format=BreakingChangesOutput,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    "You are writing the \"Breaking Changes\" section for ZenML release notes.\n\n"
+                    f"Repository: {source_repo}\n"
+                    f"Audience: {audience}\n\n"
+                    "Here are PRs labeled as breaking changes for this release:\n\n"
+                    f"{pr_summaries}\n\n"
+                    "Task:\n"
+                    "- Write user-facing bullet point text summarizing what is breaking and how users should adapt.\n"
+                    "- Produce one bullet per breaking PR, unless a small grouping is clearly warranted.\n"
+                    f"- {link_instruction}\n"
+                    "- Each bullet must be plain text only and must NOT start with '-' or '*'. "
+                    "The caller will format bullets.\n"
+                    "- Avoid implementation details; focus on behavioral changes, removals, renamed APIs, "
+                    "compatibility requirements, or required migration steps.\n"
+                    "- If there is nothing meaningful to summarize, return an empty list.\n"
+                ),
+            }
+        ],
+    )
+    return response.parsed_output.bullets
+
+def render_release_header(
+    release_tag: str,
+    published_at: str,
+    image_number: int,
+    source_repo: str,
+) -> str:
+    """Render the deterministic header portion of release notes."""
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    alt_prefix = "ZenML Pro" if repo_type == "pro" else "ZenML"
+
+    return (
+        f"## {release_tag} ({published_at[:10]})\n\n"
+        f"See what's new and improved in version {release_tag}.\n\n"
+        f'<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/{image_number}.jpg" '
+        f'align="left" alt="{alt_prefix} {release_tag}" width="800">\n\n'
+    )
+
+def render_breaking_section(
+    bullets: List[str],
+    force_placeholder: bool,
+    is_major_bump: bool,
+) -> str:
+    """Render the Breaking Changes section.
+
+    Returns empty string if no bullets and not forced.
+    If forced (major bump) but no bullets, returns placeholder text.
+    """
+    bullets_clean = [bullet.strip() for bullet in (bullets or []) if bullet and bullet.strip()]
+    if bullets_clean:
+        formatted = "\n".join(f"* {bullet}" for bullet in bullets_clean)
+        return f"### Breaking Changes\n\n{formatted}\n\n"
+
+    forced = force_placeholder or is_major_bump
+    if not forced:
+        return ""
+
+    placeholder = (
+        "* This is a major release. No PRs were labeled as breaking changes; "
+        "please review manually for any breaking changes."
+    )
+    return f"### Breaking Changes\n\n{placeholder}\n\n"
+
+def render_release_footer(source_repo: str, release_url: str) -> str:
+    """Render the deterministic footer portion of release notes."""
+    config = REPO_CONFIG[source_repo]
+
+    footer_parts: List[str] = []
+    if config.get("include_release_link"):
+        footer_parts.append(f"[View full release on GitHub]({release_url})")
+    if config.get("include_compatibility_note"):
+        footer_parts.append("> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.")
+
+    if footer_parts:
+        return "\n\n".join(footer_parts) + "\n\n***"
+    return "***"
+
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=2, min=2, max=60),
+    retry=retry_if_exception_type((APIError, RateLimitError)),
+)
+def llm_generate_release_notes_body(
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+    include_pr_links: bool,
+) -> str:
+    """Generate the body portion of release notes (no header, footer, or breaking section)."""
+    if not prs:
+        return ""
+
+    if anthropic_client is None:
+        raise RuntimeError("Anthropic client not initialized")
+
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
+
+    pr_summaries = "\n".join(
+        f"- {pr['title']} (#{pr['number']}): {pr['url']} — {(pr.get('body') or '')[:500].replace(chr(10), ' ')}"
+        for pr in prs
+    )
+
+    include_links_instruction = (
+        "Include a markdown link to each PR using the format [PR #<number>](<url>) where relevant."
+        if include_pr_links
+        else "Do not include PR links, URLs, or PR numbers; keep the prose concise."
+    )
+
+    response = anthropic_client.beta.messages.parse(
+        model="claude-sonnet-4-5-20250929",
+        betas=["structured-outputs-2025-11-13"],
+        max_tokens=1800,
+        temperature=0,
+        output_format=MarkdownSection,
+        messages=[
+            {
+                "role": "user",
+                "content": (
+                    "You are writing the release notes body for ZenML.\n\n"
+                    f"Repository: {source_repo}\n"
+                    f"Audience: {audience}\n\n"
+                    "Merged PRs to cover (release-notes label):\n"
+                    f"{pr_summaries}\n\n"
+                    "Output rules (CRITICAL):\n"
+                    "- Output markdown for the body only.\n"
+                    "- Do NOT include the `## <release_tag>` header (the caller will render the release header).\n"
+                    "- Do NOT include the `<img>` tag.\n"
+                    "- Do NOT include a \"Breaking Changes\" heading.\n"
+                    "- Do NOT include the footer, any release link section, or `***`.\n\n"
+                    "Formatting requirements:\n"
+                    "- Use `####` subsection headers to group related changes by theme.\n"
+                    "- Use `<details><summary>Fixed</summary>...</details>` for bug fixes.\n"
+                    f"- {include_links_instruction}\n\n"
+                    "Writing guidance:\n"
+                    "- Highlight the most user-facing improvements first.\n"
+                    "- Avoid low-level implementation details; focus on what users can now do.\n"
+                    "- Keep it readable and scannable.\n"
+                ),
+            }
+        ],
+    )
+    return response.parsed_output.content
 
 @retry(
     reraise=True,
@@ -583,12 +896,45 @@ def main() -> None:
 
     previous_tag = find_previous_tag(gh, source_repo, env["RELEASE_TAG"])
     print(f"Processing {source_repo} {env['RELEASE_TAG']} (previous: {previous_tag or 'first release'})")
-    prs = get_release_prs(gh, source_repo, previous_tag, env["RELEASE_TAG"])
-    print(f"Found {len(prs)} PRs with release-notes label")
-    if not prs:
-        print("ERROR: No release-notes PRs found for this release.")
-        print("This likely means no PRs were labeled with 'release-notes' between the releases.")
+
+    config = REPO_CONFIG[source_repo]
+    since_date, until_date = get_release_window(gh, source_repo, previous_tag, env["RELEASE_TAG"])
+
+    release_notes_prs = search_merged_prs(
+        gh, source_repo, config["default_branch"], since_date, until_date, label="release-notes"
+    )
+    release_notes_prs = dedupe_prs_by_number(release_notes_prs)
+    print(f"Found {len(release_notes_prs)} PRs with release-notes label")
+
+    all_breaking_prs: List[Dict[str, Any]] = []
+    for breaking_label in BREAKING_CHANGE_LABELS:
+        prs_for_label = search_merged_prs(
+            gh, source_repo, config["default_branch"], since_date, until_date, label=breaking_label
+        )
+        all_breaking_prs.extend(prs_for_label)
+    breaking_prs = dedupe_prs_by_number(all_breaking_prs)
+    print(f"Found {len(breaking_prs)} PRs with breaking-change labels")
+
+    major_bump = is_major_bump(previous_tag, env["RELEASE_TAG"])
+    if major_bump:
+        print("Detected major version bump - will force Breaking Changes section")
+
+    if not release_notes_prs and not breaking_prs:
+        print("ERROR: No release-notes or breaking-change PRs found for this release.")
         raise SystemExit(1)
+
+    # Use release-notes PRs for changelog entries; fall back to breaking PRs if none
+    grouping_prs = release_notes_prs if release_notes_prs else breaking_prs
+
+    breaking_pr_numbers = {pr["number"] for pr in breaking_prs}
+    body_prs = [pr for pr in release_notes_prs if pr["number"] not in breaking_pr_numbers]
+
+    include_pr_links = config["type"] == "oss"
+    breaking_bullets = llm_generate_breaking_changes_bullets(
+        breaking_prs=breaking_prs,
+        source_repo=source_repo,
+        include_pr_links=include_pr_links,
+    )
 
     changelog_path = Path("changelog.json")
     existing_changelog = json.loads(changelog_path.read_text())
@@ -596,16 +942,24 @@ def main() -> None:
     starting_id = max_existing_id + 1
 
     # Identify PRs with insufficient descriptions that should be reviewed manually
-    needs_attention = collect_needs_attention(prs)
+    needs_attention = collect_needs_attention(grouping_prs)
+    if not release_notes_prs and breaking_prs:
+        needs_attention.append(
+            {
+                "number": "N/A",
+                "title": "No release-notes PRs found; changelog derived from breaking PRs only",
+                "url": "",
+            }
+        )
 
     # Use a single LLM call to create 2-3 grouped, thematic changelog entries
     grouped_output = llm_generate_grouped_changelog_entries(
-        prs=prs,
+        prs=grouping_prs,
         source_repo=source_repo,
     )
     new_entries = build_grouped_changelog_entries(
         grouped_output=grouped_output,
-        prs=prs,
+        prs=grouping_prs,
         source_repo=source_repo,
         published_at=published_at,
         starting_id=starting_id,
@@ -620,19 +974,29 @@ def main() -> None:
     validate_changelog(changelog_path, Path("changelog_schema/announcement-schema.json"))
 
     image_number = get_next_image_number()
-    md_section = llm_generate_markdown_section(
-        prs=prs,
-        release_tag=env["RELEASE_TAG"],
-        release_url=release_url,
-        published_at=published_at,
-        source_repo=source_repo,
-        image_number=image_number,
+    header = render_release_header(env["RELEASE_TAG"], published_at, image_number, source_repo)
+    breaking_section = render_breaking_section(
+        breaking_bullets, force_placeholder=False, is_major_bump=major_bump
     )
-    update_markdown_file(Path(REPO_CONFIG[source_repo]["markdown_file"]), md_section)
+    body = llm_generate_release_notes_body(body_prs, source_repo, include_pr_links) if body_prs else ""
+    footer = render_release_footer(source_repo, release_url)
+    md_section = header + breaking_section + body + "\n\n" + footer
+
+    update_markdown_file(Path(config["markdown_file"]), md_section)
     print(
         f"Updated changelog.json (+{len(new_entries)} entries) and "
-        f"{REPO_CONFIG[source_repo]['markdown_file']} (image {image_number})."
+        f"{config['markdown_file']} (image {image_number})."
     )
+
+    if breaking_section.strip():
+        print()
+        print("BREAKING_CHANGES")
+        # Print just the bullets portion for extraction
+        for bullet in breaking_bullets:
+            print(f"- {bullet}")
+        if major_bump and not breaking_bullets:
+            print("- Major version bump detected; manual review recommended")
+        print("END_BREAKING_CHANGES")
 
     if needs_attention:
         print()
