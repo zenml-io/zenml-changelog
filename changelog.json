@@ -41,6 +41,7 @@
     ],
     "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/cli-columns.png",
     "docs_url": "https://docs.zenml.io/user-guides/best-practices/quick-wins#id-15-export-cli-data-in-multiple-formats",
+    "learn_more_url": "https://docs.zenml.io/stacks/stack-components/artifact-stores/alibaba-oss",
     "should_highlight": false
   },
   {
