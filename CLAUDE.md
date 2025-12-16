@@ -22,6 +22,8 @@ This repo is the canonical source of ZenML release metadata:
   - `announcement-schema.json` — Validation schema for `changelog.json`.
   - `README.md` — Field documentation and examples.
 - `scripts/update_changelog.py` — Main automation script (fetch PRs, LLM summaries, update JSON/markdown, image rotation, validation).
+- `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
+- `scripts/install-hooks.sh` — Installs git pre-commit hook for local validation.
 - `.github/workflows/`
   - `process-release.yml` — Receives `repository_dispatch` `release-published`, runs the script, validates, opens a PR.
   - `validate-changelog.yml` — PR-time schema validation for `changelog.json`.
@@ -55,14 +57,15 @@ This repo is the canonical source of ZenML release metadata:
 2. Update release notes:
    - OSS: insert a new section at the top of `gitbook-release-notes/server-sdk.md` after frontmatter.
    - Pro: insert at the top of `gitbook-release-notes/pro-control-plane.md` after frontmatter.
-3. Validate locally (recommended): use `cardinalby/schema-validator-action@v3` or run a local `jsonschema` check against `changelog_schema/announcement-schema.json`.
+3. Validate locally (recommended): run `uv run scripts/validate_changelog.py`, or let the pre-commit hook catch issues on commit.
 4. Open a PR; `validate-changelog.yml` will re-validate `changelog.json`.
 
 ## Schema Validation
 
+- **Pre-commit hook**: Automatically validates `changelog.json` before each commit. Install with `./scripts/install-hooks.sh`.
 - Automated on PRs touching `changelog.json` via `.github/workflows/validate-changelog.yml`.
 - Automated in the dispatch workflow after generation via `process-release.yml`.
-- Manual: run a JSON Schema check against `changelog_schema/announcement-schema.json` if editing locally.
+- Manual: run `uv run scripts/validate_changelog.py` to validate locally.
 
 ## Secrets
 

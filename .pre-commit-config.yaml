@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: validate-changelog
+        name: Validate changelog.json against schema
+        entry: uv run scripts/validate_changelog.py
+        language: system
+        files: ^changelog\.json$
+        pass_filenames: false
