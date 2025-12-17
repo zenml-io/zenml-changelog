@@ -6,7 +6,7 @@
     "description": "The dashboard now displays run indexes consistently across all views, including breadcrumbs and navigation elements. Each run shows its index number (e.g., #1, #2) before the run name, making it significantly easier to identify and reference specific runs, especially when working with multiple runs that have similar names.",
     "published_at": "2025-12-15T11:53:04Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "improvement"
     ],
@@ -23,13 +23,12 @@
     "description": "View your pipeline's complete Python source code directly in the dashboard through a new \"Code\" tab on pipeline run details pages. Additionally, the dashboard now supports log stores as a stack component and enables viewing logs from multiple sources, providing better insight into your pipeline execution and debugging capabilities.",
     "published_at": "2025-12-15T11:53:04Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "feature",
       "improvement"
     ],
     "feature_image_url": "",
-    "video_url": "",
     "learn_more_url": "https://example.com/REPLACE-ME",
     "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
@@ -41,15 +40,15 @@
     "description": "Configure connections between your IDE or AI assistants and your ZenML server through a new MCP settings page. This feature enables seamless integration with AI-powered development tools, accessible via the settings menu with support for API key management and service account configuration.",
     "published_at": "2025-12-15T11:53:04Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
-      "improvement"
+      "improvement",
+      "feature"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/mcp-settings-page.gif",
+    "learn_more_url": "https://github.com/zenml-io/mcp-zenml",
+    "docs_url": "https://docs.zenml.io/user-guides/best-practices/mcp-chat-with-server",
+    "should_highlight": true
   },
   {
     "id": 7,
