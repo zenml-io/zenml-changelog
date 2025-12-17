@@ -30,16 +30,32 @@ zenml-changelog/
 flowchart TD
     A[Source repo release] -->|repository_dispatch<br/>event_type: release-published| B[process-release.yml]
     B --> C[Run update_changelog.py]
-    C --> D[changelog.json]
-    C --> E[gitbook-release-notes/server-sdk.md or pro-control-plane.md]
+    C --> D[changelog.json + .image_state]
+    C --> E[gitbook-release-notes/*.md]
     D --> F[Schema validation]
-    B --> G[Create PR<br/>changelog/{repo}-{tag}]
+    B --> G[Widget PR<br/>changelog/{repo}/{tag}]
+    B --> H[GitBook PR<br/>release-notes/{repo}/{tag}]
 ```
 
 - Trigger: Source repos emit `repository_dispatch` (`release-published`).
-- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens a PR with reviewers and labels.
+- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on source repo.
 - Script tasks: fetch `release-notes` PRs between releases, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
+
+### PR Routing
+
+**Widget PR** (updates `changelog.json` and `.image_state`):
+- Reviewers: `htahir1`, `znegrin`, `strickvl`
+- Labels: `internal`, `x-squad`
+
+**GitBook PR** (updates release notes markdown):
+
+| Source Repository | Reviewers | Labels |
+| --- | --- | --- |
+| `zenml-io/zenml-dashboard` | Cahllagerfeld | documentation, internal, x-squad |
+| `zenml-io/zenml-cloud-ui` | Cahllagerfeld | documentation, internal, x-squad |
+| `zenml-io/zenml` | schustmi, bcdurak | core-squad, internal |
+| `zenml-io/zenml-cloud-api` | htahir1, strickvl, znegrin | internal, x-squad |
 
 ## Source Repositories and Targets
 
