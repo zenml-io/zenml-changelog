@@ -80,6 +80,32 @@ This repo uses [uv](https://docs.astral.sh/uv/) with PEP 723 inline dependencies
 uv run scripts/update_changelog.py
 ```
 
+## Uploading Feature Images to S3
+
+Images for `feature_image_url` in changelog entries should be uploaded to the `public-flavor-logos` S3 bucket in the `whats_new/` folder.
+
+**Important:** Use your `default` AWS profile (do not assume a role like `OrganizationAccountAccessRoleDev`).
+
+```bash
+# Upload a new image (will fail if file already exists)
+aws s3api put-object \
+  --bucket public-flavor-logos \
+  --key whats_new/your-image-name.png \
+  --body /path/to/local/image.png \
+  --if-none-match "*" \
+  --profile default
+
+# List existing files in the folder
+aws s3api list-objects-v2 \
+  --bucket public-flavor-logos \
+  --prefix whats_new/ \
+  --profile default
+```
+
+The bucket enforces upload-only permissions (no delete/overwrite). If the file already exists, you'll get a `412 Precondition Failed` error—choose a different filename.
+
+The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
+
 ## Tips for Working Here
 
 - Keep `changelog.json` ordered newest-first; IDs must be unique and sequential.

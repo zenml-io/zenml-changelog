@@ -55,7 +55,16 @@ Each changelog item is a JSON object with the following fields. The announcement
 - **Type:** String
 - **Required:** No
 - **Description:** URL to a feature image/screenshot for the announcement
-- **Example:** `"<https://zenml.io/assets/feature-image.png>"`
+- **Upload location:** Images should be uploaded to the `public-flavor-logos` S3 bucket in the `whats_new/` folder. Use your `default` AWS profile (not an assumed role):
+  ```bash
+  aws s3api put-object \
+    --bucket public-flavor-logos \
+    --key whats_new/your-image.png \
+    --body /path/to/image.png \
+    --if-none-match "*" \
+    --profile default
+  ```
+- **Example:** `"https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image.png"`
 
 ### `learn_more_url` (string)
 

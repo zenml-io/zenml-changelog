@@ -67,6 +67,22 @@ flowchart TD
 - In this repo, you can also re-run the `Process release` workflow from the Actions tab on a past dispatch if needed.
 - Validate locally (optional) by running a JSON Schema check of `changelog.json` against `changelog_schema/announcement-schema.json`.
 
+## Uploading Feature Images
+
+Images for changelog entries (`feature_image_url`) should be uploaded to the `public-flavor-logos` S3 bucket in the `whats_new/` folder.
+
+```bash
+# Upload (requires default AWS profile, not an assumed role)
+aws s3api put-object \
+  --bucket public-flavor-logos \
+  --key whats_new/your-image-name.png \
+  --body /path/to/local/image.png \
+  --if-none-match "*" \
+  --profile default
+```
+
+The bucket has upload-only permissions—no overwrites or deletes allowed. See `CLAUDE.md` for more details.
+
 ## Related Documentation
 
 - Automation design: `design/plan.md`
