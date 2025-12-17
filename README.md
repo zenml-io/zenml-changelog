@@ -73,15 +73,12 @@ Images for changelog entries (`feature_image_url`) should be uploaded to the `pu
 
 ```bash
 # Upload (requires default AWS profile, not an assumed role)
-aws s3api put-object \
-  --bucket public-flavor-logos \
-  --key whats_new/your-image-name.png \
-  --body /path/to/local/image.png \
-  --if-none-match "*" \
+aws s3 cp /path/to/local/image.png \
+  s3://public-flavor-logos/whats_new/your-image-name.png \
   --profile default
 ```
 
-The bucket has upload-only permissions—no overwrites or deletes allowed. See `CLAUDE.md` for more details.
+The bucket has upload-only permissions—no deletes allowed. See `CLAUDE.md` for more details.
 
 ## Related Documentation
 

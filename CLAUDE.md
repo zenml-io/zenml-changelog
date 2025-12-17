@@ -87,22 +87,16 @@ Images for `feature_image_url` in changelog entries should be uploaded to the `p
 **Important:** Use your `default` AWS profile (do not assume a role like `OrganizationAccountAccessRoleDev`).
 
 ```bash
-# Upload a new image (will fail if file already exists)
-aws s3api put-object \
-  --bucket public-flavor-logos \
-  --key whats_new/your-image-name.png \
-  --body /path/to/local/image.png \
-  --if-none-match "*" \
+# Upload a new image
+aws s3 cp /path/to/local/image.png \
+  s3://public-flavor-logos/whats_new/your-image-name.png \
   --profile default
 
 # List existing files in the folder
-aws s3api list-objects-v2 \
-  --bucket public-flavor-logos \
-  --prefix whats_new/ \
-  --profile default
+aws s3 ls s3://public-flavor-logos/whats_new/ --profile default
 ```
 
-The bucket enforces upload-only permissions (no delete/overwrite). If the file already exists, you'll get a `412 Precondition Failed` error—choose a different filename.
+The bucket enforces upload-only permissions (no delete allowed). Choose a unique filename to avoid conflicts.
 
 The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
 
