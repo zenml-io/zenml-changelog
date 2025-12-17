@@ -199,17 +199,26 @@ jobs:
 
       - name: Select reviewers and labels
         id: routing
-        env:
-          MARKDOWN_FILE: ${{ needs.generate.outputs.markdown_file }}
         run: |
           set -euo pipefail
-          if [ "$MARKDOWN_FILE" = "gitbook-release-notes/server-sdk.md" ]; then
-            echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
-            echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
-          else
-            echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
-            echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
-          fi
+          case "$SOURCE_REPO" in
+            "zenml-io/zenml-dashboard"|"zenml-io/zenml-cloud-ui")
+              echo "reviewers=Cahllagerfeld" >> "$GITHUB_OUTPUT"
+              echo "labels=documentation,internal,x-squad" >> "$GITHUB_OUTPUT"
+              ;;
+            "zenml-io/zenml")
+              echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
+              echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
+              ;;
+            "zenml-io/zenml-cloud-api")
+              echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
+              echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
+              echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
 
       - name: Create Pull Request (gitbook)
         uses: peter-evans/create-pull-request@v6
