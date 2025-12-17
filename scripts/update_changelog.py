@@ -73,7 +73,10 @@ REPO_CONFIG: Dict[str, Dict[str, Any]] = {
 
 def with_prefix(repo_name: str, tag: str) -> str:
     config = REPO_CONFIG.get(repo_name, {})
-    return f"{config.get('github_tag_prefix', '')}{tag}"
+    prefix = config.get("github_tag_prefix", "")
+    if prefix and tag.startswith(prefix):
+        return tag
+    return f"{prefix}{tag}"
 
 def strip_prefix(repo_name: str, tag: str) -> str:
     config = REPO_CONFIG.get(repo_name, {})
