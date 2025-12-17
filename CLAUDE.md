@@ -39,7 +39,12 @@ This repo is the canonical source of ZenML release metadata:
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
   - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
-  - Opens a PR on branch `changelog/{repo_name}-{release_tag}` with labels `automated,changelog` and reviewers `htahir1,strickvl`.
+  - Opens **two PRs**:
+    - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state`. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
+    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers and labels vary by source repo:
+      - `zenml-dashboard` / `zenml-cloud-ui` → Reviewer: `Cahllagerfeld`, Labels: `documentation,internal,x-squad`
+      - `zenml` → Reviewers: `schustmi,bcdurak`, Labels: `core-squad,internal`
+      - `zenml-cloud-api` → Reviewers: `htahir1,strickvl,znegrin`, Labels: `internal,x-squad`
 - Script: `scripts/update_changelog.py`
   - Determines repo config (OSS/Pro, markdown target, default branch) from `REPO_CONFIG`.
   - Finds previous release tag, fetches merged PRs with `release-notes` label in the date range.
