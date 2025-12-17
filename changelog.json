@@ -1,5 +1,57 @@
 [
   {
+    "id": 10,
+    "slug": "enhanced-pipeline-run-visibility-and-navigation",
+    "title": "Enhanced Pipeline Run Visibility and Navigation",
+    "description": "The dashboard now displays run indexes consistently across all views, including breadcrumbs and navigation elements. Each run shows its index number (e.g., #1, #2) before the run name, making it significantly easier to identify and reference specific runs, especially when working with multiple runs that have similar names.",
+    "published_at": "2025-12-15T11:53:04Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 9,
+    "slug": "comprehensive-pipeline-observability-features",
+    "title": "Comprehensive Pipeline Observability Features",
+    "description": "View your pipeline's complete Python source code directly in the dashboard through a new \"Code\" tab on pipeline run details pages. Additionally, the dashboard now supports log stores as a stack component and enables viewing logs from multiple sources, providing better insight into your pipeline execution and debugging capabilities.",
+    "published_at": "2025-12-15T11:53:04Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 8,
+    "slug": "model-context-protocol-mcp-integration-for-ai-assistants",
+    "title": "Model Context Protocol (MCP) Integration for AI Assistants",
+    "description": "Configure connections between your IDE or AI assistants and your ZenML server through a new MCP settings page. This feature enables seamless integration with AI-powered development tools, accessible via the settings menu with support for API key management and service account configuration.",
+    "published_at": "2025-12-15T11:53:04Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 7,
     "slug": "enhanced-pipeline-orchestration-and-deployment-capabilities",
     "title": "Enhanced Pipeline Orchestration and Deployment Capabilities",
