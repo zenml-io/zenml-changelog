@@ -7,6 +7,30 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## v0.40.0 (2025-12-15)
+
+See what's new and improved in version v0.40.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/3.jpg" align="left" alt="ZenML v0.40.0" width="800">
+
+#### Enhanced Run Identification
+
+Run indexes are now displayed consistently throughout the dashboard, making it much easier to identify and reference specific pipeline runs. Each run shows its index number in the format `#index-` before the run name, which is especially helpful when working with multiple runs that have similar names. You'll see these indexes in breadcrumb navigation, pipeline detail pages, run detail pages, and the snapshot creation flow. [PR #971](https://github.com/zenml-io/zenml-dashboard/pull/971)
+
+#### Pipeline Source Code Viewing
+
+You can now view the Python source code of your pipelines directly in the dashboard without switching to your code editor or repository. A new "Code" tab has been added to the pipeline run details page, displaying the complete pipeline definition. When source code is unavailable (for example, when no snapshot is associated with the run), helpful messages guide you on next steps. [PR #972](https://github.com/zenml-io/zenml-dashboard/pull/972)
+
+#### Log Store Support and Multiple Log Sources
+
+This release introduces support for log stores as a new stack component type that can be configured in your stacks. Log stores are responsible for storing and managing pipeline run logs, giving you more flexibility in how logs are handled. When viewing step logs, you can now select from different log sources if multiple are available through a new log source selector. [PR #973](https://github.com/zenml-io/zenml-dashboard/pull/973)
+
+#### MCP Settings for IDE and AI Assistant Integration
+
+A new MCP (Model Context Protocol) settings page is now available at `/settings/mcp`, accessible from the sidebar menu. This page enables you to configure connections between your IDEs or AI assistants and your ZenML server. The settings include a token section for managing API keys with show/hide/copy functionality, plus tabbed configuration instructions for VS Code (with deep links and CLI commands) and other clients. Links to Service Accounts make it easy to create the necessary API keys. [PR #969](https://github.com/zenml-io/zenml-dashboard/pull/969)
+
+***
+
 ## 0.93.0 (2025-12-16)
 
 See what's new and improved in version 0.93.0.
