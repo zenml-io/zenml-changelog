@@ -37,9 +37,9 @@ flowchart TD
     B --> H[GitBook PR<br/>release-notes/{repo}/{tag}]
 ```
 
-- Trigger: Source repos emit `repository_dispatch` (`release-published`).
-- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on source repo.
-- Script tasks: fetch `release-notes` PRs between releases, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
+- Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-pro-api`) emits `repository_dispatch` (`release-published`).
+- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on trigger repo.
+- Script tasks: fetch `release-notes` PRs from all bundled source repos, aggregate and deduplicate, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
 
 ### PR Routing
@@ -50,21 +50,21 @@ flowchart TD
 
 **GitBook PR** (updates release notes markdown):
 
-| Source Repository | Reviewers | Labels |
+| Trigger Repository | Reviewers | Labels |
 | --- | --- | --- |
-| `zenml-io/zenml-dashboard` | Cahllagerfeld | documentation, internal, x-squad |
-| `zenml-io/zenml-cloud-ui` | Cahllagerfeld | documentation, internal, x-squad |
-| `zenml-io/zenml` | schustmi, bcdurak | core-squad, internal |
-| `zenml-io/zenml-cloud-api` | htahir1, strickvl, znegrin | internal, x-squad |
+| `zenml-io/zenml` (OSS) | schustmi, bcdurak | core-squad, internal |
+| `zenml-io/zenml-pro-api` (Pro) | htahir1, strickvl, znegrin | internal, x-squad |
 
-## Source Repositories and Targets
+## Two-Path Architecture
 
-| Source repository | Type | Files updated here |
+The automation uses a **two-path flow** where each trigger aggregates PRs from multiple bundled source repos:
+
+| Trigger Repository | Bundled Sources | Files Updated |
 | --- | --- | --- |
-| `zenml-io/zenml` | OSS core | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
-| `zenml-io/zenml-dashboard` | OSS UI | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
-| `zenml-io/zenml-cloud-ui` | Pro UI | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
-| `zenml-io/zenml-cloud-api` | Pro API | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
+| `zenml-io/zenml` (OSS) | zenml + zenml-dashboard | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
+| `zenml-io/zenml-pro-api` (Pro) | zenml-pro-api + zenml-cloud-ui | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
+
+When a release is published on a trigger repo, the script automatically fetches PRs from all bundled source repos, aggregates them, and generates unified release notes.
 
 ## Manual vs Automated Entries
 

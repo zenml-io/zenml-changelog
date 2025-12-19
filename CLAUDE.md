@@ -15,8 +15,8 @@ This repo is the canonical source of ZenML release metadata:
 - `changelog.json` — Array of announcements consumed by the dashboard.
 - `.image_state` — Persists rotating image index (1–49) for release note headers.
 - `gitbook-release-notes/`
-  - `server-sdk.md` — OSS/UI release notes (zenml, zenml-dashboard).
-  - `pro-control-plane.md` — Pro/Cloud release notes (zenml-cloud-ui, zenml-cloud-api).
+  - `server-sdk.md` — OSS release notes (bundles content from zenml + zenml-dashboard).
+  - `pro-control-plane.md` — Pro release notes (bundles content from zenml-pro-api + zenml-cloud-ui).
   - `README.md` — Notes for GitBook syncing.
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
@@ -34,21 +34,24 @@ This repo is the canonical source of ZenML release metadata:
 
 **Flow**: Source repo release → `repository_dispatch` → `process-release.yml` → `scripts/update_changelog.py` → validation → PR.
 
-- Trigger: `repository_dispatch` with `event_type: release-published` from source repos.
+- Trigger: `repository_dispatch` with `event_type: release-published` from one of two trigger repos.
+- **Two-Path Architecture**:
+  - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md`
+  - **Pro Path**: Triggered by `zenml-io/zenml-pro-api` release → aggregates PRs from zenml-pro-api + zenml-cloud-ui → updates `pro-control-plane.md`
 - Workflow: `.github/workflows/process-release.yml`
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
   - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
   - Opens **two PRs**:
     - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state`. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
-    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers and labels vary by source repo:
-      - `zenml-dashboard` / `zenml-cloud-ui` → Reviewer: `Cahllagerfeld`, Labels: `documentation,internal,x-squad`
-      - `zenml` → Reviewers: `schustmi,bcdurak`, Labels: `core-squad,internal`
-      - `zenml-cloud-api` → Reviewers: `htahir1,strickvl,znegrin`, Labels: `internal,x-squad`
+    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers and labels vary by trigger repo:
+      - `zenml-io/zenml` → Reviewers: `schustmi,bcdurak`, Labels: `core-squad,internal`
+      - `zenml-io/zenml-pro-api` → Reviewers: `htahir1,strickvl,znegrin`, Labels: `internal,x-squad`
 - Script: `scripts/update_changelog.py`
-  - Determines repo config (OSS/Pro, markdown target, default branch) from `REPO_CONFIG`.
-  - Finds previous release tag, fetches merged PRs with `release-notes` label in the date range.
-  - Generates per-PR changelog entries via Anthropic structured outputs (validated with Pydantic models).
+  - Uses `REPO_CONFIG` with nested `sources[]` arrays to define bundled repos per trigger.
+  - For each source repo: finds its previous tag, computes release window, fetches merged PRs with `release-notes` label.
+  - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
+  - Generates 2-3 grouped changelog entries via Anthropic structured outputs (validated with Pydantic models).
   - Prepends entries to `changelog.json`, validates against `announcement-schema.json`.
   - Rotates header image using `.image_state` (cycles 1–49).
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.

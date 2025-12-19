@@ -11,9 +11,7 @@ on:
         type: choice
         options:
           - zenml-io/zenml
-          - zenml-io/zenml-dashboard
-          - zenml-io/zenml-cloud-ui
-          - zenml-io/zenml-cloud-api
+          - zenml-io/zenml-pro-api
       release_tag:
         description: "Release tag (e.g., 0.75.0)"
         required: true
@@ -202,15 +200,11 @@ jobs:
         run: |
           set -euo pipefail
           case "$SOURCE_REPO" in
-            "zenml-io/zenml-dashboard"|"zenml-io/zenml-cloud-ui")
-              echo "reviewers=Cahllagerfeld" >> "$GITHUB_OUTPUT"
-              echo "labels=documentation,internal,x-squad" >> "$GITHUB_OUTPUT"
-              ;;
             "zenml-io/zenml")
               echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
               echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
               ;;
-            "zenml-io/zenml-cloud-api")
+            "zenml-io/zenml-pro-api")
               echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
               echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
               ;;
