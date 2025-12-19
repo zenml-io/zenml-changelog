@@ -295,6 +295,21 @@ def get_next_image_number(release_tag: str, markdown_file: str) -> int:
     return next_num
 
 
+def find_latest_release_tag(gh: Github, repo_name: str) -> Optional[str]:
+    """Find the most recent release tag for a repo."""
+    repo = gh.get_repo(repo_name)
+    releases = list(repo.get_releases())
+    if not releases:
+        return None
+    releases_sorted = sorted(
+        releases,
+        key=lambda r: (r.published_at or r.created_at or datetime.min.replace(tzinfo=timezone.utc)),
+        reverse=True,
+    )
+    latest_prefixed = releases_sorted[0].tag_name
+    return strip_prefix(repo_name, latest_prefixed)
+
+
 def find_previous_tag(gh: Github, repo_name: str, current_tag: str) -> Optional[str]:
     repo = gh.get_repo(repo_name)
     releases = list(repo.get_releases())
@@ -459,15 +474,29 @@ def get_multi_source_release_prs(
     if not sources:
         return []
 
+    # Primary source is the trigger repo itself (first in list)
+    primary_source = sources[0]["repo"]
+
     all_prs: List[Dict[str, Any]] = []
     for source in sources:
         source_repo = source["repo"]
-        previous_tag = find_previous_tag(gh, source_repo, trigger_release_tag)
+
+        if source_repo == primary_source:
+            # Trigger repo: use the provided trigger_release_tag
+            current_tag = trigger_release_tag
+        else:
+            # Bundled repo: find its latest release (guaranteed to exist per team agreements)
+            current_tag = find_latest_release_tag(gh, source_repo)
+            if current_tag is None:
+                print(f"Warning: No releases found for bundled repo {source_repo}, skipping")
+                continue
+
+        previous_tag = find_previous_tag(gh, source_repo, current_tag)
         since_date, until_date = get_release_window(
             gh=gh,
             repo_name=source_repo,
             since_tag=previous_tag,
-            until_tag=trigger_release_tag,
+            until_tag=current_tag,
         )
         source_prs = search_merged_prs(
             gh=gh,
@@ -477,9 +506,11 @@ def get_multi_source_release_prs(
             until_date=until_date,
             label="release-notes",
         )
+        print(f"  {source_repo}: {len(source_prs)} PRs ({previous_tag or 'start'} → {current_tag})")
         all_prs.extend(source_prs)
 
     return dedupe_prs_by_number(all_prs)
+
 
 def get_multi_source_breaking_prs(
     gh: Github,
@@ -495,15 +526,29 @@ def get_multi_source_breaking_prs(
     if not sources:
         return []
 
+    # Primary source is the trigger repo itself (first in list)
+    primary_source = sources[0]["repo"]
+
     all_prs: List[Dict[str, Any]] = []
     for source in sources:
         source_repo = source["repo"]
-        previous_tag = find_previous_tag(gh, source_repo, trigger_release_tag)
+
+        if source_repo == primary_source:
+            # Trigger repo: use the provided trigger_release_tag
+            current_tag = trigger_release_tag
+        else:
+            # Bundled repo: find its latest release (guaranteed to exist per team agreements)
+            current_tag = find_latest_release_tag(gh, source_repo)
+            if current_tag is None:
+                print(f"Warning: No releases found for bundled repo {source_repo}, skipping")
+                continue
+
+        previous_tag = find_previous_tag(gh, source_repo, current_tag)
         since_date, until_date = get_release_window(
             gh=gh,
             repo_name=source_repo,
             since_tag=previous_tag,
-            until_tag=trigger_release_tag,
+            until_tag=current_tag,
         )
         for breaking_label in BREAKING_CHANGE_LABELS:
             source_prs = search_merged_prs(
