@@ -36,50 +36,59 @@ REPO_CONFIG: Dict[str, Dict[str, Any]] = {
     "zenml-io/zenml": {
         "type": "oss",
         "markdown_file": "gitbook-release-notes/server-sdk.md",
-        "default_branch": "develop",
         "audience": "oss",
         "include_release_link": True,
         "include_compatibility_note": False,
-        "github_tag_prefix": "",
+        "sources": [
+            {
+                "repo": "zenml-io/zenml",
+                "default_branch": "develop",
+                "github_tag_prefix": "",
+            },
+            {
+                "repo": "zenml-io/zenml-dashboard",
+                "default_branch": "staging",
+                "github_tag_prefix": "v",
+            },
+        ],
     },
-    "zenml-io/zenml-dashboard": {
-        "type": "oss",
-        "markdown_file": "gitbook-release-notes/server-sdk.md",
-        "default_branch": "staging",
-        "audience": "oss",
-        "include_release_link": False,
-        "include_compatibility_note": False,
-        "github_tag_prefix": "v",
-    },
-    "zenml-io/zenml-cloud-ui": {
+    "zenml-io/zenml-pro-api": {
         "type": "pro",
         "markdown_file": "gitbook-release-notes/pro-control-plane.md",
-        "default_branch": "staging",
-        "audience": "pro",
-        "include_release_link": False,
-        "include_compatibility_note": False,
-        "github_tag_prefix": "",
-    },
-    "zenml-io/zenml-cloud-api": {
-        "type": "pro",
-        "markdown_file": "gitbook-release-notes/pro-control-plane.md",
-        "default_branch": "develop",
         "audience": "pro",
         "include_release_link": False,
         "include_compatibility_note": True,
-        "github_tag_prefix": "",
+        "sources": [
+            {
+                "repo": "zenml-io/zenml-pro-api",
+                "default_branch": "develop",
+                "github_tag_prefix": "",
+            },
+            {
+                "repo": "zenml-io/zenml-cloud-ui",
+                "default_branch": "staging",
+                "github_tag_prefix": "",
+            },
+        ],
     },
 }
 
+def get_source_config(repo_name: str) -> Dict[str, Any]:
+    for trigger_config in REPO_CONFIG.values():
+        for source in trigger_config.get("sources", []):
+            if source.get("repo") == repo_name:
+                return source
+    return {}
+
 def with_prefix(repo_name: str, tag: str) -> str:
-    config = REPO_CONFIG.get(repo_name, {})
+    config = get_source_config(repo_name)
     prefix = config.get("github_tag_prefix", "")
     if prefix and tag.startswith(prefix):
         return tag
     return f"{prefix}{tag}"
 
 def strip_prefix(repo_name: str, tag: str) -> str:
-    config = REPO_CONFIG.get(repo_name, {})
+    config = get_source_config(repo_name)
     prefix = config.get("github_tag_prefix", "")
     if prefix and tag.startswith(prefix):
         return tag[len(prefix) :]
@@ -378,6 +387,7 @@ def search_merged_prs(
                 "body": pr.body or "",
                 "labels": [label_item.name for label_item in pr.labels],
                 "merged_at": merged_at,
+                "repo": repo_name,
             }
         )
 
@@ -386,13 +396,15 @@ def search_merged_prs(
 
 def dedupe_prs_by_number(prs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove duplicate PRs by number, keeping first occurrence, then sort by merged_at."""
-    seen: set[int] = set()
+    seen: set[Tuple[str, int]] = set()
     unique: List[Dict[str, Any]] = []
     for pr in prs:
+        repo_name = pr.get("repo", "")
         number = int(pr["number"])
-        if number in seen:
+        key = (repo_name, number)
+        if key in seen:
             continue
-        seen.add(number)
+        seen.add(key)
         unique.append(pr)
 
     def merged_at_key(pr_item: Dict[str, Any]) -> datetime:
@@ -433,23 +445,78 @@ def is_major_bump(previous_tag: Optional[str], current_tag: str) -> bool:
         return False
     return current[0] > previous[0]
 
-def get_release_prs(gh: Github, repo_name: str, since_tag: Optional[str], until_tag: str) -> List[Dict[str, Any]]:
-    config = REPO_CONFIG[repo_name]
-    since_date, until_date = get_release_window(
-        gh=gh,
-        repo_name=repo_name,
-        since_tag=since_tag,
-        until_tag=until_tag,
-    )
-    prs = search_merged_prs(
-        gh=gh,
-        repo_name=repo_name,
-        base_branch=config["default_branch"],
-        since_date=since_date,
-        until_date=until_date,
-        label="release-notes",
-    )
-    return dedupe_prs_by_number(prs)
+def get_multi_source_release_prs(
+    gh: Github,
+    trigger_repo: str,
+    trigger_release_tag: str,
+) -> List[Dict[str, Any]]:
+    """Collect release-notes PRs for a trigger repo across its configured sources."""
+    config = REPO_CONFIG.get(trigger_repo)
+    if config is None:
+        raise RuntimeError(f"Repository {trigger_repo} is not configured for changelog updates")
+
+    sources = config.get("sources", [])
+    if not sources:
+        return []
+
+    all_prs: List[Dict[str, Any]] = []
+    for source in sources:
+        source_repo = source["repo"]
+        previous_tag = find_previous_tag(gh, source_repo, trigger_release_tag)
+        since_date, until_date = get_release_window(
+            gh=gh,
+            repo_name=source_repo,
+            since_tag=previous_tag,
+            until_tag=trigger_release_tag,
+        )
+        source_prs = search_merged_prs(
+            gh=gh,
+            repo_name=source_repo,
+            base_branch=source.get("default_branch", "main"),
+            since_date=since_date,
+            until_date=until_date,
+            label="release-notes",
+        )
+        all_prs.extend(source_prs)
+
+    return dedupe_prs_by_number(all_prs)
+
+def get_multi_source_breaking_prs(
+    gh: Github,
+    trigger_repo: str,
+    trigger_release_tag: str,
+) -> List[Dict[str, Any]]:
+    """Collect breaking-change PRs for a trigger repo across its configured sources."""
+    config = REPO_CONFIG.get(trigger_repo)
+    if config is None:
+        raise RuntimeError(f"Repository {trigger_repo} is not configured for changelog updates")
+
+    sources = config.get("sources", [])
+    if not sources:
+        return []
+
+    all_prs: List[Dict[str, Any]] = []
+    for source in sources:
+        source_repo = source["repo"]
+        previous_tag = find_previous_tag(gh, source_repo, trigger_release_tag)
+        since_date, until_date = get_release_window(
+            gh=gh,
+            repo_name=source_repo,
+            since_tag=previous_tag,
+            until_tag=trigger_release_tag,
+        )
+        for breaking_label in BREAKING_CHANGE_LABELS:
+            source_prs = search_merged_prs(
+                gh=gh,
+                repo_name=source_repo,
+                base_branch=source.get("default_branch", "main"),
+                since_date=since_date,
+                until_date=until_date,
+                label=breaking_label,
+            )
+            all_prs.extend(source_prs)
+
+    return dedupe_prs_by_number(all_prs)
 
 
 def slugify_title(title: str) -> str:
@@ -1000,28 +1067,21 @@ def main() -> None:
         print(f"Fetching release info from GitHub for {source_repo}@{env['RELEASE_TAG']}...")
         release_url, published_at = get_release_info(gh, source_repo, env["RELEASE_TAG"])
 
-    previous_tag = find_previous_tag(gh, source_repo, env["RELEASE_TAG"])
-    print(f"Processing {source_repo} {env['RELEASE_TAG']} (previous: {previous_tag or 'first release'})")
-
     config = REPO_CONFIG[source_repo]
-    since_date, until_date = get_release_window(gh, source_repo, previous_tag, env["RELEASE_TAG"])
-
-    release_notes_prs = search_merged_prs(
-        gh, source_repo, config["default_branch"], since_date, until_date, label="release-notes"
+    primary_source = config["sources"][0]["repo"]
+    primary_previous_tag = find_previous_tag(gh, primary_source, env["RELEASE_TAG"])
+    print(
+        f"Processing {source_repo} {env['RELEASE_TAG']} "
+        f"(primary previous: {primary_previous_tag or 'first release'})"
     )
-    release_notes_prs = dedupe_prs_by_number(release_notes_prs)
-    print(f"Found {len(release_notes_prs)} PRs with release-notes label")
 
-    all_breaking_prs: List[Dict[str, Any]] = []
-    for breaking_label in BREAKING_CHANGE_LABELS:
-        prs_for_label = search_merged_prs(
-            gh, source_repo, config["default_branch"], since_date, until_date, label=breaking_label
-        )
-        all_breaking_prs.extend(prs_for_label)
-    breaking_prs = dedupe_prs_by_number(all_breaking_prs)
-    print(f"Found {len(breaking_prs)} PRs with breaking-change labels")
+    release_notes_prs = get_multi_source_release_prs(gh, source_repo, env["RELEASE_TAG"])
+    print(f"Found {len(release_notes_prs)} PRs with release-notes label across all sources")
 
-    major_bump = is_major_bump(previous_tag, env["RELEASE_TAG"])
+    breaking_prs = get_multi_source_breaking_prs(gh, source_repo, env["RELEASE_TAG"])
+    print(f"Found {len(breaking_prs)} PRs with breaking-change labels across all sources")
+
+    major_bump = is_major_bump(primary_previous_tag, env["RELEASE_TAG"])
     if major_bump:
         print("Detected major version bump - will force Breaking Changes section")
 
@@ -1032,8 +1092,8 @@ def main() -> None:
     # Use release-notes PRs for changelog entries; fall back to breaking PRs if none
     grouping_prs = release_notes_prs if release_notes_prs else breaking_prs
 
-    breaking_pr_numbers = {pr["number"] for pr in breaking_prs}
-    body_prs = [pr for pr in release_notes_prs if pr["number"] not in breaking_pr_numbers]
+    breaking_pr_keys = {(pr.get("repo", ""), pr["number"]) for pr in breaking_prs}
+    body_prs = [pr for pr in release_notes_prs if (pr.get("repo", ""), pr["number"]) not in breaking_pr_keys]
 
     include_pr_links = config["type"] == "oss"
     breaking_bullets = llm_generate_breaking_changes_bullets(
