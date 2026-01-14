@@ -114,6 +114,16 @@ The bucket enforces upload-only permissions (no delete/overwrite). If the file a
 
 The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
 
+## Naming Conventions
+
+**Branch names**, **PR titles**, and **commit messages** should all use plain descriptive text without conventional commit prefixes (no `fix:`, `feat:`, `docs:`, etc.).
+
+- ✅ `fix-release-notes-formatting` (branch)
+- ✅ `Fix release notes formatting for GitHub sync` (PR title)
+- ✅ `Strip GitBook-specific formatting from synced release notes` (commit)
+- ❌ `fix/release-notes-formatting` (no type prefix)
+- ❌ `fix: release notes formatting` (no colon syntax)
+
 ## Tips for Working Here
 
 - Keep `changelog.json` ordered newest-first; IDs must be unique and sequential.

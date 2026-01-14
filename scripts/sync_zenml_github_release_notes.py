@@ -35,8 +35,12 @@ def extract_release_section_from_server_sdk(markdown_text: str, release_tag: str
     - a `***` separator line, or
     - EOF.
 
-    We also remove a trailing `***` separator and the \"View full release on GitHub\" link
-    because the GitHub Release page already provides that context.
+    We also strip GitBook-specific formatting that doesn't belong in GitHub Releases:
+    - The trailing `***` separator
+    - The "View full release on GitHub" link (redundant on GitHub)
+    - HTML comments
+    - The intro phrase "See what's new and improved in version X.Y.Z."
+    - The header image banner (<img> tag)
     """
     if not release_tag.strip():
         raise ValueError("release_tag must be a non-empty string")
@@ -76,6 +80,26 @@ def extract_release_section_from_server_sdk(markdown_text: str, release_tag: str
 
     # Remove any trailing separator markers that might have been included due to formatting variance.
     section = re.sub(r"\n?\*\*\*\s*$", "", section, flags=re.MULTILINE).rstrip()
+
+    # Remove GitBook-specific formatting that doesn't belong in GitHub Releases:
+    # 1. Remove HTML comments (e.g., <!-- ... -->)
+    section = re.sub(r"<!--.*?-->", "", section, flags=re.DOTALL).strip()
+
+    # 2. Remove the intro phrase "See what's new and improved in version X.Y.Z."
+    section = re.sub(
+        r"^See what's new and improved in version [0-9]+\.[0-9]+\.[0-9]+\.?\s*\n*",
+        "",
+        section,
+        flags=re.MULTILINE | re.IGNORECASE,
+    ).strip()
+
+    # 3. Remove the image banner (<img src="..." ...>)
+    section = re.sub(
+        r"<img\s+[^>]*>\s*\n*",
+        "",
+        section,
+        flags=re.IGNORECASE,
+    ).strip()
 
     return section.strip()
 
