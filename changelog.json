@@ -1,5 +1,40 @@
 [
   {
+    "id": 12,
+    "slug": "enhanced-stack-management-with-update-functionality",
+    "title": "Enhanced Stack Management with Update Functionality",
+    "description": "You can now update existing stacks directly from the UI without needing to delete and recreate them. A new dedicated stack update page allows you to modify stack configurations, add or replace components, making stack management more efficient and streamlined.",
+    "published_at": "2026-01-14T15:50:48Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 11,
+    "slug": "improved-artifact-and-logs-viewing-experience",
+    "title": "Improved Artifact and Logs Viewing Experience",
+    "description": "The artifact version view has been completely revamped with a unified detail page featuring a new 3-panel layout and improved tag management. Additionally, pipeline runs now include a dedicated logs page with a sidebar for easy navigation between run-level and step logs, virtualized rendering for better performance, and enhanced search and filter capabilities.",
+    "published_at": "2026-01-14T15:50:48Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 10,
     "slug": "enhanced-pipeline-scheduling-and-stack-management",
     "title": "Enhanced Pipeline Scheduling and Stack Management",
