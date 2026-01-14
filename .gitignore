@@ -209,6 +209,7 @@ __marimo__/
 # Agentic coding stuff'
 design/
 .claude/**
+!.claude/skills/
 !.claude/skills/**
 !.claude/settings.json
 
