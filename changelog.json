@@ -1,5 +1,57 @@
 [
   {
+    "id": 10,
+    "slug": "enhanced-pipeline-scheduling-and-stack-management",
+    "title": "Enhanced Pipeline Scheduling and Stack Management",
+    "description": "You can now pause and resume schedules directly from the CLI for Kubernetes orchestrators, and archive schedules to preserve historical references while deactivating them. The dashboard introduces a new stack update page, allowing you to modify existing stacks without recreating them, plus improved step cache expiration management with manual invalidation support.",
+    "published_at": "2026-01-14T09:20:00Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 9,
+    "slug": "improved-logs-viewing-and-dynamic-pipeline-support",
+    "title": "Improved Logs Viewing and Dynamic Pipeline Support",
+    "description": "A new dedicated logs page in the dashboard provides virtualized rendering, search, and filtering capabilities with a sidebar for navigating between run-level and step logs. Dynamic pipelines are now supported on AzureML, and the Kubernetes orchestrator includes performance improvements for caching efficiency and reliability.",
+    "published_at": "2026-01-14T09:20:00Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 8,
+    "slug": "bug-fixes-and-reliability-improvements",
+    "title": "Bug Fixes and Reliability Improvements",
+    "description": "Fixed several issues including database migration handling for pipelines with zero runs, proper application of per-step compute settings, correct working directory usage in pipeline containers, and improved error handling during source validation. Additional enhancements include support for image templates in Kubernetes init containers and faster database backup/restore operations.",
+    "published_at": "2026-01-14T09:20:00Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 7,
     "slug": "enhanced-pipeline-orchestration-and-deployment-capabilities",
     "title": "Enhanced Pipeline Orchestration and Deployment Capabilities",
