@@ -37,16 +37,14 @@ This repo is the canonical source of ZenML release metadata:
 - Trigger: `repository_dispatch` with `event_type: release-published` from one of two trigger repos.
 - **Two-Path Architecture**:
   - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md`
-  - **Pro Path**: Triggered by `zenml-io/zenml-pro-api` release → aggregates PRs from zenml-pro-api + zenml-cloud-ui → updates `pro-control-plane.md`
+  - **Pro Path**: Triggered by `zenml-io/zenml-cloud-api` release → aggregates PRs from zenml-cloud-api + zenml-cloud-ui → updates `pro-control-plane.md`
 - Workflow: `.github/workflows/process-release.yml`
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
   - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
   - Opens **two PRs**:
     - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state`. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
-    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers and labels vary by trigger repo:
-      - `zenml-io/zenml` → Reviewers: `schustmi,bcdurak`, Labels: `core-squad,internal`
-      - `zenml-io/zenml-pro-api` → Reviewers: `htahir1,strickvl,znegrin`, Labels: `internal,x-squad`
+    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers: `schustmi,bcdurak`. Labels: `core-squad,internal`.
 - Script: `scripts/update_changelog.py`
   - Uses `REPO_CONFIG` with nested `sources[]` arrays to define bundled repos per trigger.
   - For each source repo: finds its previous tag, computes release window, fetches merged PRs with `release-notes` label.
