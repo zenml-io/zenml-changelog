@@ -62,10 +62,13 @@ Verify the labels are correct. Options:
 - `bugfix` - Bug fix
 - `deprecation` - Deprecated features
 
-#### 2.3 Feature Image URL
-Ask if there's a feature image/screenshot. If yes, get the URL.
-- Images should be hosted at: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/`
-- If no image, this field will be removed from the entry
+#### 2.3 Feature Image
+Ask if there's a feature image/screenshot. Options:
+- **No image** - This field will be removed from the entry
+- **Already uploaded** - User provides existing S3 URL
+- **Local file** - User has a local image that needs processing (see [Processing Local Images](#processing-local-images))
+
+Images are hosted at: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/`
 
 #### 2.4 Video URL
 Ask if there's a video demonstration. If yes, get the YouTube embed URL.
@@ -159,6 +162,56 @@ Questions to ask (can batch related questions):
    - No (default)
    - Yes, highlight this
 ```
+
+## Processing Local Images
+
+When a user has a local image file that needs to be used as a feature image:
+
+### Step 1: Get the Local File Path
+
+Ask the user for the full path to their local image file (PNG, JPG, etc.).
+
+### Step 2: Convert to AVIF
+
+Use the `avif-image-compressor` skill to convert and compress the image:
+
+```bash
+~/.claude/skills/avif-image-compressor/scripts/convert_to_avif.sh "/path/to/image.png" --quality 30 --output "/tmp/output-name.avif"
+```
+
+- Quality 30 provides good visual fidelity for UI screenshots
+- Typical compression: 80-90% size reduction
+
+> **Note**: The AVIF compressor skill is available in the private `zenml-io/skills` repository. Team members who don't have it installed can clone it from there.
+
+### Step 3: Upload to S3
+
+Upload the converted image to the `public-flavor-logos` S3 bucket:
+
+```bash
+aws s3 cp /tmp/output-name.avif s3://public-flavor-logos/whats_new/output-name.avif --profile default
+```
+
+- Try the `default` AWS profile first
+- If that fails, try the `zenml` profile
+- All PR reviewers on this repo should have permissions to upload
+
+### Step 4: Get the Final URL
+
+The final URL will be:
+```
+https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/output-name.avif
+```
+
+Use this URL for the `feature_image_url` field in the changelog entry.
+
+### Naming Convention
+
+Use descriptive, kebab-case names for images:
+- ✅ `enhanced-logs.avif`
+- ✅ `pipeline-scheduling-ui.avif`
+- ❌ `screenshot1.avif`
+- ❌ `image.avif`
 
 ## Tips
 
