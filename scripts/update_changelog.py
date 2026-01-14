@@ -52,7 +52,7 @@ REPO_CONFIG: Dict[str, Dict[str, Any]] = {
             },
         ],
     },
-    "zenml-io/zenml-pro-api": {
+    "zenml-io/zenml-cloud-api": {
         "type": "pro",
         "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "audience": "pro",
@@ -60,7 +60,7 @@ REPO_CONFIG: Dict[str, Dict[str, Any]] = {
         "include_compatibility_note": True,
         "sources": [
             {
-                "repo": "zenml-io/zenml-pro-api",
+                "repo": "zenml-io/zenml-cloud-api",
                 "default_branch": "develop",
                 "github_tag_prefix": "",
             },
