@@ -208,7 +208,9 @@ __marimo__/
 
 # Agentic coding stuff'
 design/
-.claude
+.claude/**
+!.claude/skills/**
+!.claude/settings.json
 
 # Workflow temp files
 changelog_output.txt
