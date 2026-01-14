@@ -11,7 +11,7 @@ on:
         type: choice
         options:
           - zenml-io/zenml
-          - zenml-io/zenml-pro-api
+          - zenml-io/zenml-cloud-api
       release_tag:
         description: "Release tag (e.g., 0.75.0)"
         required: true
@@ -205,7 +205,7 @@ jobs:
               echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
               echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
               ;;
-            "zenml-io/zenml-pro-api")
+            "zenml-io/zenml-cloud-api")
               echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
               echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
               ;;
