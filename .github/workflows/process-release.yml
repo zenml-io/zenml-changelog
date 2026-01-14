@@ -206,8 +206,8 @@ jobs:
               echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
               ;;
             "zenml-io/zenml-cloud-api")
-              echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
-              echo "labels=internal,x-squad" >> "$GITHUB_OUTPUT"
+              echo "reviewers=schustmi,bcdurak" >> "$GITHUB_OUTPUT"
+              echo "labels=core-squad,internal" >> "$GITHUB_OUTPUT"
               ;;
             *)
               echo "reviewers=htahir1,strickvl,znegrin" >> "$GITHUB_OUTPUT"
