@@ -11,7 +11,8 @@
       "feature",
       "improvement"
     ],
-    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/unified-artifact-version-view.avif"
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/unified-artifact-version-view.avif",
+    "should_highlight": true
   },
   {
     "id": 10,
