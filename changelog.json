@@ -1,5 +1,20 @@
 [
   {
+    "id": 11,
+    "slug": "unified-artifact-version-view",
+    "title": "Unified Artifact Version View",
+    "description": "The artifact version view has been completely redesigned with a new unified 3-panel layout. The left panel shows a searchable, paginated list of versions; the center panel features dedicated visualizations with improved error handling; and the right panel displays details, data, code, and collapsible metadata. Navigation to artifact versions is now more reliable with canonical routing and backwards-compatible redirects for existing links.",
+    "published_at": "2026-01-14T15:50:48Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/unified-artifact-version-view.avif",
+    "should_highlight": true
+  },
+  {
     "id": 10,
     "slug": "enhanced-pipeline-scheduling-and-stack-management",
     "title": "Enhanced Pipeline Scheduling and Stack Management",

@@ -48,7 +48,37 @@ Parse the diff to identify entries that were added (look for lines starting with
 
 ### Step 2: Review Each Entry
 
-For each new entry, use the `AskUserQuestion` tool to gather information. Ask about:
+For each new entry, use the `AskUserQuestion` tool to gather information. **IMPORTANT**: Always check recent entries (last ~5) in `changelog.json` for overlapping content before proceeding.
+
+#### 2.0 Should Include (Ask First)
+
+Before asking about details, first ask whether this entry should be included at all:
+
+- **Yes, include this** - Proceed with remaining questions
+- **No, duplicate of recent entry** - Remove this entry entirely (content already covered in a recent changelog entry)
+- **No, not significant enough** - Remove this entry entirely (too minor for the changelog)
+- **Merge with another entry** - Combine with another new entry in this PR
+
+When asking this question, **provide context** by:
+1. Showing the entry title and a brief summary
+2. Listing any recent entries (last ~5) that might overlap
+3. Noting any obvious duplications
+
+If the user chooses to remove or merge, skip all remaining questions for this entry and handle the deletion/merge accordingly.
+
+#### 2.0.1 Update Entry Content (if keeping)
+
+If the user chooses to include the entry but mentions it needs updating (e.g., wrong focus, inaccurate description, or should be based on a specific PR), ask:
+
+- **Keep current title/description** - The generated content is accurate
+- **Update based on specific PR** - User provides a PR URL with better context (fetch and read it)
+- **Manual update** - User will provide new title/description text
+
+When updating based on a PR:
+1. Fetch the PR description using `gh pr view <number> --repo <repo> --json title,body`
+2. Extract the key user-facing changes
+3. Rewrite the entry title and description to accurately reflect the PR's changes
+4. Show the proposed update to the user for approval before applying
 
 #### 2.1 Audience
 - **oss** - Only open-source users see this
@@ -126,19 +156,32 @@ After updating all entries, tell the user:
 
 ## Example AskUserQuestion Flow
 
-For entry "Enhanced Pipeline Scheduling and Stack Management":
+For entry "Enhanced Stack Management with Update Functionality":
 
 ```
 Questions to ask (can batch related questions):
+
+0. Should we include this entry?
+   Context: "Enhanced Stack Management with Update Functionality" - Allows updating stacks from the UI.
+   Recent entries that might overlap:
+   - ID 10: "Enhanced Pipeline Scheduling and Stack Management" - Already mentions stack update page
+
+   Options:
+   - Yes, include this (Recommended if it adds significant new detail)
+   - No, duplicate of recent entry (content already in ID 10)
+   - No, not significant enough
+   - Merge with another entry in this PR
+
+[If user chooses "Yes, include this", continue with remaining questions...]
 
 1. Audience: Is this feature available to...
    - OSS users only
    - Pro users only
    - All users (Recommended)
 
-2. Labels: The current labels are ["improvement"]. Is this correct?
-   - Yes, keep as improvement
-   - Change to feature
+2. Labels: The current labels are ["feature"]. Is this correct?
+   - Yes, keep as feature
+   - Change to improvement
    - Change to bugfix
    - Other (specify)
 
