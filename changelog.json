@@ -1,5 +1,57 @@
 [
   {
+    "id": 14,
+    "slug": "enhanced-dashboard-experience-with-code-downloads-and-labels",
+    "title": "Enhanced Dashboard Experience with Code Downloads and Labels",
+    "description": "The ZenML dashboard now supports downloading pipeline code directly from the UI, making it easier to inspect and share the exact code used in your runs. Additionally, stack and component labels are now displayed in the dashboard, and exception information for failed dynamic pipelines is shown for better debugging.",
+    "published_at": "2026-01-29T22:30:18Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 13,
+    "slug": "improved-dynamic-pipeline-support-and-visualization",
+    "title": "Improved Dynamic Pipeline Support and Visualization",
+    "description": "Dynamic pipelines now benefit from better environment handling, step grouping for clearer DAG visualization, and enhanced error tracking. These improvements make it easier to work with complex, dynamically-generated workflows and understand their structure at a glance.",
+    "published_at": "2026-01-29T22:30:18Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 12,
+    "slug": "performance-and-scalability-improvements",
+    "title": "Performance and Scalability Improvements",
+    "description": "Database query performance has been significantly improved through optimized filtering queries and the addition of missing indexes. These changes enhance ZenML's scalability, especially for deployments with large numbers of pipelines and runs.",
+    "published_at": "2026-01-29T22:30:18Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 11,
     "slug": "unified-artifact-version-view",
     "title": "Unified Artifact Version View",
