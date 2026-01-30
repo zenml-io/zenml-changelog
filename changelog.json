@@ -1,5 +1,58 @@
 [
   {
+    "id": 18,
+    "slug": "enhanced-workspace-and-stack-visibility",
+    "title": "Enhanced Workspace and Stack Visibility",
+    "description": "The dashboard now displays workspace descriptions and tags in comparison tables, making it easier to understand and differentiate between workspaces at a glance. Stack and component labels are also now visible through a collapsible interface, providing better organization and metadata visibility for your infrastructure.",
+    "published_at": "2026-01-30T14:50:27Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 17,
+    "slug": "improved-pipeline-debugging-and-code-access",
+    "title": "Improved Pipeline Debugging and Code Access",
+    "description": "Pipeline troubleshooting is now easier with the addition of exception information display for dynamic pipelines and a new download button that lets you retrieve pipeline code snapshots directly from the dashboard. These features streamline debugging workflows by providing immediate access to error details and the exact code that ran.",
+    "published_at": "2026-01-30T14:50:27Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 16,
+    "slug": "redesigned-team-invitation-management",
+    "title": "Redesigned Team Invitation Management",
+    "description": "User invitations have been completely refactored with a dedicated view for managing open invitations and the ability to assign roles before invitations are accepted. This provides administrators with more control over team onboarding and role assignment workflows.",
+    "published_at": "2026-01-30T14:50:27Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 15,
     "slug": "advanced-user-management-and-authentication",
     "title": "Advanced User Management and Authentication",
