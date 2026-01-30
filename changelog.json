@@ -1,5 +1,16 @@
 [
   {
+    "id": 15,
+    "slug": "advanced-user-management-and-authentication",
+    "title": "Advanced User Management and Authentication",
+    "description": "User onboarding is now more flexible with the ability to assign roles and teams directly to invitations, which are automatically transferred when accepted. For on-premise deployments, ZenML Pro now supports generic OAuth2/OIDC integration, allowing seamless authentication with any identity provider including Google, GitHub, Azure AD, and Keycloak.",
+    "published_at": "2026-01-30T11:07:52Z",
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
     "id": 14,
     "slug": "enhanced-dashboard-experience-with-code-downloads-and-labels",
     "title": "Enhanced Dashboard Experience with Code Downloads and Labels",
