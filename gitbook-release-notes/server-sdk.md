@@ -39,8 +39,6 @@ Dynamic pipelines are now more robust and easier to work with:
 
 #### 🚀 Performance & Scalability
 
-- **Database Query Optimization**: Significantly improved database query performance for deployments with large numbers of snapshots and pipeline runs. Added missing indexes and rewrote filtering queries to be more efficient, particularly around counting items, DISTINCT operations, and OR subqueries. [PR #4431](https://github.com/zenml-io/zenml/pull/4431), [PR #4438](https://github.com/zenml-io/zenml/pull/4438)
-
 - **Artifact Download Fix**: Resolved an issue where artifact version downloads were failing due to incorrect RBAC checks on the download endpoint. [PR #4401](https://github.com/zenml-io/zenml/pull/4401)
 
 </details>
