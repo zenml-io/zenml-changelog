@@ -1,56 +1,14 @@
 [
   {
-    "id": 17,
-    "slug": "enhanced-stack-and-artifact-management",
-    "title": "Enhanced Stack and Artifact Management",
-    "description": "Stack management is now more flexible with the ability to update existing stacks directly from the UI, eliminating the need to delete and recreate configurations. The artifact version experience has been completely revamped with a unified detail view featuring a new 3-panel layout and improved tag management, making it easier to track and organize your ML artifacts.",
-    "published_at": "2026-01-30T11:07:52Z",
-    "published": true,
-    "audience": "pro",
-    "labels": [
-      "feature",
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 16,
-    "slug": "improved-pipeline-debugging-with-dedicated-logs-viewer",
-    "title": "Improved Pipeline Debugging with Dedicated Logs Viewer",
-    "description": "A new standalone logs page provides a streamlined debugging experience for pipeline runs. The enhanced viewer includes virtualized rendering for better performance with large outputs, a sidebar for easy navigation between run-level and step-level logs, and powerful search and filter capabilities to quickly find what you need.",
-    "published_at": "2026-01-30T11:07:52Z",
-    "published": true,
-    "audience": "pro",
-    "labels": [
-      "feature",
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
     "id": 15,
     "slug": "advanced-user-management-and-authentication",
     "title": "Advanced User Management and Authentication",
     "description": "User onboarding is now more flexible with the ability to assign roles and teams directly to invitations, which are automatically transferred when accepted. For on-premise deployments, ZenML Pro now supports generic OAuth2/OIDC integration, allowing seamless authentication with any identity provider including Google, GitHub, Azure AD, and Keycloak.",
     "published_at": "2026-01-30T11:07:52Z",
-    "published": true,
     "audience": "pro",
     "labels": [
       "feature"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 14,
