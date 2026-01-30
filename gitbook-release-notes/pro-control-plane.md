@@ -7,6 +7,38 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.1 (2026-01-30)
+
+See what's new and improved in version 0.13.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/6.jpg" align="left" alt="ZenML Pro 0.13.1" width="800">
+
+#### Enhanced Workspace Management
+
+Workspace comparison tables now display workspace descriptions and tags, making it easier to understand and differentiate between workspaces at a glance.
+
+#### Stack and Component Visibility
+
+Stacks and components now display their associated labels in a collapsible view, providing better organization and discoverability of your infrastructure resources.
+
+#### Improved Invitation System
+
+The invitation workflow has been completely redesigned:
+- Users now have a dedicated view to manage all their open invitations in one place
+- Organization administrators can now assign roles to invitations before they are accepted, streamlining the onboarding process
+
+#### Pipeline Code Download
+
+You can now download pipeline code directly from the dashboard. A new **Download** button is available in the "Code Path" section on both the Pipeline Run details page and the Step details sheet, making it easier to access and review your pipeline implementations.
+
+#### Better Error Visibility
+
+Pipeline exception information is now displayed for dynamic pipelines, helping you quickly identify and troubleshoot issues in your pipeline runs.
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
+***
+
 ## 0.13.0 (2026-01-30)
 
 See what's new and improved in version 0.13.0.
