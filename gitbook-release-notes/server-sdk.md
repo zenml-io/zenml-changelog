@@ -27,8 +27,6 @@ The ZenML Dashboard now provides better visibility into your pipelines and infra
 
 Dynamic pipelines are now more robust and easier to work with:
 
-- **Step Grouping**: Steps can now be organized into groups in the DAG visualizer. When using `.map(...)` in dynamic pipelines, an implicit group is automatically created, making complex pipeline structures easier to understand and navigate. [PR #4375](https://github.com/zenml-io/zenml/pull/4375)
-
 - **Proper Environment Configuration**: The pipeline environment is now correctly set while running the entrypoint function of dynamic pipelines, ensuring consistent behavior across different execution contexts. [PR #4420](https://github.com/zenml-io/zenml/pull/4420)
 
 #### 🤖 Developer Experience
