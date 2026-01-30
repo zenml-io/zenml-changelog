@@ -7,6 +7,44 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.0 (2026-01-30)
+
+See what's new and improved in version 0.13.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/5.jpg" align="left" alt="ZenML Pro 0.13.0" width="800">
+
+#### Stack Management Improvements
+
+Users can now **update existing stacks directly from the UI** without needing to delete and recreate them. A new dedicated stack update page allows you to modify stack configurations, add new components, or replace existing ones (orchestrators, artifact stores, container registries, etc.). Access the update functionality from the stack detail sheet or the stacks dropdown menu for more efficient stack management.
+
+#### Enhanced Artifact Version Experience
+
+The Artifact Version view has been completely revamped with a new unified detail page featuring a modern 3-panel layout. Navigate through artifact versions with a searchable, paginated list on the left panel, while viewing detailed version information in the center and right panels. Tag display and management have been improved across all artifact-related screens, and existing deep links continue to work seamlessly via automatic redirects.
+
+#### Dedicated Logs Viewer
+
+Pipeline runs now feature a **standalone logs page** with a dedicated URL, making debugging and monitoring much easier. The new logs viewer includes:
+
+- A sidebar for navigating between run-level logs and individual step logs
+- Virtualized rendering for better performance with large log outputs
+- Built-in search and filtering capabilities
+- Step duration display in the sidebar for quick performance insights
+
+#### Team and Role Management for Invitations
+
+Invitations are now more flexible and powerful:
+
+- **Assign roles to invitations**: Instead of a single static role, you can now assign multiple roles to invitations, just like with users and teams. When the invitation is accepted, those roles are automatically transferred to the new user account.
+- **Add invitations to teams**: Invitations can now be added to teams directly. Once accepted, the user automatically becomes a member of the assigned team, streamlining the onboarding process.
+
+#### Generic OAuth2/OIDC Integration
+
+ZenML Pro now supports **generic OAuth2/OIDC authentication** for on-premises deployments, allowing integration with any OAuth2/OIDC-compliant identity provider such as Google, GitHub, Azure AD, or Keycloak. This provides greater flexibility in authentication options beyond Auth0, which remains available as an optional integration when configured.
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
+***
+
 ## 0.12.22 (2026-01-14)
 
 See what's new and improved in version 0.12.22.
