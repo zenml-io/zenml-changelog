@@ -7,6 +7,46 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.93.2 (2026-01-29)
+
+See what's new and improved in version 0.93.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/4.jpg" align="left" alt="ZenML 0.93.2" width="800">
+
+#### 🎨 Dashboard Enhancements
+
+The ZenML Dashboard now provides better visibility into your pipelines and infrastructure:
+
+- **Download Pipeline Code**: You can now download the code used for a pipeline snapshot directly from the dashboard. A new Download button appears in the "Code Path" section on both the Pipeline Run details page and the Step details sheet, making it easy to retrieve and review the exact code that was executed. [PR #4401](https://github.com/zenml-io/zenml/pull/4401), [PR #989](https://github.com/zenml-io/zenml-dashboard/pull/989)
+
+- **Exception Information Display**: When dynamic pipeline runs fail, the dashboard now displays detailed exception information, helping you quickly diagnose and troubleshoot issues. [PR #4395](https://github.com/zenml-io/zenml/pull/4395), [PR #990](https://github.com/zenml-io/zenml-dashboard/pull/990)
+
+- **Stack & Component Labels**: Labels attached to stacks and components are now visible in the dashboard, making it easier to organize and identify your infrastructure resources. [PR #992](https://github.com/zenml-io/zenml-dashboard/pull/992)
+
+#### 🔄 Dynamic Pipeline Improvements
+
+Dynamic pipelines are now more robust and easier to work with:
+
+- **Step Grouping**: Steps can now be organized into groups in the DAG visualizer. When using `.map(...)` in dynamic pipelines, an implicit group is automatically created, making complex pipeline structures easier to understand and navigate. [PR #4375](https://github.com/zenml-io/zenml/pull/4375)
+
+- **Proper Environment Configuration**: The pipeline environment is now correctly set while running the entrypoint function of dynamic pipelines, ensuring consistent behavior across different execution contexts. [PR #4420](https://github.com/zenml-io/zenml/pull/4420)
+
+#### 🤖 Developer Experience
+
+- **Claude Code Plugin**: A new ZenML Quick Wins skill for Claude Code helps you implement MLOps best practices directly in your AI-assisted coding workflow. The plugin is available through the Claude Code plugin marketplace and includes comprehensive documentation for multiple AI coding tools. [PR #4426](https://github.com/zenml-io/zenml/pull/4426)
+
+<details><summary>Fixed</summary>
+
+#### 🚀 Performance & Scalability
+
+- **Artifact Download Fix**: Resolved an issue where artifact version downloads were failing due to incorrect RBAC checks on the download endpoint. [PR #4401](https://github.com/zenml-io/zenml/pull/4401)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.93.2)
+
+***
+
 ## 0.93.1 (2026-01-14)
 
 See what's new and improved in version 0.93.1.
