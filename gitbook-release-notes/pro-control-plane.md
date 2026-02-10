@@ -7,6 +7,26 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.2 (2026-02-10)
+
+See what's new and improved in version 0.13.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/6.jpg" align="left" alt="ZenML Pro 0.13.2" width="800">
+
+#### Authentication Enhancements
+
+ZenML Pro now supports running both SSO and username/password authentication methods simultaneously. This enables a smooth transition period when migrating from password-based authentication to SSO, allowing administrators to configure both methods and gradually move users over to SSO without disrupting existing workflows.
+
+The login interface has been updated to dynamically display available authentication options based on your deployment configuration. When both methods are enabled, users can choose between SSO and traditional username/password login. The SSO login button now includes a loading indicator for better user feedback during the authentication process.
+
+#### Workspace Management
+
+You can now enroll external self-hosted ZenML servers as Pro workspaces directly from the workspace creation interface. A new "enroll" toggle in the workspace creation form allows you to switch between deploying a regular SaaS workspace and enrolling an existing self-hosted server. For on-premises control plane deployments, the interface automatically defaults to enrollment mode, streamlining the process of bringing your existing ZenML infrastructure under Pro management.
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
+***
+
 ## 0.13.0 (2026-01-30)
 
 See what's new and improved in version 0.13.0.
