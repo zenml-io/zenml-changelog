@@ -10,7 +10,8 @@
     "labels": [
       "feature",
       "improvement"
-    ]
+    ],
+    "docs_url": "https://docs.zenml.io/pro/manage/sso"
   },
   {
     "id": 16,
