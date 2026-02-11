@@ -1,5 +1,32 @@
 [
   {
+    "id": 17,
+    "slug": "flexible-authentication-options-for-seamless-sso-migration",
+    "title": "Flexible Authentication Options for Seamless SSO Migration",
+    "description": "ZenML Pro now supports configuring both password-based and SSO authentication methods simultaneously, enabling a smooth transition path for organizations migrating to SSO. The login interface dynamically displays available authentication options based on your deployment configuration, ensuring users can authenticate using their preferred method during the migration period.",
+    "published_at": "2026-02-10T09:17:29Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/manage/sso"
+  },
+  {
+    "id": 16,
+    "slug": "self-hosted-workspace-enrollment-support",
+    "title": "Self-Hosted Workspace Enrollment Support",
+    "description": "You can now enroll external self-hosted ZenML servers as Pro workspaces directly from the UI. The new enrollment toggle in the workspace creation form allows you to seamlessly integrate your existing self-hosted infrastructure with ZenML Pro's management capabilities.",
+    "published_at": "2026-02-10T09:17:29Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/deployments/deploy-details/workspace-server/enroll-workspace"
+  },
+  {
     "id": 15,
     "slug": "advanced-user-management-and-authentication",
     "title": "Advanced User Management and Authentication",
