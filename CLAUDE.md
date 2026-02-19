@@ -112,6 +112,8 @@ The bucket enforces upload-only permissions (no delete/overwrite). If the file a
 
 The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
 
+**Important:** Always upload both AVIF and PNG versions of feature images. The AVIF version is used by the dashboard widget (smaller file size), but the PNG version is needed for email newsletters since many email clients (Outlook, Brevo preview) don't support AVIF.
+
 ## Naming Conventions
 
 **Branch names**, **PR titles**, and **commit messages** should all use plain descriptive text without conventional commit prefixes (no `fix:`, `feat:`, `docs:`, etc.).

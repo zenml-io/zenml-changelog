@@ -229,10 +229,14 @@ Use the `avif-image-compressor` skill to convert and compress the image:
 
 ### Step 3: Upload to S3
 
-Upload the converted image to the `public-flavor-logos` S3 bucket:
+Upload **both** the AVIF and the original PNG to the `public-flavor-logos` S3 bucket:
 
 ```bash
+# Upload the AVIF version (used by the dashboard widget)
 aws s3 cp /tmp/output-name.avif s3://public-flavor-logos/whats_new/output-name.avif --profile default
+
+# Upload the PNG version (needed for email newsletters - many email clients don't support AVIF)
+aws s3 cp /path/to/original-image.png s3://public-flavor-logos/whats_new/output-name.png --profile default
 ```
 
 - Try the `default` AWS profile first
@@ -241,12 +245,13 @@ aws s3 cp /tmp/output-name.avif s3://public-flavor-logos/whats_new/output-name.a
 
 ### Step 4: Get the Final URL
 
-The final URL will be:
+The final URLs will be:
 ```
-https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/output-name.avif
+https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/output-name.avif  (dashboard)
+https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/output-name.png   (email)
 ```
 
-Use this URL for the `feature_image_url` field in the changelog entry.
+Use the AVIF URL for the `feature_image_url` field in the changelog entry. The PNG version will be used when building email newsletters.
 
 ### Naming Convention
 
