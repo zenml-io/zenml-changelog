@@ -25,7 +25,7 @@ from anthropic import Anthropic, APIError, RateLimitError
 from github import Auth, Github
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from slugify import slugify
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
@@ -572,7 +572,7 @@ def slugify_title(title: str) -> str:
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
 )
 def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
     # NOTE: This helper is primarily intended for ad-hoc or manual usage.
@@ -610,7 +610,7 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
 )
 def llm_generate_grouped_changelog_entries(
     prs: List[Dict[str, Any]],
@@ -661,6 +661,7 @@ def llm_generate_grouped_changelog_entries(
                     "Output format rules:\n"
                     "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
                     "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
+                    "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
                     "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
                     "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
                     "feature, improvement, bugfix, deprecation.\n"
@@ -675,7 +676,7 @@ def llm_generate_grouped_changelog_entries(
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
 )
 def llm_generate_breaking_changes_bullets(
     breaking_prs: List[Dict[str, Any]],
@@ -802,7 +803,7 @@ def render_release_footer(source_repo: str, release_url: str) -> str:
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
 )
 def llm_generate_release_notes_body(
     prs: List[Dict[str, Any]],
@@ -870,7 +871,7 @@ def llm_generate_release_notes_body(
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
 )
 def llm_generate_markdown_section(
     prs: List[Dict[str, Any]],
