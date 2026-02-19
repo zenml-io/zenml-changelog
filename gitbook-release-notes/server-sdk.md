@@ -7,6 +7,52 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.93.3 (2026-02-19)
+
+See what's new and improved in version 0.93.3.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/5.jpg" align="left" alt="ZenML 0.93.3" width="800">
+
+#### Performance Improvements
+
+This release includes significant performance optimizations for the ZenML server, particularly when handling large-scale deployments:
+
+- **Improved database query efficiency**: Rewrote filtering queries to eliminate unnecessary sorting during item counting, removed inefficient DISTINCT statements on multiple columns, and optimized OR subqueries for better database performance at scale. [PR #4449](https://github.com/zenml-io/zenml/pull/4449)
+
+- **Enhanced API transaction management**: Moved cleanup of expired transactions to an independent background thread that runs periodically, significantly improving API response times especially for large payloads like pipeline snapshots with many steps. [PR #4453](https://github.com/zenml-io/zenml/pull/4453)
+
+#### Logging Enhancements
+
+Logging capabilities have been expanded with new features and improvements:
+
+- Added new `create` and `update` endpoints for logs with support for UUIDs in `StepRunRequest` and `PipelineRunRequest`
+- Introduced workspace ID and name to pipeline run log metadata (with backward compatibility)
+- Added `zenml.event.type` to error messages for better context tracking
+- Introduced environment variable to manage maximum log entries per request
+- Fixed inconsistent metadata key formatting (standardized `zenml.` prefix) [PR #4405](https://github.com/zenml-io/zenml/pull/4405), [PR #4467](https://github.com/zenml-io/zenml/pull/4467)
+
+#### Dashboard Updates
+
+- Added elapsed time display to step nodes in the DAG visualization for better pipeline monitoring [PR #994](https://github.com/zenml-io/zenml-dashboard/pull/994)
+
+<details><summary>Fixed</summary>
+
+- **Critical data loss bug**: Fixed a critical issue in `download_artifact_files_from_response` that caused silent data corruption when downloading artifacts larger than 8KB. The bug resulted in up to 98%+ data loss for large artifacts by only preserving the last chunk of data. [PR #4422](https://github.com/zenml-io/zenml/pull/4422)
+
+- **ZenML Pro migration**: Fixed an issue where cookies from local user accounts persisted after migrating a ZenML OSS server to ZenML Pro via organization enrollment, preventing access to migrated resources in the UI. The server now properly rejects these stale cookies. [PR #4473](https://github.com/zenml-io/zenml/pull/4473)
+
+- **UV-only environments**: Fixed pipeline run crashes in environments using only `uv` without `pip` installed. ZenML now falls back to `uv pip freeze` when `pip freeze` is unavailable for collecting environment metadata. Also added `UV_FREEZE` as an export method for Docker builds. [PR #4484](https://github.com/zenml-io/zenml/pull/4484)
+
+- **Kubernetes credential expiration**: Fixed an issue where Kubernetes credentials issued by service connectors expired while monitoring long-running jobs, causing monitoring failures. Credentials are now properly refreshed during job monitoring. [PR #4493](https://github.com/zenml-io/zenml/pull/4493)
+
+- Improved CLI messaging when attempting to activate a stack without proper permissions
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.93.3)
+
+***
+
 ## 0.93.2 (2026-01-29)
 
 See what's new and improved in version 0.93.2.
