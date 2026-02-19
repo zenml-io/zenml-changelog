@@ -212,6 +212,7 @@ design/
 !.claude/skills/
 !.claude/skills/**
 !.claude/settings.json
+.agents/**
 
 # Workflow temp files
 changelog_output.txt

@@ -1,5 +1,41 @@
 [
   {
+    "id": 20,
+    "slug": "critical-bug-fixes-and-stability-improvements",
+    "title": "Critical Bug Fixes and Stability Improvements",
+    "description": "This release addresses several critical issues including a data corruption bug in artifact downloads for files larger than 8KB, proper credential refresh for long-running Kubernetes jobs, and improved handling of authentication cookies when migrating from ZenML OSS to ZenML Pro. Additionally, pipeline runs now gracefully fall back to `uv pip freeze` in environments where pip is not installed.",
+    "published_at": "2026-02-19T09:59:12Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
+    "id": 19,
+    "slug": "enhanced-performance-and-scalability",
+    "title": "Enhanced Performance and Scalability",
+    "description": "Significant improvements to database query efficiency and API transaction management make ZenML more performant at scale. Filtering queries have been rewritten to eliminate unnecessary operations, and transaction handling now better manages large payloads such as pipeline snapshots with many steps.",
+    "published_at": "2026-02-19T09:59:12Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 18,
+    "slug": "logging-system-enhancements",
+    "title": "Logging System Enhancements",
+    "description": "The logging system now includes new create and update endpoints, support for UUIDs in step and pipeline run requests, workspace metadata in pipeline run logs, and better error event tracking. The dashboard also displays elapsed time for steps in the DAG visualization.",
+    "published_at": "2026-02-19T09:59:12Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
     "id": 17,
     "slug": "flexible-authentication-options-for-seamless-sso-migration",
     "title": "Flexible Authentication Options for Seamless SSO Migration",
