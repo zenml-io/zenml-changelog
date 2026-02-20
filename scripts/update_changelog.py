@@ -57,7 +57,7 @@ REPO_CONFIG: Dict[str, Dict[str, Any]] = {
         "markdown_file": "gitbook-release-notes/pro-control-plane.md",
         "audience": "pro",
         "include_release_link": False,
-        "include_compatibility_note": True,
+        "include_compatibility_note": False,
         "sources": [
             {
                 "repo": "zenml-io/zenml-cloud-api",
