@@ -7,6 +7,24 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.3 (2026-02-20)
+
+See what's new and improved in version 0.13.3.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/6.jpg" align="left" alt="ZenML Pro 0.13.3" width="800">
+
+#### Dashboard Customization
+
+Organization administrators can now add custom navigation links that appear on the dashboard, making it easier to direct team members to relevant external resources like documentation, wikis, or internal tools. Additionally, custom buttons can be added to the header for quick access to frequently used links.
+
+#### Artifact Management
+
+Artifact tags are now displayed in the Artifact Version panel when viewing artifacts in both the DAG visualization and timeline view, providing better visibility into artifact metadata and making it easier to identify and organize artifacts.
+
+> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.
+
+***
+
 ## 0.13.2 (2026-02-10)
 
 See what's new and improved in version 0.13.2.
