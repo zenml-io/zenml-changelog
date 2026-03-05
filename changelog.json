@@ -1,5 +1,23 @@
 [
   {
+    "id": 23,
+    "slug": "enhanced-artifact-visibility-and-ui-customization",
+    "title": "Enhanced Artifact Visibility and UI Customization",
+    "description": "The artifact version panel now displays tags directly in the DAG and timeline views, making it easier to identify and organize artifacts. Additionally, the header now supports customizable documentation buttons, allowing teams to add quick access links to their own resources and guides.",
+    "published_at": "2026-03-05T15:55:12Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 22,
     "slug": "enhanced-organization-customization",
     "title": "Enhanced Organization Customization",
