@@ -15,6 +15,7 @@ See what's new and improved in version 0.94.0.
 
 ### Breaking Changes
 
+* Old endpoints and client methods for legacy triggers, actions and event sources have been removed. **This shouldn't affect you unless you explicitly used those endpoints or methods in your code.**
 * Custom step operator flavors must implement new `submit_step` and `get_step_status` methods to work with dynamic pipelines. The legacy `launch` method will only work in static pipelines as a fallback. The Spark step operator is not yet compatible with dynamic pipelines. [PR #4515](https://github.com/zenml-io/zenml/pull/4515)
 
 #### 🚀 New Integrations
