@@ -49,8 +49,6 @@ See what's new and improved in version 0.94.0.
 
 - Fixed handling of external artifacts with `None` values and reduced chunk size when fetching many step runs to avoid URI too large errors. [PR #4551](https://github.com/zenml-io/zenml/pull/4551)
 
-- Updated Run:AI step operator to work with the new step submission logic. [PR #4535](https://github.com/zenml-io/zenml/pull/4535)
-
 </details>
 
 [View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.0)
