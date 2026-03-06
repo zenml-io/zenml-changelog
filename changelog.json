@@ -1,5 +1,44 @@
 [
   {
+    "id": 26,
+    "slug": "step-and-pipeline-replays",
+    "title": "Step and Pipeline Replays",
+    "description": "You can now replay existing step or pipeline runs with the same inputs and configuration. When replaying a pipeline run, specify which steps to skip and reuse outputs from the original run. A debug mode is also available to run replays on your active stack with a local orchestrator. Note: this release removes old endpoints for legacy triggers, actions, and event sources, and custom step operator flavors must now implement `submit_step` and `get_step_status` methods to work with dynamic pipelines.",
+    "published_at": "2026-03-04T18:22:00Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "feature",
+      "deprecation"
+    ],
+    "should_highlight": true
+  },
+  {
+    "id": 25,
+    "slug": "new-run-ai-integration-and-skypilot-update",
+    "title": "New Run:AI Integration and SkyPilot Update",
+    "description": "Added a new Run:AI step operator integration enabling fractional GPU allocation for individual pipeline steps on Run:AI clusters. Updated SkyPilot integration to support version 0.11.x with async API improvements for better orchestration performance.",
+    "published_at": "2026-03-04T18:22:00Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "feature",
+      "improvement"
+    ]
+  },
+  {
+    "id": 24,
+    "slug": "bug-fixes-and-stability-improvements",
+    "title": "Bug Fixes and Stability Improvements",
+    "description": "Fixed Azure integration dependencies to ensure compatibility with latest releases, resolved variadic keyword argument handling in pipeline functions, improved Kubernetes client retry configuration with configurable timeouts, and addressed issues with external artifacts and URI length limits. Also fixed git submodule file inclusion in code archives.",
+    "published_at": "2026-03-04T18:22:00Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
     "id": 23,
     "slug": "triggers-and-native-schedules",
     "title": "Triggers and Native Schedules",
