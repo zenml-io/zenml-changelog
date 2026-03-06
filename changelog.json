@@ -1,5 +1,20 @@
 [
   {
+    "id": 23,
+    "slug": "triggers-and-native-schedules",
+    "title": "Triggers and Native Schedules",
+    "description": "Introducing the Trigger concept for automated pipeline execution. The first supported trigger type is Schedules, offering full lifecycle management, automatic synchronization with orchestrators, and centralized schedule management across stacks.",
+    "published_at": "2026-03-05T15:55:12Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/triggers-schedules.avif",
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/triggers",
+    "should_highlight": true
+  },
+  {
     "id": 22,
     "slug": "enhanced-organization-customization",
     "title": "Enhanced Organization Customization",
