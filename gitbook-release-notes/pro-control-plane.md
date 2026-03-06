@@ -7,6 +7,26 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.4 (2026-03-05)
+
+See what's new and improved in version 0.13.4.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/7.jpg" align="left" alt="ZenML Pro 0.13.4" width="800">
+
+#### UI Enhancements
+
+**Triggers and Native Schedules**: Introduced the `Trigger` concept for automated pipeline execution. The first supported trigger type is Schedules, which offers lifecycle management, automatic synchronization with orchestrators, and centralized management across stacks.
+
+**Artifact Version Tags Now Visible in DAG and Timeline Views**
+
+You can now see all tags associated with an artifact version directly in the Artifact Version Panel when viewing your pipeline runs in the DAG or timeline view. This makes it easier to identify and understand artifact metadata without navigating away from your pipeline visualization.
+
+**Customizable Documentation Buttons**
+
+The header now supports custom documentation buttons, allowing for more flexible navigation to relevant documentation and resources tailored to your workspace needs.
+
+***
+
 ## 0.13.3 (2026-02-20)
 
 See what's new and improved in version 0.13.3.

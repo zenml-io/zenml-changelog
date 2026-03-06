@@ -1,6 +1,6 @@
 [
   {
-    "id": 25,
+    "id": 26,
     "slug": "new-trigger-system-and-enhanced-pipeline-execution",
     "title": "New Trigger System and Enhanced Pipeline Execution",
     "description": "Introduced a new Trigger system (PRO feature) for automated pipeline execution with native schedule support, offering improved lifecycle management and centralized control. Enhanced pipeline capabilities with step/pipeline replay functionality, allowing you to re-run steps with original inputs or selectively skip steps in pipeline runs. Improved dynamic pipeline monitoring with split step operator submission and monitoring for better performance.",
@@ -18,7 +18,7 @@
     "should_highlight": false
   },
   {
-    "id": 24,
+    "id": 25,
     "slug": "new-run-ai-integration-and-skypilot-update",
     "title": "New Run:AI Integration and SkyPilot Update",
     "description": "Added a new Run:AI step operator integration enabling fractional GPU allocation for individual pipeline steps on Run:AI clusters. Updated SkyPilot integration to support version 0.11.x with async API improvements for better orchestration performance.",
@@ -35,7 +35,7 @@
     "should_highlight": false
   },
   {
-    "id": 23,
+    "id": 24,
     "slug": "bug-fixes-and-stability-improvements",
     "title": "Bug Fixes and Stability Improvements",
     "description": "Fixed Azure integration dependencies to ensure compatibility with latest releases, resolved variadic keyword argument handling in pipeline functions, improved Kubernetes client retry configuration with configurable timeouts, and addressed issues with external artifacts and URI length limits. Also fixed git submodule file inclusion in code archives.",
@@ -50,6 +50,21 @@
     "learn_more_url": "https://example.com/REPLACE-ME",
     "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
+  },
+  {
+    "id": 23,
+    "slug": "triggers-and-native-schedules",
+    "title": "Triggers and Native Schedules",
+    "description": "Introducing the Trigger concept for automated pipeline execution. The first supported trigger type is Schedules, offering full lifecycle management, automatic synchronization with orchestrators, and centralized schedule management across stacks.",
+    "published_at": "2026-03-05T15:55:12Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/triggers-schedules.avif",
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/triggers",
+    "should_highlight": true
   },
   {
     "id": 22,

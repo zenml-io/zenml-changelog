@@ -7,6 +7,54 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.0 (2026-03-04)
+
+See what's new and improved in version 0.94.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/6.jpg" align="left" alt="ZenML 0.94.0" width="800">
+
+### Breaking Changes
+
+* Old endpoints and client methods for legacy triggers, actions and event sources have been removed. **This shouldn't affect you unless you explicitly used those endpoints or methods in your code.**
+* Custom step operator flavors must implement new `submit_step` and `get_step_status` methods to work with dynamic pipelines. The legacy `launch` method will only work in static pipelines as a fallback. The Spark step operator is not yet compatible with dynamic pipelines. [PR #4515](https://github.com/zenml-io/zenml/pull/4515)
+
+#### 🚀 New Integrations
+
+- **Run:AI Step Operator**: ZenML now supports running individual pipeline steps on Run:AI clusters with fractional GPU allocation, enabling more efficient resource utilization for ML workloads. [PR #4439](https://github.com/zenml-io/zenml/pull/4439)
+
+#### ✨ New Features
+
+- **Step and Pipeline Replays**: You can now replay existing step or pipeline runs with the same inputs and configuration. When replaying a pipeline run, you can specify which steps to skip and reuse from the original run. A debug mode is also available to run replays on your active stack with a local orchestrator. [PR #4456](https://github.com/zenml-io/zenml/pull/4456)
+
+- **Triggers and Native Schedules (PRO)**: Introduced the `Trigger` concept for automated pipeline execution. The first supported trigger type is Schedules, which offers lifecycle management, automatic synchronization with orchestrators, and centralized management across stacks. [PR #4482](https://github.com/zenml-io/zenml/pull/4482)
+
+- **Step Run Filtering by Version**: Added the ability to filter step runs by version, making it easier to track and manage specific versions of your pipeline steps. [PR #4518](https://github.com/zenml-io/zenml/pull/4518)
+
+#### 🔧 Improvements
+
+- **Enhanced Dynamic Pipeline Monitoring**: Improved the execution and monitoring of isolated steps in dynamic pipelines. Step submission is now separated from monitoring, preventing thread blocking during step execution. [PR #4369](https://github.com/zenml-io/zenml/pull/4369)
+
+- **SkyPilot Integration Update**: Updated the SkyPilot integration to support version 0.11.x, including migration to the new async API and support for new resource settings. [PR #4462](https://github.com/zenml-io/zenml/pull/4462)
+
+- **Kubernetes Retry Configuration**: Added configurable timeout options for Kubernetes orchestrator and step operator API calls, ensuring proper retry behavior and preventing unnecessary hanging. [PR #4525](https://github.com/zenml-io/zenml/pull/4525)
+
+- **Git Submodule Support**: Code archives now include files from git submodules when uploading to the artifact store, ensuring complete code tracking for repositories with submodules. [PR #4496](https://github.com/zenml-io/zenml/pull/4496)
+
+<details>
+<summary>Fixed</summary>
+
+- Fixed handling of variadic keyword arguments in pipeline functions, ensuring they are properly flattened before being passed to the pipeline. [PR #4528](https://github.com/zenml-io/zenml/pull/4528)
+
+- Fixed Azure integration dependencies by limiting the `azure-mgmt-resource` version to avoid compatibility issues with the 25.0.0 package split. [PR #4516](https://github.com/zenml-io/zenml/pull/4516)
+
+- Fixed handling of external artifacts with `None` values and reduced chunk size when fetching many step runs to avoid URI too large errors. [PR #4551](https://github.com/zenml-io/zenml/pull/4551)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.0)
+
+***
+
 ## 0.93.3 (2026-02-19)
 
 See what's new and improved in version 0.93.3.
