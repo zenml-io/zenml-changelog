@@ -132,3 +132,4 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 - For OSS markdown, include PR links; for Pro markdown, keep concise and omit PR links.
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
 - Never commit secrets; use repo/org secrets for workflows.
+- IMPORTANT: **Before opening a PR or making a large commit**, always run `/simplify` to review changed code for reuse opportunities, quality issues, and efficiency improvements. Fix any issues it finds before committing.
