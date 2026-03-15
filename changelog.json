@@ -1,5 +1,22 @@
 [
   {
+    "id": 27,
+    "slug": "enhanced-json-visualization",
+    "title": "Enhanced JSON Visualization",
+    "description": "The JSON visualizer now supports collapsing and expanding items, making it easier to navigate and explore complex JSON data structures in your pipeline artifacts and outputs.",
+    "published_at": "2026-03-11T15:34:59Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 26,
     "slug": "step-and-pipeline-replays",
     "title": "Step and Pipeline Replays",
