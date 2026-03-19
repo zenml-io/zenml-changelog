@@ -7,6 +7,54 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.1 (2026-03-19)
+
+See what's new and improved in version 0.94.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/7.jpg" align="left" alt="ZenML 0.94.1" width="800">
+
+#### 🎯 Pipeline Execution Control
+
+- **Pause and Resume Pipeline Runs**: Introduced `zenml.wait(...)` to pause dynamic pipelines while waiting for external inputs, automatically freeing resources until the input is provided. Runs can be resumed automatically (when using remote orchestrators with snapshot support) or manually via `zenml pipeline runs resume <ID>`. [PR #4588](https://github.com/zenml-io/zenml/pull/4588)
+- **Override Step Inputs on Replay**: You can now override step inputs when replaying a pipeline run, giving you more flexibility to rerun pipelines with different data. [PR #4590](https://github.com/zenml-io/zenml/pull/4590)
+
+#### 🔧 Materializers and Data Handling
+
+- **Dataclass Materializer**: Added a built-in materializer for JSON-serializable dataclasses, making it easier to pass structured data between steps. [PR #4600](https://github.com/zenml-io/zenml/pull/4600)
+- **LakeFS Data Versioning Example**: New example demonstrating the "pass references, not data" pattern for terabyte-scale datasets. ZenML steps exchange lightweight LakeFS pointers while actual data stays in LakeFS, accessed via its S3-compatible gateway. [PR #4559](https://github.com/zenml-io/zenml/pull/4559)
+
+#### ☁️ Infrastructure and Deployment
+
+- **Helm Environment Variable Overrides**: Environment variables specified in `zenml.environment`, `zenml.secretEnvironment`, and worker deployment configurations can now override computed settings from the Helm chart. [PR #4595](https://github.com/zenml-io/zenml/pull/4595)
+- **Secret Environment Variables in Helm**: Added support for injecting secret environment variables into the ZenML server deployment via Helm without committing secrets to values.yaml, enabling better GitOps workflows. [PR #4606](https://github.com/zenml-io/zenml/pull/4606)
+- **Docker Build Arguments**: Build arguments defined in `DockerSettings` are now properly declared with `ARG` instructions in auto-generated Dockerfiles. [PR #4612](https://github.com/zenml-io/zenml/pull/4612)
+
+#### 🔐 Authentication and Credentials
+
+- **Improved GCP Credentials Refresh**: Implemented native GCP credentials refresh using service connector logic, replacing periodic expiration checks for more reliable OAuth2 credential handling. [PR #4527](https://github.com/zenml-io/zenml/pull/4527)
+
+#### 📊 Pipeline Configuration
+
+- **Step Parameter Schema Storage**: Step parameter specifications are now stored for better schema validation when triggering pipeline snapshots. [PR #4591](https://github.com/zenml-io/zenml/pull/4591)
+
+<details><summary>Fixed</summary>
+
+- **Exception Handling for Isolated Steps**: Isolated steps in dynamic pipelines now raise the correct exception types instead of always wrapping them in `RuntimeError`, making error handling more intuitive and consistent. [PR #4589](https://github.com/zenml-io/zenml/pull/4589)
+- **Kubernetes API Request Timeout**: Fixed typing issue in the Kubernetes orchestrator and step operator to ensure `api_request_timeout` is properly applied as an integer value. [PR #4605](https://github.com/zenml-io/zenml/pull/4605)
+- **Client-Server Compatibility**: Resolved compatibility issue with clients `<=0.92.0` by not passing both pipeline run ID and step run ID to logs requests. [PR #4614](https://github.com/zenml-io/zenml/pull/4614)
+- **Dynamic Pipeline Monitoring**: Fixed dictionary size change error that occurred when the main thread modified the `_steps_to_monitor` dictionary while the monitoring thread was iterating over it. [PR #4619](https://github.com/zenml-io/zenml/pull/4619)
+- **Step Config Template Parameters**: Step parameters defined in config templates now correctly take precedence over function default values in dynamic pipelines. [PR #4624](https://github.com/zenml-io/zenml/pull/4624)
+
+</details>
+
+#### 📦 Dependencies
+
+- Updated Pydantic to version 2.12.5. [PR #4552](https://github.com/zenml-io/zenml/pull/4552)
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.1)
+
+***
+
 ## 0.94.0 (2026-03-04)
 
 See what's new and improved in version 0.94.0.
