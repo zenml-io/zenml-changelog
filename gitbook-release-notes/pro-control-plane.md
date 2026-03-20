@@ -7,6 +7,18 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.6 (2026-03-20)
+
+See what's new and improved in version 0.13.6.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/9.jpg" align="left" alt="ZenML Pro 0.13.6" width="800">
+
+#### Visualization Improvements
+
+- Enhanced the JSON visualizer with collapsible tree navigation, making it easier to explore and navigate through complex JSON artifacts and outputs. You can now expand and collapse nested items for better readability and focus.
+
+***
+
 ## 0.13.5 (2026-03-11)
 
 See what's new and improved in version 0.13.5.
