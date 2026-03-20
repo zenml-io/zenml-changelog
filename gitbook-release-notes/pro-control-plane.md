@@ -15,7 +15,9 @@ See what's new and improved in version 0.13.6.
 
 #### Visualization Improvements
 
-- Enhanced the JSON visualizer with collapsible tree navigation, making it easier to explore and navigate through complex JSON artifacts and outputs. You can now expand and collapse nested items for better readability and focus.
+- **Step Parameter Validation for Snapshots**: The snapshot trigger UI now validates step parameters before submission, helping you catch invalid inputs earlier when launching pipeline snapshots.
+- **Wait Condition Support**: The dashboard now supports wait conditions for pipelines that use `zenml.wait(...)`, making it easier to inspect paused runs and resolve pending external inputs so execution can continue.
+- **Retried Step Version Visibility**: You can now view retried versions of steps in the UI, giving you better visibility into rerun history when debugging or comparing execution attempts.
 
 ***
 
