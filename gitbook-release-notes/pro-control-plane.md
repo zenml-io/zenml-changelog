@@ -7,6 +7,20 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.6 (2026-03-20)
+
+See what's new and improved in version 0.13.6.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/9.jpg" align="left" alt="ZenML Pro 0.13.6" width="800">
+
+#### Visualization Improvements
+
+- **Step Parameter Validation for Snapshots**: The snapshot trigger UI now validates step parameters before submission, helping you catch invalid inputs earlier when launching pipeline snapshots.
+- **Wait Condition Support**: The dashboard now supports wait conditions for pipelines that use `zenml.wait(...)`, making it easier to inspect paused runs and resolve pending external inputs so execution can continue.
+- **Retried Step Version Visibility**: You can now view retried versions of steps in the UI, giving you better visibility into rerun history when debugging or comparing execution attempts.
+
+***
+
 ## 0.13.5 (2026-03-11)
 
 See what's new and improved in version 0.13.5.
