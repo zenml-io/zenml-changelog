@@ -6,16 +6,13 @@
     "description": "ZenML now supports pausing and resuming pipeline runs with `zenml.wait()` for external inputs, automatically freeing resources during pauses and resuming when ready. Dynamic pipelines also gained better error handling with correct exception propagation for isolated steps, the ability to override step inputs during replays, and improved parameter handling from config templates.",
     "published_at": "2026-03-19T17:11:55Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "bugfix",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/wait_resume",
+    "should_highlight": true
   },
   {
     "id": 28,
@@ -24,15 +21,10 @@
     "description": "Helm deployments now support secret environment variables injection without committing secrets to values.yaml, and allow custom environment variables to override computed settings. Kubernetes orchestrator timeout handling was fixed, and Docker builds now properly support build arguments with ARG instructions.",
     "published_at": "2026-03-19T17:11:55Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 27,
@@ -41,16 +33,11 @@
     "description": "Fixed GCP credentials refresh for more reliable authentication, resolved client-server compatibility issues with logging, and eliminated race conditions in dynamic pipeline monitoring. Added built-in materializer for JSON-serializable dataclasses and included a new LakeFS data versioning example demonstrating efficient handling of terabyte-scale datasets.",
     "published_at": "2026-03-19T17:11:55Z",
     "published": true,
-    "audience": "oss",
+    "audience": "all",
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 26,
