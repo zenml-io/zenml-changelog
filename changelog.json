@@ -1,5 +1,45 @@
 [
   {
+    "id": 30,
+    "slug": "dynamic-pipeline-enhancements-and-pause-resume-support",
+    "title": "Dynamic Pipeline Enhancements and Pause/Resume Support",
+    "description": "ZenML now supports pausing and resuming pipeline runs with `zenml.wait()` for external inputs, automatically freeing resources during pauses and resuming when ready. Dynamic pipelines also gained better error handling with correct exception propagation for isolated steps, the ability to override step inputs during replays, and improved parameter handling from config templates.",
+    "published_at": "2026-03-19T17:11:55Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/wait_resume",
+    "should_highlight": true
+  },
+  {
+    "id": 29,
+    "slug": "infrastructure-and-deployment-improvements",
+    "title": "Infrastructure and Deployment Improvements",
+    "description": "Helm deployments now support secret environment variables injection without committing secrets to values.yaml, and allow custom environment variables to override computed settings. Kubernetes orchestrator timeout handling was fixed, and Docker builds now properly support build arguments with ARG instructions.",
+    "published_at": "2026-03-19T17:11:55Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 28,
+    "slug": "bug-fixes-and-core-enhancements",
+    "title": "Bug Fixes and Core Enhancements",
+    "description": "Fixed GCP credentials refresh for more reliable authentication, resolved client-server compatibility issues with logging, and eliminated race conditions in dynamic pipeline monitoring. Added built-in materializer for JSON-serializable dataclasses and included a new LakeFS data versioning example demonstrating efficient handling of terabyte-scale datasets.",
+    "published_at": "2026-03-19T17:11:55Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 27,
     "slug": "enhanced-json-visualization",
     "title": "Enhanced JSON Visualization",
