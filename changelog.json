@@ -1,5 +1,17 @@
 [
   {
+    "id": 27,
+    "slug": "enhanced-json-visualization",
+    "title": "Enhanced JSON Visualization",
+    "description": "The JSON visualizer now supports collapsing and expanding items, making it easier to navigate and explore complex JSON data structures in your pipeline artifacts.",
+    "published_at": "2026-03-20T09:37:57Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
     "id": 26,
     "slug": "step-and-pipeline-replays",
     "title": "Step and Pipeline Replays",
