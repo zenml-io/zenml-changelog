@@ -1,6 +1,6 @@
 [
   {
-    "id": 29,
+    "id": 30,
     "slug": "dynamic-pipeline-enhancements-and-pause-resume-support",
     "title": "Dynamic Pipeline Enhancements and Pause/Resume Support",
     "description": "ZenML now supports pausing and resuming pipeline runs with `zenml.wait()` for external inputs, automatically freeing resources during pauses and resuming when ready. Dynamic pipelines also gained better error handling with correct exception propagation for isolated steps, the ability to override step inputs during replays, and improved parameter handling from config templates.",
@@ -15,7 +15,7 @@
     "should_highlight": true
   },
   {
-    "id": 28,
+    "id": 29,
     "slug": "infrastructure-and-deployment-improvements",
     "title": "Infrastructure and Deployment Improvements",
     "description": "Helm deployments now support secret environment variables injection without committing secrets to values.yaml, and allow custom environment variables to override computed settings. Kubernetes orchestrator timeout handling was fixed, and Docker builds now properly support build arguments with ARG instructions.",
@@ -27,7 +27,7 @@
     ]
   },
   {
-    "id": 27,
+    "id": 28,
     "slug": "bug-fixes-and-core-enhancements",
     "title": "Bug Fixes and Core Enhancements",
     "description": "Fixed GCP credentials refresh for more reliable authentication, resolved client-server compatibility issues with logging, and eliminated race conditions in dynamic pipeline monitoring. Added built-in materializer for JSON-serializable dataclasses and included a new LakeFS data versioning example demonstrating efficient handling of terabyte-scale datasets.",
@@ -36,6 +36,18 @@
     "audience": "all",
     "labels": [
       "bugfix",
+      "improvement"
+    ]
+  },
+  {
+    "id": 27,
+    "slug": "enhanced-json-visualization",
+    "title": "Enhanced JSON Visualization",
+    "description": "The JSON visualizer now supports collapsing and expanding items, making it easier to navigate and explore complex JSON data structures in your pipeline artifacts.",
+    "published_at": "2026-03-20T09:37:57Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
       "improvement"
     ]
   },
