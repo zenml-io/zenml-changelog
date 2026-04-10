@@ -1132,8 +1132,9 @@ def main() -> None:
         print("Detected major version bump - will force Breaking Changes section")
 
     if not release_notes_prs and not breaking_prs:
-        print("ERROR: No release-notes or breaking-change PRs found for this release.")
-        raise SystemExit(1)
+        print("No release-notes or breaking-change PRs found for this release. Nothing to do.")
+        print("NO_CHANGES_NEEDED")
+        raise SystemExit(0)
 
     # Use release-notes PRs for changelog entries; fall back to breaking PRs if none
     grouping_prs = release_notes_prs if release_notes_prs else breaking_prs

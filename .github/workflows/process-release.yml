@@ -31,6 +31,7 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     outputs:
+      has_changes: ${{ steps.check_changes.outputs.has_changes }}
       markdown_file: ${{ steps.extract_md.outputs.markdown_file }}
       breaking_changes: ${{ steps.extract_breaking.outputs.breaking_changes }}
       needs_attention: ${{ steps.extract_attention.outputs.needs_attention }}
@@ -54,13 +55,25 @@ jobs:
           set -euo pipefail
           uv run scripts/update_changelog.py | tee changelog_output.txt
 
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if grep -q '^NO_CHANGES_NEEDED$' changelog_output.txt; then
+            echo "No release-notes PRs found — skipping changelog generation."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Validate changelog.json
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: cardinalby/schema-validator-action@v3
         with:
           file: ./changelog.json
           schema: ./changelog_schema/announcement-schema.json
 
       - name: Extract updated markdown file
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: extract_md
         run: |
           set -euo pipefail
@@ -72,6 +85,7 @@ jobs:
           echo "markdown_file=$md" >> "$GITHUB_OUTPUT"
 
       - name: Extract breaking changes
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: extract_breaking
         run: |
           set -euo pipefail
@@ -83,6 +97,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Extract attention items
+        if: steps.check_changes.outputs.has_changes == 'true'
         id: extract_attention
         run: |
           set -euo pipefail
@@ -94,11 +109,13 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create widget patch
+        if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           set -euo pipefail
           git diff --binary -- changelog.json .image_state > widget.patch
 
       - name: Create gitbook patch
+        if: steps.check_changes.outputs.has_changes == 'true'
         env:
           MARKDOWN_FILE: ${{ steps.extract_md.outputs.markdown_file }}
         run: |
@@ -106,6 +123,7 @@ jobs:
           git diff --binary -- "$MARKDOWN_FILE" > gitbook.patch
 
       - name: Upload widget patch artifact
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: widget-patch
@@ -113,6 +131,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload gitbook patch artifact
+        if: steps.check_changes.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: gitbook-patch
@@ -122,6 +141,7 @@ jobs:
   pr-widget:
     runs-on: ubuntu-latest
     needs: generate
+    if: needs.generate.outputs.has_changes == 'true'
     steps:
       - name: Checkout repository (main)
         uses: actions/checkout@v4
@@ -174,6 +194,7 @@ jobs:
   pr-gitbook:
     runs-on: ubuntu-latest
     needs: generate
+    if: needs.generate.outputs.has_changes == 'true'
     steps:
       - name: Checkout repository (main)
         uses: actions/checkout@v4
