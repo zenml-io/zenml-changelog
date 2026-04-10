@@ -7,6 +7,42 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.2 (2026-04-08)
+
+See what's new and improved in version 0.94.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/8.jpg" align="left" alt="ZenML 0.94.2" width="800">
+
+#### 🎨 Dashboard Enhancements
+
+The ZenML dashboard now includes a **Run Summary View** that provides a comprehensive overview of your pipeline runs at a glance [PR #1029](https://github.com/zenml-io/zenml-dashboard/pull/1029). Timeline rows now automatically resize for better visualization of your pipeline execution history [PR #1028](https://github.com/zenml-io/zenml-dashboard/pull/1028).
+
+#### 🔧 Pipeline & Trigger Improvements
+
+**Artifact Name Substitutions for Dynamic Pipelines**: You can now use artifact name substitutions in dynamic pipelines, making it easier to reference and manage artifacts programmatically [PR #4668](https://github.com/zenml-io/zenml/pull/4668).
+
+**Enhanced Trigger Configuration**: Triggered runs now follow a cleaner `snapshot.source` pattern. You can provide a configuration object to customize parameters for all triggered runs in an attachment, giving you more control over automated pipeline executions [PR #4610](https://github.com/zenml-io/zenml/pull/4610).
+
+#### ⚠️ Deprecation Notice
+
+**Helm Chart Configuration Update**: The top-level `zenml:` values key in the ZenML Helm chart has been renamed to `server:` [PR #4637](https://github.com/zenml-io/zenml/pull/4637). Your existing values files will continue to work — the chart automatically merges both keys for backwards compatibility. If both keys are present, `zenml:` takes precedence for overlapping fields. The `zenml:` key is deprecated and will be removed in a future release; we recommend migrating to `server:` in your Helm configurations.
+
+<details><summary>Fixed</summary>
+
+- **Schedule Management**: Fixed issues where deletion by ID prefix wasn't working for archived schedules, and reusing an archived schedule name was incorrectly blocked. Documentation has been updated to clarify schedule behavior post-deletion, including archived schedule renaming, hard deletion guidelines, and discovery of archived objects [PR #4641](https://github.com/zenml-io/zenml/pull/4641).
+
+- **Input Artifact Handling**: Resolved a bug where a list of input artifacts containing a single item was incorrectly treated as a scalar input artifact, causing materializer type incompatibility errors [PR #4679](https://github.com/zenml-io/zenml/pull/4679).
+
+- **HTTP Request Optimization**: The system now dynamically reduces chunk size when fetching many steps to avoid HTTP 414 (URI Too Long) errors [PR #4553](https://github.com/zenml-io/zenml/pull/4553).
+
+- **Dashboard Deployment Stability**: Fixed a template loading issue in the FastAPI deployment app's dashboard that could cause `TypeError: unhashable type: 'dict'` on certain environments (e.g., Kubernetes with newer Jinja2 versions), preventing the server from starting when the dashboard was enabled [PR #4649](https://github.com/zenml-io/zenml/pull/4649).
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.2)
+
+***
+
 ## 0.94.1 (2026-03-19)
 
 See what's new and improved in version 0.94.1.
