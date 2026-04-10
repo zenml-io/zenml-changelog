@@ -1,6 +1,6 @@
 [
   {
-    "id": 31,
+    "id": 32,
     "slug": "workspace-level-rbac-for-resource-pools",
     "title": "Workspace-level RBAC for resource pools",
     "description": "Resource pools and their subject policies now support workspace-scoped role-based access control, giving you finer-grained permission management within your workspaces. This enhancement aligns control plane permissions with existing default roles and ensures consistent access control across your organization.",
@@ -16,6 +16,18 @@
     "learn_more_url": "https://example.com/REPLACE-ME",
     "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
+  },
+  {
+    "id": 31,
+    "slug": "performance-improvements-for-workspace-operations",
+    "title": "Performance improvements for workspace operations",
+    "description": "Internal optimizations have been implemented to significantly improve the performance of workspace-related operations, including authentication and permission checks. These enhancements reduce latency and provide a smoother experience when interacting with the ZenML Pro platform.",
+    "published_at": "2026-03-26T17:11:47Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ]
   },
   {
     "id": 30,
