@@ -1,5 +1,23 @@
 [
   {
+    "id": 31,
+    "slug": "workspace-level-rbac-for-resource-pools",
+    "title": "Workspace-level RBAC for resource pools",
+    "description": "Resource pools and their subject policies now support workspace-scoped role-based access control, giving you finer-grained permission management within your workspaces. This enhancement aligns control plane permissions with existing default roles and ensures consistent access control across your organization.",
+    "published_at": "2026-04-07T12:57:09Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 30,
     "slug": "dynamic-pipeline-enhancements-and-pause-resume-support",
     "title": "Dynamic Pipeline Enhancements and Pause/Resume Support",
