@@ -10,12 +10,7 @@
     "labels": [
       "feature",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 33,
@@ -28,30 +23,20 @@
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 32,
-    "slug": "helm-chart-key-rename-and-trigger-configuration",
-    "title": "Helm Chart Key Rename and Trigger Configuration",
-    "description": "The Helm chart's top-level key has been renamed from `zenml` to `server` with full backwards compatibility (the old key is deprecated but still works). Triggered runs now support customizable configuration objects for better control over pipeline execution parameters. The deployer dashboard is now more resilient to template loading issues in Kubernetes environments.",
+    "slug": "trigger-configuration-and-deployer-stability",
+    "title": "Trigger Configuration and Deployer Stability",
+    "description": "Triggered runs now support customizable configuration objects, giving you better control over pipeline execution parameters when using triggers. The deployer dashboard is also more resilient to template loading issues in Kubernetes environments, preventing server startup failures caused by Jinja2/Starlette version mismatches.",
     "published_at": "2026-04-08T15:00:24Z",
     "published": true,
     "audience": "oss",
     "labels": [
-      "bugfix",
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+      "improvement",
+      "bugfix"
+    ]
   },
   {
     "id": 31,
