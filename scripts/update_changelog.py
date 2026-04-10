@@ -21,13 +21,13 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from anthropic import Anthropic, APIError, RateLimitError
+from anthropic import Anthropic, APIError, AuthenticationError, RateLimitError
 from github import Auth, Github
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
 from pydantic import BaseModel, Field, ValidationError
 from slugify import slugify
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, retry_if_not_exception_type, stop_after_attempt, wait_exponential
 
 IMAGE_STATE_FILE = Path(".image_state")
 MAX_IMAGE_NUMBER = 49
@@ -572,7 +572,7 @@ def slugify_title(title: str) -> str:
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
 )
 def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
     # NOTE: This helper is primarily intended for ad-hoc or manual usage.
@@ -610,7 +610,7 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
 )
 def llm_generate_grouped_changelog_entries(
     prs: List[Dict[str, Any]],
@@ -676,7 +676,7 @@ def llm_generate_grouped_changelog_entries(
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
 )
 def llm_generate_breaking_changes_bullets(
     breaking_prs: List[Dict[str, Any]],
@@ -803,7 +803,7 @@ def render_release_footer(source_repo: str, release_url: str) -> str:
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
 )
 def llm_generate_release_notes_body(
     prs: List[Dict[str, Any]],
@@ -871,7 +871,7 @@ def llm_generate_release_notes_body(
     reraise=True,
     stop=stop_after_attempt(5),
     wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)),
+    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
 )
 def llm_generate_markdown_section(
     prs: List[Dict[str, Any]],
