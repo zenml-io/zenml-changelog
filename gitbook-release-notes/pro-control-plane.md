@@ -7,6 +7,20 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.9 (2026-04-07)
+
+See what's new and improved in version 0.13.9.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/10.jpg" align="left" alt="ZenML Pro 0.13.9" width="800">
+
+#### Enhanced Access Control for Resource Pools
+
+Workspace-level role-based access control (RBAC) is now available for resource pools and their subject policies. This enhancement allows you to manage permissions for resource pool operations at a more granular level within your workspaces.
+
+With this update, workspace roles can now control who can create, view, update, and delete resource pools, as well as manage the policies that govern which subjects can access specific resource pools. This provides better security and governance for your infrastructure resources, ensuring that only authorized team members can configure and manage compute resources in your ZenML Pro environment.
+
+***
+
 ## 0.13.7 (2026-03-26)
 
 See what's new and improved in version 0.13.7.
