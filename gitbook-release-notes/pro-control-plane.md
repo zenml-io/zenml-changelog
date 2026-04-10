@@ -7,6 +7,18 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.7 (2026-03-26)
+
+See what's new and improved in version 0.13.7.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/10.jpg" align="left" alt="ZenML Pro 0.13.7" width="800">
+
+#### Performance Improvements
+
+This release includes internal optimizations to improve the responsiveness and scalability of ZenML Pro. Workspace authentication and permission checks now benefit from intelligent caching, reducing database load and improving API response times for all workspace operations.
+
+***
+
 ## 0.13.6 (2026-03-20)
 
 See what's new and improved in version 0.13.6.
