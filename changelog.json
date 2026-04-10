@@ -1,5 +1,17 @@
 [
   {
+    "id": 31,
+    "slug": "performance-improvements-for-workspace-operations",
+    "title": "Performance improvements for workspace operations",
+    "description": "Internal optimizations have been implemented to significantly improve the performance of workspace-related operations, including authentication and permission checks. These enhancements reduce latency and provide a smoother experience when interacting with the ZenML Pro platform.",
+    "published_at": "2026-03-26T17:11:47Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
     "id": 30,
     "slug": "dynamic-pipeline-enhancements-and-pause-resume-support",
     "title": "Dynamic Pipeline Enhancements and Pause/Resume Support",
