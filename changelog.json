@@ -1,5 +1,59 @@
 [
   {
+    "id": 33,
+    "slug": "dashboard-enhancements-and-run-visualization",
+    "title": "Dashboard Enhancements and Run Visualization",
+    "description": "The dashboard now includes a new run summary view and auto-resizing timeline rows, making it easier to visualize and understand pipeline execution details at a glance. These improvements provide a more intuitive and responsive interface for monitoring your ML workflows.",
+    "published_at": "2026-04-08T15:00:24Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 32,
+    "slug": "pipeline-execution-and-artifact-handling-fixes",
+    "title": "Pipeline Execution and Artifact Handling Fixes",
+    "description": "Fixed several issues affecting pipeline reliability: artifact name substitutions now work correctly in dynamic pipelines, single-item lists are properly distinguished from scalar inputs, and HTTP 414 errors are automatically handled by reducing chunk sizes. Additionally, archived schedules can now be deleted by ID prefix and their names can be reused.",
+    "published_at": "2026-04-08T15:00:24Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 31,
+    "slug": "helm-chart-key-rename-and-trigger-configuration",
+    "title": "Helm Chart Key Rename and Trigger Configuration",
+    "description": "The Helm chart's top-level key has been renamed from `zenml` to `server` with full backwards compatibility (the old key is deprecated but still works). Triggered runs now support customizable configuration objects for better control over pipeline execution parameters. The deployer dashboard is now more resilient to template loading issues in Kubernetes environments.",
+    "published_at": "2026-04-08T15:00:24Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 30,
     "slug": "dynamic-pipeline-enhancements-and-pause-resume-support",
     "title": "Dynamic Pipeline Enhancements and Pause/Resume Support",
