@@ -1,6 +1,6 @@
 [
   {
-    "id": 33,
+    "id": 34,
     "slug": "dashboard-enhancements-and-run-visualization",
     "title": "Dashboard Enhancements and Run Visualization",
     "description": "The dashboard now includes a new run summary view and auto-resizing timeline rows, making it easier to visualize and understand pipeline execution details at a glance. These improvements provide a more intuitive and responsive interface for monitoring your ML workflows.",
@@ -18,7 +18,7 @@
     "should_highlight": false
   },
   {
-    "id": 32,
+    "id": 33,
     "slug": "pipeline-execution-and-artifact-handling-fixes",
     "title": "Pipeline Execution and Artifact Handling Fixes",
     "description": "Fixed several issues affecting pipeline reliability: artifact name substitutions now work correctly in dynamic pipelines, single-item lists are properly distinguished from scalar inputs, and HTTP 414 errors are automatically handled by reducing chunk sizes. Additionally, archived schedules can now be deleted by ID prefix and their names can be reused.",
@@ -36,7 +36,7 @@
     "should_highlight": false
   },
   {
-    "id": 31,
+    "id": 32,
     "slug": "helm-chart-key-rename-and-trigger-configuration",
     "title": "Helm Chart Key Rename and Trigger Configuration",
     "description": "The Helm chart's top-level key has been renamed from `zenml` to `server` with full backwards compatibility (the old key is deprecated but still works). Triggered runs now support customizable configuration objects for better control over pipeline execution parameters. The deployer dashboard is now more resilient to template loading issues in Kubernetes environments.",
@@ -52,6 +52,18 @@
     "learn_more_url": "https://example.com/REPLACE-ME",
     "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
+  },
+  {
+    "id": 31,
+    "slug": "performance-improvements-for-workspace-operations",
+    "title": "Performance improvements for workspace operations",
+    "description": "Internal optimizations have been implemented to significantly improve the performance of workspace-related operations, including authentication and permission checks. These enhancements reduce latency and provide a smoother experience when interacting with the ZenML Pro platform.",
+    "published_at": "2026-03-26T17:11:47Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ]
   },
   {
     "id": 30,
