@@ -1,5 +1,57 @@
 [
   {
+    "id": 37,
+    "slug": "advanced-pipeline-orchestration-and-automation",
+    "title": "Advanced Pipeline Orchestration and Automation",
+    "description": "ZenML now supports **event-based triggers** that automatically execute pipelines when platform events occur (like pipeline run completion), **server-side pipeline replays** with step skipping and artifact override capabilities, and **max-runs stopping criteria** for schedules. These features enable sophisticated automation workflows and give you fine-grained control over pipeline execution patterns.",
+    "published_at": "2026-04-24T13:55:54Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 36,
+    "slug": "enhanced-stack-flexibility-and-infrastructure-support",
+    "title": "Enhanced Stack Flexibility and Infrastructure Support",
+    "description": "You can now register **multiple components of the same type** (alerters, step operators, experiment trackers) within a single stack, use **Podman as an alternative container engine** to Docker, and expose ZenML servers via **Kubernetes Gateway API** in addition to Ingress. Resource pools are now available for managing compute resources across your infrastructure.",
+    "published_at": "2026-04-24T13:55:54Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 35,
+    "slug": "bug-fixes-and-performance-improvements",
+    "title": "Bug Fixes and Performance Improvements",
+    "description": "Fixed issues with making secrets public via CLI/client, resolved run status update conditions for failed Kubernetes pods, removed blocking behavior when waiting for concurrent step inputs in dynamic pipelines, eliminated unique constraint conflicts on log entries during pipeline restarts, and improved performance in air-gapped environments by avoiding unnecessary PyPI version checks.",
+    "published_at": "2026-04-24T13:55:54Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 34,
     "slug": "dashboard-enhancements-and-run-visualization",
     "title": "Dashboard Enhancements and Run Visualization",
