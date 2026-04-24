@@ -7,6 +7,74 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.3 (2026-04-24)
+
+See what's new and improved in version 0.94.3.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/9.jpg" align="left" alt="ZenML 0.94.3" width="800">
+
+#### 🚀 New Features
+
+**Podman Support & Container Engine Abstraction**
+
+ZenML now supports **Podman** as an alternative to Docker for container image management. A new `ContainerEngine` abstraction has been introduced to make it easier to work with different OCI-compatible container runtimes. This gives you more flexibility in choosing your container tooling, especially in environments where Docker isn't available or preferred. [PR #4651](https://github.com/zenml-io/zenml/pull/4651)
+
+**Resource Pools**
+
+Introducing **Resource Pools** - a new way to manage and organize compute resources in ZenML. This feature includes full SDK methods, CLI commands, and API endpoints to create and manage resource pools and their associated objects, giving you better control over resource allocation across your ML workflows. [PR #4465](https://github.com/zenml-io/zenml/pull/4465)
+
+**Platform Event Triggers**
+
+You can now set up **event-based triggers** that automatically execute downstream workflows based on ZenML platform events, such as when a pipeline run completes. This enables powerful automation patterns and reactive workflows without manual intervention. Full backend management including CLI and SDK support is now available. [PR #4692](https://github.com/zenml-io/zenml/pull/4692)
+
+**Server-Side Pipeline Replays**
+
+Pipeline runs can now be **replayed from the server** with advanced capabilities:
+- **Skip specific steps** - steps won't re-execute even if cache was disabled or inputs changed
+- **Override step input artifacts** - go beyond parameter overrides and replace inputs that came from upstream steps in the original run
+
+This gives you fine-grained control over re-executing parts of your pipelines. [PR #4716](https://github.com/zenml-io/zenml/pull/4716)
+
+**Multiple Components Per Stack Type**
+
+Stacks can now include **multiple components of the same type** for Alerters, Step Operators, and Experiment Trackers. You can designate one as the default while having others available for specific use cases, providing more flexibility in stack composition. [PR #4671](https://github.com/zenml-io/zenml/pull/4671)
+
+**Kubernetes Gateway API Support**
+
+The ZenML server can now be exposed via **Gateway API HTTPRoute resources** as an alternative to Ingress. Both Ingress and Gateway can be enabled simultaneously, making it easy to migrate from Ingress to Gateway API with zero downtime. [PR #4726](https://github.com/zenml-io/zenml/pull/4726)
+
+#### ✨ Enhancements
+
+**Improved Trigger Management**
+
+- Triggers now track **per-snapshot dispatch state** showing whether the last run succeeded, was skipped due to concurrency policy, or failed
+- Failed dispatches store **richer error context** including message, type, severity, stack trace, and timestamps
+- New **acknowledge flow** lets you clear stored error context without re-attaching triggers or changing configuration
+
+[PR #4743](https://github.com/zenml-io/zenml/pull/4743)
+
+**Schedule Stop Criteria**
+
+Schedules now support a **max-runs limit** to automatically stop after a specified number of executions per snapshot, giving you better control over scheduled pipeline runs. [PR #4752](https://github.com/zenml-io/zenml/pull/4752)
+
+**Non-Blocking Concurrent Steps**
+
+Dynamic pipelines with concurrent steps now execute more efficiently. Waiting for step inputs happens asynchronously instead of blocking the main thread, significantly improving pipeline execution performance when using concurrent steps. [PR #4699](https://github.com/zenml-io/zenml/pull/4699)
+
+<details>
+<summary>🐛 Fixed</summary>
+
+- **Run status updates**: Fixed a bug where pipeline runs weren't properly marked as failed when a step pod failed after initially reporting success [PR #4747](https://github.com/zenml-io/zenml/pull/4747)
+- **Secret visibility updates**: You can now properly update secrets from private to public using the CLI or client [PR #4755](https://github.com/zenml-io/zenml/pull/4755)
+- **Logs for restarted runs**: Removed the unique constraint from logs schema to allow log entries for repeated executions of the same pipeline run [PR #4729](https://github.com/zenml-io/zenml/pull/4729)
+- **Air-gapped performance**: Flavor model generation no longer calls PyPI to resolve ZenML versions, improving performance in air-gapped environments [PR #4744](https://github.com/zenml-io/zenml/pull/4744)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.3)
+
+***
+
 ## 0.94.2 (2026-04-08)
 
 See what's new and improved in version 0.94.2.
