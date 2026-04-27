@@ -19,15 +19,15 @@ See what's new and improved in version 0.94.3.
 
 ZenML now supports **Podman** as an alternative to Docker for container image management. A new `ContainerEngine` abstraction has been introduced to make it easier to work with different OCI-compatible container runtimes. This gives you more flexibility in choosing your container tooling, especially in environments where Docker isn't available or preferred. [PR #4651](https://github.com/zenml-io/zenml/pull/4651)
 
-**Resource Pools**
+**Resource Pools (Pro only)**
 
 Introducing **Resource Pools** - a new way to manage and organize compute resources in ZenML. This feature includes full SDK methods, CLI commands, and API endpoints to create and manage resource pools and their associated objects, giving you better control over resource allocation across your ML workflows. [PR #4465](https://github.com/zenml-io/zenml/pull/4465)
 
-**Platform Event Triggers**
+**Platform Event Triggers (Pro only)**
 
 You can now set up **event-based triggers** that automatically execute downstream workflows based on ZenML platform events, such as when a pipeline run completes. This enables powerful automation patterns and reactive workflows without manual intervention. Full backend management including CLI and SDK support is now available. [PR #4692](https://github.com/zenml-io/zenml/pull/4692)
 
-**Server-Side Pipeline Replays**
+**Server-Side Pipeline Replays (Pro only)**
 
 Pipeline runs can now be **replayed from the server** with advanced capabilities:
 - **Skip specific steps** - steps won't re-execute even if cache was disabled or inputs changed
