@@ -1,5 +1,17 @@
 [
   {
+    "id": 38,
+    "slug": "secret-sharing-permissions-fixed",
+    "title": "Secret Sharing Permissions Fixed",
+    "description": "When you share a workspace secret with read or edit access, collaborators can now properly view the secret's key/value content as expected. Previously, users with read access could see the secret existed but couldn't access its actual values.",
+    "published_at": "2026-04-27T12:38:58Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
     "id": 37,
     "slug": "advanced-pipeline-orchestration-and-automation",
     "title": "Advanced Pipeline Orchestration and Automation",
