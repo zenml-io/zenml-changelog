@@ -7,6 +7,22 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.12 (2026-04-27)
+
+See what's new and improved in version 0.13.12.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/9.jpg" align="left" alt="ZenML Pro 0.13.12" width="800">
+
+#### Secret Sharing Improvements
+
+<details><summary>Fixed</summary>
+
+When sharing a workspace secret with read access, recipients can now view the secret's key/value content as expected. Previously, users with read permissions could see the secret existed but couldn't access its actual values. Both read and edit permissions now work correctly for shared secrets.
+
+</details>
+
+***
+
 ## 0.13.9 (2026-04-07)
 
 See what's new and improved in version 0.13.9.
