@@ -1,5 +1,40 @@
 [
   {
+    "id": 40,
+    "slug": "enhanced-secret-sharing-with-full-value-access",
+    "title": "Enhanced secret sharing with full value access",
+    "description": "When you share a workspace secret with read or edit permissions, collaborators can now view the actual secret values, not just metadata. This ensures that shared secrets work as expected for team collaboration.",
+    "published_at": "2026-05-12T08:41:10Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 39,
+    "slug": "improved-helm-deployment-security-and-flexibility",
+    "title": "Improved Helm deployment security and flexibility",
+    "description": "ZenML Helm charts now support loading sensitive credentials (admin passwords and OAuth SSO settings) from existing Kubernetes secrets, following security best practices. Additionally, workspace filtering has been fixed to correctly handle managed workspace queries for all users.",
+    "published_at": "2026-05-12T08:41:10Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "feature"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 38,
     "slug": "secret-sharing-permissions-fixed",
     "title": "Secret Sharing Permissions Fixed",
