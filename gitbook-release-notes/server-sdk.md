@@ -7,6 +7,61 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.4 (2026-05-12)
+
+See what's new and improved in version 0.94.4.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/10.jpg" align="left" alt="ZenML 0.94.4" width="800">
+
+#### New Databricks Step Operator
+
+You can now run individual pipeline steps on Databricks using the new **Databricks step operator** [PR #4648](https://github.com/zenml-io/zenml/pull/4648). This is useful when you want specific steps to execute in the Databricks runtime while the rest of your pipeline uses a different orchestrator. The Databricks orchestrator also now supports optional tag settings to label jobs and cluster resources for cost tracking, ownership, and governance.
+
+#### Nested Dynamic Pipelines
+
+Dynamic pipelines can now be nested, allowing you to call one dynamic pipeline from within another [PR #4775](https://github.com/zenml-io/zenml/pull/4775). This enables more modular and reusable pipeline designs.
+
+#### Enhanced Run:AI Training Workload Configuration
+
+The Run:AI step operator now supports advanced training workload settings [PR #4780](https://github.com/zenml-io/zenml/pull/4780), including:
+- Multiple mount types (PVC, ConfigMap, Secret, NFS, S3, HostPath)
+- Workload templates via `workload_template_id`
+- Security context settings (UID/GID, non-root execution, seccomp, capabilities)
+- Port declarations and external URL exposure
+- Training workload `parallelism` and `completions`
+
+#### Improved Kubernetes Job Failure Diagnostics
+
+When dynamic pipeline jobs fail due to system issues (such as OOM kills), ZenML now provides richer diagnostic information [PR #4800](https://github.com/zenml-io/zenml/pull/4800). This makes it easier to understand why Kubernetes terminated your pods.
+
+#### Better Kubernetes Label Handling
+
+Kubernetes string handling has been improved with separate sanitization for DNS-style names/keys and looser label-value rules for metadata like run, pipeline, and step IDs [PR #4756](https://github.com/zenml-io/zenml/pull/4756). This makes it easier to navigate through runs in Kubernetes.
+
+#### Increased Secret Size Limit
+
+The maximum allowed size for ZenML secrets stored in the SQL secrets store has been increased to 64KB [PR #4769](https://github.com/zenml-io/zenml/pull/4769). The limit applies to the combined size of all keys and values in a secret object.
+
+#### Dashboard: Parent Run Display
+
+The dashboard now displays parent run information in the run details view when available [PR #1050](https://github.com/zenml-io/zenml-dashboard/pull/1050).
+
+<details><summary>Fixed</summary>
+
+- **Signal handling during step execution**: Signal handlers are now properly unregistered after step execution, preventing strange errors when running many sync steps or interrupting pipelines [PR #4784](https://github.com/zenml-io/zenml/pull/4784). Dynamic pipeline steps running in isolated environments or step operators are no longer affected by signal handling from the orchestrator.
+
+- **RBAC performance**: Fixed redundant RBAC permission checks during response model dehydration [PR #4797](https://github.com/zenml-io/zenml/pull/4797). Previously, when permissions were already prefetched and denied, additional RBAC requests were sent unnecessarily for each sub-model.
+
+- **Keyword-only arguments in steps**: Step functions can now use keyword-only arguments without causing failures [PR #4798](https://github.com/zenml-io/zenml/pull/4798).
+
+- **Kubernetes orchestrator settings**: Fixed step pod configuration by replacing legacy hardcoded `orchestrator.kubernetes` lookups with proper `orchestrator.get_settings(...)` calls [PR #4803](https://github.com/zenml-io/zenml/pull/4803). Step pods now correctly apply orchestrator settings from canonical component keys while maintaining backward compatibility.
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.4)
+
+***
+
 ## 0.94.3 (2026-04-24)
 
 See what's new and improved in version 0.94.3.
