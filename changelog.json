@@ -1,5 +1,58 @@
 [
   {
+    "id": 42,
+    "slug": "enhanced-kubernetes-and-orchestrator-reliability",
+    "title": "Enhanced Kubernetes and Orchestrator Reliability",
+    "description": "Improved Kubernetes orchestration with better label sanitization for easier run navigation, fixed orchestrator setting resolution for step pods, and enhanced signal handling during step execution to prevent errors when pipelines are interrupted. Also added richer error information when Kubernetes kills jobs due to resource constraints like OOM.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 41,
+    "slug": "nested-dynamic-pipelines-and-databricks-integration",
+    "title": "Nested Dynamic Pipelines and Databricks Integration",
+    "description": "Introduced support for nested dynamic pipelines, allowing you to compose complex workflows by calling dynamic pipelines from within other dynamic pipelines. Added a new Databricks step operator for running individual pipeline steps on Databricks, with enhanced tagging capabilities for cost tracking and resource management.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 40,
+    "slug": "expanded-secrets-storage-and-run-ai-capabilities",
+    "title": "Expanded Secrets Storage and Run:AI Capabilities",
+    "description": "Increased the maximum size limit for secrets stored in the SQL secrets store to 64KB, enabling larger configuration storage. Enhanced the Run:AI step operator with advanced training workload settings including support for various mount types, workload templates, security contexts, and port declarations.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 39,
     "slug": "improved-helm-deployment-security-and-flexibility",
     "title": "Improved Helm deployment security and flexibility",
