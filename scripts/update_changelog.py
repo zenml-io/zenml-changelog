@@ -164,6 +164,17 @@ class GroupedChangelogOutput(BaseModel):
         description="2-3 grouped changelog entries summarizing the release.",
     )
 
+
+class GroupedChangelogSemanticError(RuntimeError):
+    """Recoverable semantic validation failure for grouped changelog output."""
+
+    def __init__(self, details: List[str], invalid_grouping_summary: str) -> None:
+        self.details = details
+        self.invalid_grouping_summary = invalid_grouping_summary
+        message = "\n".join(f"- {detail}" for detail in details)
+        super().__init__(message)
+
+
 class BreakingChangesOutput(BaseModel):
     bullets: List[str] = Field(
         default_factory=list,
@@ -615,6 +626,7 @@ def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_t
 def llm_generate_grouped_changelog_entries(
     prs: List[Dict[str, Any]],
     source_repo: str,
+    retry_feedback: Optional[str] = None,
 ) -> GroupedChangelogOutput:
     if anthropic_client is None:
         raise RuntimeError("Anthropic client not initialized")
@@ -636,39 +648,44 @@ def llm_generate_grouped_changelog_entries(
         for pr in prs
     )
 
+    prompt = (
+        "You are helping write grouped changelog entries for ZenML, an MLOps platform.\n\n"
+        "Here is the list of merged PRs with the `release-notes` label for this release. "
+        "Each PR includes its number, title, labels, URL, and a truncated body:\n\n"
+        f"{pr_summaries}\n\n"
+        f"The audience is {audience}. Focus on what users can now do or benefit from.\n\n"
+        "Your task:\n"
+        "- Group these PRs into 2-3 thematic user-facing changelog entries when possible. "
+        "For very small releases, 1 entry is acceptable.\n"
+        "- Each entry should summarize a coherent theme or area of improvement.\n"
+        "- Every PR must appear in exactly one group.\n"
+        "- Do not include PR numbers in the titles or descriptions.\n"
+        "- Use markdown-friendly prose in the descriptions (1-3 sentences).\n\n"
+        "Output format rules:\n"
+        "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
+        "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
+        "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
+        "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
+        "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
+        "feature, improvement, bugfix, deprecation.\n"
+        "Avoid low-level implementation details and emphasize user-facing value."
+    )
+
+    if retry_feedback:
+        prompt += (
+            "\n\nPrevious grouped output failed validation.\n\n"
+            f"{retry_feedback}\n\n"
+            "Generate the grouped changelog entries again. Every PR number from the input list "
+            "must appear exactly once. Do not invent, duplicate, or omit PR numbers."
+        )
+
     response = anthropic_client.beta.messages.parse(
         model="claude-sonnet-4-5-20250929",
         betas=["structured-outputs-2025-11-13"],
         max_tokens=1200,
         temperature=0,
         output_format=GroupedChangelogOutput,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    "You are helping write grouped changelog entries for ZenML, an MLOps platform.\n\n"
-                    "Here is the list of merged PRs with the `release-notes` label for this release. "
-                    "Each PR includes its number, title, labels, URL, and a truncated body:\n\n"
-                    f"{pr_summaries}\n\n"
-                    f"The audience is {audience}. Focus on what users can now do or benefit from.\n\n"
-                    "Your task:\n"
-                    "- Group these PRs into 2-3 thematic user-facing changelog entries when possible. "
-                    "For very small releases, 1 entry is acceptable.\n"
-                    "- Each entry should summarize a coherent theme or area of improvement.\n"
-                    "- Every PR must appear in exactly one group.\n"
-                    "- Do not include PR numbers in the titles or descriptions.\n"
-                    "- Use markdown-friendly prose in the descriptions (1-3 sentences).\n\n"
-                    "Output format rules:\n"
-                    "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
-                    "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
-                    "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
-                    "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
-                    "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
-                    "feature, improvement, bugfix, deprecation.\n"
-                    "Avoid low-level implementation details and emphasize user-facing value."
-                ),
-            }
-        ],
+        messages=[{"role": "user", "content": prompt}],
     )
     return response.parsed_output
 
@@ -972,6 +989,90 @@ def collect_needs_attention(
             )
     return needs_attention
 
+
+def format_repo_qualified_pr(pr: Dict[str, Any]) -> str:
+    """Return a compact repo-qualified PR identifier for hard validation errors."""
+    repo = pr.get("repo") or "<unknown repo>"
+    return f"{repo}#{pr['number']}"
+
+
+def assert_unique_grouped_pr_numbers(prs: List[Dict[str, Any]]) -> None:
+    """Fail fast when bare PR numbers cannot uniquely identify grouped PRs."""
+    prs_by_number: Dict[int, List[Dict[str, Any]]] = {}
+    for pr in prs:
+        prs_by_number.setdefault(pr["number"], []).append(pr)
+
+    ambiguous_groups = {
+        number: grouped_prs
+        for number, grouped_prs in prs_by_number.items()
+        if len(grouped_prs) > 1
+    }
+    if not ambiguous_groups:
+        return
+
+    examples = []
+    for number, grouped_prs in sorted(ambiguous_groups.items()):
+        repo_qualified = ", ".join(format_repo_qualified_pr(pr) for pr in grouped_prs)
+        examples.append(f"PR #{number}: {repo_qualified}")
+
+    raise RuntimeError(
+        "Cannot generate grouped changelog entries because multiple source PRs share "
+        "the same PR number. The current grouped-output format only returns bare "
+        "PR numbers, so these inputs would be ambiguous. Conflicting PR records: "
+        + "; ".join(examples)
+    )
+
+
+def summarize_grouped_changelog_output(grouped_output: GroupedChangelogOutput) -> str:
+    """Return compact group titles and PR numbers for retry feedback."""
+    if not grouped_output.entries:
+        return "- <no grouped entries>: []"
+
+    return "\n".join(
+        f"- {entry.title}: [{', '.join(str(number) for number in entry.pr_numbers)}]"
+        for entry in grouped_output.entries
+    )
+
+
+def validate_grouped_changelog_output(
+    grouped_output: GroupedChangelogOutput,
+    prs: List[Dict[str, Any]],
+) -> None:
+    """Validate that grouped changelog output assigns each input PR exactly once."""
+    assert_unique_grouped_pr_numbers(prs)
+
+    known_numbers = {pr["number"] for pr in prs}
+    assigned_counts: Dict[int, int] = {}
+    details: List[str] = []
+
+    for entry in grouped_output.entries:
+        for pr_number in entry.pr_numbers:
+            assigned_counts[pr_number] = assigned_counts.get(pr_number, 0) + 1
+            if pr_number not in known_numbers:
+                details.append(
+                    f"Grouped changelog entry '{entry.title}' references unknown PR #{pr_number}."
+                )
+
+    for pr_number, count in sorted(assigned_counts.items()):
+        if count > 1:
+            details.append(
+                f"PR #{pr_number} appears in more than one grouped changelog entry."
+            )
+
+    missing_numbers = known_numbers - set(assigned_counts.keys())
+    if missing_numbers:
+        missing_str = ", ".join(f"#{number}" for number in sorted(missing_numbers))
+        details.append(
+            f"The following PRs were not assigned to any grouped changelog entry: {missing_str}."
+        )
+
+    if details:
+        raise GroupedChangelogSemanticError(
+            details=details,
+            invalid_grouping_summary=summarize_grouped_changelog_output(grouped_output),
+        )
+
+
 def build_grouped_changelog_entries(
     grouped_output: GroupedChangelogOutput,
     prs: List[Dict[str, Any]],
@@ -980,29 +1081,9 @@ def build_grouped_changelog_entries(
     starting_id: int,
 ) -> List[Dict[str, Any]]:
     """Convert grouped LLM output into schema-compliant changelog entries."""
+    validate_grouped_changelog_output(grouped_output=grouped_output, prs=prs)
+
     pr_by_number: Dict[int, Dict[str, Any]] = {pr["number"]: pr for pr in prs}
-    all_known_numbers = set(pr_by_number.keys())
-    assigned_numbers: set[int] = set()
-
-    for entry in grouped_output.entries:
-        for pr_number in entry.pr_numbers:
-            if pr_number not in pr_by_number:
-                raise RuntimeError(
-                    f"Grouped changelog entry references unknown PR number #{pr_number}"
-                )
-            if pr_number in assigned_numbers:
-                raise RuntimeError(
-                    f"PR #{pr_number} appears in more than one grouped changelog entry"
-                )
-            assigned_numbers.add(pr_number)
-
-    unassigned = all_known_numbers - assigned_numbers
-    if unassigned:
-        missing_str = ", ".join(f"#{n}" for n in sorted(unassigned))
-        raise RuntimeError(
-            f"The following PRs were not assigned to any grouped changelog entry: {missing_str}"
-        )
-
     config = REPO_CONFIG[source_repo]
     entries: List[Dict[str, Any]] = []
     group_count = len(grouped_output.entries)
@@ -1038,6 +1119,74 @@ def build_grouped_changelog_entries(
         )
 
     return entries
+
+
+def build_grouped_retry_feedback(error: GroupedChangelogSemanticError) -> str:
+    """Build compact validation feedback for a semantic grouped-output retry."""
+    validation_feedback = "\n".join(f"- {detail}" for detail in error.details)
+    return (
+        "Validation feedback:\n"
+        f"{validation_feedback}\n\n"
+        "Previous invalid grouping:\n"
+        f"{error.invalid_grouping_summary}"
+    )
+
+
+def format_grouped_attempt_summaries(attempt_errors: List[GroupedChangelogSemanticError]) -> str:
+    """Format semantic retry failures for the final actionable error."""
+    return "\n\n".join(
+        f"Attempt {index}:\n" + "\n".join(f"- {detail}" for detail in error.details)
+        for index, error in enumerate(attempt_errors, start=1)
+    )
+
+
+def generate_valid_grouped_changelog_entries(
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+    published_at: str,
+    starting_id: int,
+    max_attempts: int = 3,
+) -> List[Dict[str, Any]]:
+    """Generate grouped changelog entries, retrying only semantic PR assignment errors."""
+    assert_unique_grouped_pr_numbers(prs)
+
+    retry_feedback: Optional[str] = None
+    attempt_errors: List[GroupedChangelogSemanticError] = []
+
+    for attempt in range(1, max_attempts + 1):
+        if attempt > 1:
+            print(
+                "Retrying grouped changelog generation after semantic validation failure "
+                f"(attempt {attempt}/{max_attempts})"
+            )
+
+        grouped_output = llm_generate_grouped_changelog_entries(
+            prs=prs,
+            source_repo=source_repo,
+            retry_feedback=retry_feedback,
+        )
+
+        try:
+            return build_grouped_changelog_entries(
+                grouped_output=grouped_output,
+                prs=prs,
+                source_repo=source_repo,
+                published_at=published_at,
+                starting_id=starting_id,
+            )
+        except GroupedChangelogSemanticError as error:
+            attempt_errors.append(error)
+            print(
+                f"Grouped changelog semantic validation failed on attempt {attempt}/{max_attempts}: "
+                + "; ".join(error.details)
+            )
+            retry_feedback = build_grouped_retry_feedback(error)
+
+    raise RuntimeError(
+        f"Grouped changelog generation failed semantic validation after {max_attempts} attempts.\n\n"
+        f"{format_grouped_attempt_summaries(attempt_errors)}\n\n"
+        "No changelog.json, markdown, or .image_state updates were written."
+    )
 
 
 def update_markdown_file(md_path: Path, new_section: str) -> None:
@@ -1165,13 +1314,9 @@ def main() -> None:
             }
         )
 
-    # Use a single LLM call to create 2-3 grouped, thematic changelog entries
-    grouped_output = llm_generate_grouped_changelog_entries(
-        prs=grouping_prs,
-        source_repo=source_repo,
-    )
-    new_entries = build_grouped_changelog_entries(
-        grouped_output=grouped_output,
+    # Use a single valid grouping to create 2-3 thematic changelog entries.
+    # Semantically invalid groupings are retried before any repository files are written.
+    new_entries = generate_valid_grouped_changelog_entries(
         prs=grouping_prs,
         source_repo=source_repo,
         published_at=published_at,
