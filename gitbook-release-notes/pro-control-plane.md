@@ -7,6 +7,41 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.13 (2026-05-12)
+
+See what's new and improved in version 0.13.13.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/10.jpg" align="left" alt="ZenML Pro 0.13.13" width="800">
+
+#### Secret Sharing Improvements
+
+<details><summary>Fixed</summary>
+
+When you shared a workspace secret with someone and gave them **read** access, they could see the secret in the app but not the actual key/value content. This has been fixed—**Read** and **Edit** permissions on shared secrets now work as expected, allowing users to view secret values when they have read or edit access.
+
+</details>
+
+#### Helm Chart Enhancements
+
+You can now load sensitive configuration values from existing Kubernetes `Secrets` instead of plain Helm values. This includes:
+
+- **OAuth SSO client credentials** via `zenml.auth.sso.credentialsSecretRef`—reference an existing secret containing your OAuth client ID and client secret
+- **Admin password** via external secret reference, following the same pattern as the existing database password configuration
+
+This approach aligns with Kubernetes security best practices and makes it easier to integrate ZenML with your existing secret management workflows.
+
+#### Workspace Filtering
+
+<details><summary>Fixed</summary>
+
+Two issues with the list workspaces endpoint have been resolved:
+- The `is_managed` filter was being ignored for non-super-users
+- The `is_managed` filter was mapped incorrectly, not properly handling the default value of `True` when the database column was unset
+
+</details>
+
+***
+
 ## 0.13.12 (2026-04-27)
 
 See what's new and improved in version 0.13.12.
