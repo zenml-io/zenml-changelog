@@ -1,5 +1,58 @@
 [
   {
+    "id": 41,
+    "slug": "enhanced-organization-management-and-user-discovery",
+    "title": "Enhanced organization management and user discovery",
+    "description": "Organizations can now configure trusted email domains to streamline teammate discovery and invitations. The organizations list now properly loads all entries with pagination support, ensuring large deployments can access every organization. Personal account settings are now consistently accessible regardless of navigation context.",
+    "published_at": "2026-05-13T07:56:45Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 40,
+    "slug": "improved-sharing-permissions-for-secrets-and-connectors",
+    "title": "Improved sharing permissions for secrets and connectors",
+    "description": "Sharing secrets and service connectors with Read or Edit access now correctly grants permissions to view values, not just metadata. The access control behavior now matches the permission labels as expected.",
+    "published_at": "2026-05-13T07:56:45Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 39,
+    "slug": "fixed-code-repository-links",
+    "title": "Fixed code repository links",
+    "description": "Code repository URLs are now generated correctly throughout the interface.",
+    "published_at": "2026-05-13T07:56:45Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 38,
     "slug": "secret-sharing-permissions-fixed",
     "title": "Secret Sharing Permissions Fixed",
