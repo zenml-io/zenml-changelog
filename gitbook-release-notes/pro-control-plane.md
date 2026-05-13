@@ -21,6 +21,10 @@ Sharing secrets and service connectors now works as expected. When you grant **R
 
 Organization operators can now configure **trusted email domains** to define which company email addresses belong to their organization. This makes it easier to find and invite existing ZenML users from your company—the system can surface matching accounts where policy allows, instead of relying solely on email invitations.
 
+Configuring trusted domains:
+- ZenML-managed deployments: To enable or change trusted domains for your organization, [contact ZenML support](https://zenml.io/slack) or your account contact.
+- Self-hosted deployments: Accounts with super-user privileges can configure trusted domains through the ZenML Pro API on organization create and update operations using the `trusted_domains` field.
+
 <details><summary>Fixed</summary>
 
 - **Personal Access Tokens** now appear consistently in account settings regardless of whether you're viewing from within an organization or from the organization list
