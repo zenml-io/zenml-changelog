@@ -7,6 +7,35 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.14 (2026-05-13)
+
+See what's new and improved in version 0.13.14.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/11.jpg" align="left" alt="ZenML Pro 0.13.14" width="800">
+
+#### Improved Secret and Service Connector Sharing
+
+Sharing secrets and service connectors now works as expected. When you grant **Read** or **Edit** permissions to another user, they automatically receive the necessary permissions to view secret values and use service connectors for authentication—not just see metadata. The access list now accurately reflects who can actually use these resources.
+
+#### Organization Trusted Domains
+
+Organization operators can now configure **trusted email domains** to define which company email addresses belong to their organization. This makes it easier to find and invite existing ZenML users from your company—the system can surface matching accounts where policy allows, instead of relying solely on email invitations.
+
+Configuring trusted domains:
+- ZenML-managed deployments: To enable or change trusted domains for your organization, [contact ZenML support](https://zenml.io/slack) or your account contact.
+- Self-hosted deployments: Accounts with super-user privileges can configure trusted domains through the ZenML Pro API on organization create and update operations using the `trusted_domains` field.
+
+<details><summary>Fixed</summary>
+
+- **Personal Access Tokens** now appear consistently in account settings regardless of whether you're viewing from within an organization or from the organization list
+- **Invitations** menu item in personal account settings now only appears when SSO is enabled, matching the behavior in the avatar menu
+- Organizations overview now loads all organizations you have access to, fixing an issue where only the first ~100 organizations would appear in the list and org switcher
+- Code repository links now generate correctly
+
+</details>
+
+***
+
 ## 0.13.13 (2026-05-12)
 
 See what's new and improved in version 0.13.13.
