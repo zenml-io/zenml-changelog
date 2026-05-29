@@ -1,5 +1,69 @@
 [
   {
+    "id": 51,
+    "slug": "live-event-streaming-for-pipeline-runs",
+    "title": "Live Event Streaming for Pipeline Runs",
+    "description": "You can now stream custom events in real time from running pipelines. Call `zenml.streaming.publish()` from inside any step or dynamic pipeline to push events that consumers can read via Server-Sent Events (SSE). Enable it by setting `stream_broker_implementation_source` in your server configuration; the initial implementation includes a Redis-based broker with automatic catch-up, gap signaling, and idle cleanup.",
+    "published_at": "2026-05-29T10:10:53Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/streaming_events"
+  },
+  {
+    "id": 50,
+    "slug": "pipeline-run-statistics-endpoint",
+    "title": "Pipeline Run Statistics Endpoint",
+    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata—ideal for building dashboards and analytics.",
+    "published_at": "2026-05-29T10:10:53Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 49,
+    "slug": "richer-weights-and-biases-integration",
+    "title": "Richer Weights & Biases Integration",
+    "description": "The Weights & Biases experiment tracker now automatically attaches ZenML pipeline and step metadata to your W&B runs, groups runs by pipeline execution, and records W&B identifiers back into ZenML step metadata. You can also configure custom groups, job types, run configs, explicit or deterministic run IDs, resume behavior, and pass through additional `wandb.init` keyword arguments.",
+    "published_at": "2026-05-29T10:10:53Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/experiment-trackers/wandb"
+  },
+  {
+    "id": 48,
+    "slug": "structured-logging-and-opentelemetry-support",
+    "title": "Structured Logging and OpenTelemetry Support",
+    "description": "The ZenML server now supports structured logging with OpenTelemetry instrumentation. Configure console output with the new `ZENML_CONSOLE_LOGGING_FORMAT` environment variable, choosing between `console`, `json`, or `text` formats. Server logs use a clean structured layout with timestamps, levels, logger context, and optional JSON fields.",
+    "published_at": "2026-05-29T10:10:53Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/log-stores/otel"
+  },
+  {
+    "id": 47,
+    "slug": "developer-experience-and-reliability-improvements",
+    "title": "Developer Experience and Reliability Improvements",
+    "description": "A collection of quality-of-life and reliability improvements: step and pipeline definitions now support string type annotations (including `from __future__ import annotations`); Docker image builds can mount a build cache for faster package installs; interactive wait-condition inputs accept raw strings without requiring JSON quotes; and console logging gained step-name prefixes and clearer formatting. On the reliability side, pipeline runs now fail cleanly when the pipeline function can't be imported instead of hanging indefinitely, keyboard interrupts during wait conditions are handled gracefully, an admin API bug that blocked activating or deactivating user accounts is fixed, and the dashboard's pipeline timeline scrolling is smoother.",
+    "published_at": "2026-05-29T10:10:53Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 46,
     "slug": "enhanced-organization-management-and-user-discovery",
     "title": "Enhanced organization management and user discovery",
