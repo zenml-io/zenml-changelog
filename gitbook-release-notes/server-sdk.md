@@ -7,6 +7,56 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.5 (2026-05-29)
+
+See what's new and improved in version 0.94.5.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/11.jpg" align="left" alt="ZenML 0.94.5" width="800">
+
+#### 🚀 Live Event Streaming for Pipeline Runs
+
+You can now stream custom events in real-time from your running pipelines! Call `zenml.streaming.publish()` from inside any step or dynamic pipeline to push events that can be consumed via Server-Sent Events (SSE). Enable this feature by setting `stream_broker_implementation_source` in your server configuration. The initial implementation includes a Redis-based broker with automatic catch-up, gap signaling, and idle cleanup. [PR #4804](https://github.com/zenml-io/zenml/pull/4804)
+
+#### 📊 Pipeline Run Statistics Endpoint
+
+A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, tags, and more. Calculate averages, sums, min/max over duration, step counts, cached steps, output artifacts, or custom numeric metadata. Perfect for building dashboards and analytics. [PR #4860](https://github.com/zenml-io/zenml/pull/4860)
+
+#### 🎯 Richer Weights & Biases Integration
+
+The W&B experiment tracker now automatically adds ZenML pipeline and step metadata to your W&B runs, groups runs by pipeline execution, and records W&B identifiers back to ZenML step metadata. You can now configure custom groups, job types, run configs, explicit or deterministic run IDs, resume behavior, and pass through additional `wandb.init` kwargs for complete control over your experiment tracking. [PR #4838](https://github.com/zenml-io/zenml/pull/4838)
+
+#### 🤖 Agentic Human-in-the-Loop Pipeline Example
+
+A new example demonstrates building dynamic agentic pipelines with human approval gates. The example shows how to plan agent tasks, fan them out with `step.map()`, summarize results, pause execution with `zenml.wait()` for human review, and branch the final action based on the decision. Includes clean lineage tracking with `Annotated` step outputs. [PR #4849](https://github.com/zenml-io/zenml/pull/4849)
+
+#### 📝 Structured Logging and OpenTelemetry Instrumentation
+
+The ZenML server now supports structured logging with OpenTelemetry instrumentation. Configure console output with the new `ZENML_CONSOLE_LOGGING_FORMAT` environment variable, choosing between `console`, `json`, or `text` formats. Server logs use a clean structured layout with timestamps, levels, logger context, and optional JSON fields. [PR #4781](https://github.com/zenml-io/zenml/pull/4781)
+
+#### 🛠️ Enhanced Developer Experience
+
+- **String Type Annotations**: Step and pipeline definitions now support string annotations, either explicitly quoted or via `from __future__ import annotations`. [PR #4843](https://github.com/zenml-io/zenml/pull/4843)
+- **Build Cache Mounting**: Python package installations during Docker image building can now mount a build cache for faster builds. [PR #4820](https://github.com/zenml-io/zenml/pull/4820)
+- **Improved Wait Condition Input**: When resolving wait conditions interactively with string schemas, you can now input raw strings without quotes—ZenML detects and handles this automatically. [PR #4845](https://github.com/zenml-io/zenml/pull/4845)
+- **Better Logging Control**: Restored custom console log formatting for non-DEBUG output, added step-name prefixes in terminal output during execution (disable with `ZENML_DISABLE_STEP_NAMES_IN_LOGS=true`), and kept stored logs clean and unformatted. The `ZENML_LOGGING_FORMAT` variable is now deprecated in favor of `ZENML_CONSOLE_LOGGING_FORMAT`. [PR #4851](https://github.com/zenml-io/zenml/pull/4851)
+
+#### 🎨 Dashboard Improvements
+
+- Improved scrolling behavior for the pipeline timeline view. [PR #1053](https://github.com/zenml-io/zenml-dashboard/pull/1053)
+
+<details>
+<summary>Fixed</summary>
+
+- Pipeline runs now properly fail when the user pipeline function cannot be imported (e.g., due to missing packages), instead of staying in a `running` state indefinitely. [PR #4832](https://github.com/zenml-io/zenml/pull/4832)
+- Keyboard interrupts during active wait conditions are now handled more gracefully, preventing unclear error messages when the server transitions to `STOPPED` status. [PR #4835](https://github.com/zenml-io/zenml/pull/4835)
+- Fixed a copy-paste bug in the user update endpoint where admins couldn't activate or deactivate user accounts—the code was incorrectly writing `is_admin` instead of `active` to the safe update object. [PR #4839](https://github.com/zenml-io/zenml/pull/4839)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.5)
+
+***
+
 ## 0.94.4 (2026-05-12)
 
 See what's new and improved in version 0.94.4.
