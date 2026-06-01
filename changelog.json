@@ -1,5 +1,70 @@
 [
   {
+    "id": 44,
+    "slug": "new-databricks-step-operator",
+    "title": "New Databricks Step Operator",
+    "description": "You can now run individual pipeline steps on Databricks with the new Databricks step operator. This is useful when you want specific steps to execute in the Databricks runtime while the rest of your pipeline uses a different orchestrator. The Databricks orchestrator also supports optional tag settings to label jobs and cluster resources for cost tracking, ownership, and governance.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/step-operators/databricks"
+  },
+  {
+    "id": 43,
+    "slug": "nested-dynamic-pipelines",
+    "title": "Nested Dynamic Pipelines",
+    "description": "Dynamic pipelines can now be nested, allowing you to call one dynamic pipeline from within another. This enables more modular and reusable pipeline designs, letting you compose complex workflows from smaller dynamic building blocks.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/dynamic_pipelines"
+  },
+  {
+    "id": 42,
+    "slug": "enhanced-run-ai-training-workload-configuration",
+    "title": "Enhanced Run:AI Training Workload Configuration",
+    "description": "The Run:AI step operator now supports advanced training workload settings, including multiple mount types (PVC, ConfigMap, Secret, NFS, S3, HostPath), workload templates, security context settings (UID/GID, non-root execution, seccomp, capabilities), port declarations and external URL exposure, and training workload parallelism and completions.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/step-operators/runai"
+  },
+  {
+    "id": 41,
+    "slug": "increased-secret-size-limit",
+    "title": "Increased Secret Size Limit",
+    "description": "The maximum allowed size for ZenML secrets stored in the SQL secrets store has been increased to 64KB, enabling larger configuration storage. The limit applies to the combined size of all keys and values in a secret object.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/secrets"
+  },
+  {
+    "id": 40,
+    "slug": "enhanced-kubernetes-and-orchestrator-reliability",
+    "title": "Enhanced Kubernetes and Orchestrator Reliability",
+    "description": "Improved Kubernetes orchestration with better label sanitization for easier run navigation, fixed orchestrator setting resolution for step pods, and enhanced signal handling during step execution to prevent errors when pipelines are interrupted. Also added richer error information when Kubernetes kills jobs due to resource constraints like OOM.",
+    "published_at": "2026-05-12T15:13:19Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 39,
     "slug": "improved-helm-deployment-security-and-flexibility",
     "title": "Improved Helm deployment security and flexibility",
