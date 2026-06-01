@@ -1,5 +1,31 @@
 [
   {
+    "id": 46,
+    "slug": "enhanced-organization-management-and-user-discovery",
+    "title": "Enhanced organization management and user discovery",
+    "description": "Organizations can now configure trusted email domains to streamline teammate discovery and invitations. The organizations list now properly loads all entries with pagination support, ensuring large deployments can access every organization. Personal account settings are now consistently accessible regardless of navigation context.",
+    "published_at": "2026-05-13T07:56:45Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/organization"
+  },
+  {
+    "id": 45,
+    "slug": "improved-service-connector-sharing",
+    "title": "Improved service connector sharing",
+    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata—matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
+    "published_at": "2026-05-13T07:56:45Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
     "id": 44,
     "slug": "new-databricks-step-operator",
     "title": "New Databricks Step Operator",
