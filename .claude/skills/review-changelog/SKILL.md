@@ -33,9 +33,53 @@ This skill helps complete new changelog entries after our automated release work
 
 ## Workflow
 
+### Step 0: Find and Triage the PR Queue
+
+Before touching any entries, find which PRs are waiting for review and process them **one at a time, oldest first**.
+
+1. **List the open PRs assigned to you for review.** The widget PRs (the ones that touch `changelog.json`) have the title prefix `Changelog widget:` and request `strickvl` as a reviewer. The companion `Release notes:` GitBook PRs are reviewed by others and are usually already merged — ignore them.
+
+   ```bash
+   gh pr list --repo zenml-io/zenml-changelog --state open --limit 50 \
+     --json number,title,headRefName,createdAt,reviewRequests \
+     --jq 'sort_by(.createdAt)'
+   ```
+
+   Filter to PRs whose title starts with `Changelog widget:` and whose `reviewRequests` include `strickvl`.
+
+2. **Order the queue oldest → newest** (by `createdAt`). Show the user the ordered list as a table and confirm before starting.
+
+3. **Process each PR in order using the per-PR loop below.** Do not start the next PR until the current one is merged — later PRs branched off an older `main` and will conflict in `changelog.json` (the `id` numbering and newest-first ordering collide). Merging in order keeps conflicts predictable.
+
+### Per-PR Loop
+
+For each PR in the ordered queue:
+
+1. **Check out the PR branch:**
+   ```bash
+   gh pr checkout <number> --repo zenml-io/zenml-changelog
+   git pull --rebase origin main   # rebase onto latest main; resolve changelog.json conflicts if any
+   ```
+   If there are conflicts in `changelog.json`, resolve them: keep all entries, renumber `id`s so they stay unique and sequential, and preserve newest-first ordering. The `fix-merge-conflicts` skill can help.
+
+2. **Run Steps 1–3 below** to identify, review, and complete the new entries.
+
+3. **Validate locally:** `uv run scripts/validate_changelog.py`.
+
+4. **Commit and push** the completed entries to the PR branch.
+
+5. **Wait for CI to pass**, then merge:
+   ```bash
+   gh pr checks <number> --repo zenml-io/zenml-changelog --watch
+   gh pr merge <number> --repo zenml-io/zenml-changelog --squash
+   ```
+   `main` requires **1 approving review**, so a plain `--squash` is blocked with `the base branch policy prohibits the merge`. Ask the user how to clear the gate (approve as them, admin override, or they approve manually); admin override is `gh pr merge <number> --repo zenml-io/zenml-changelog --squash --admin`. Because you rebased the branch, push with `git push --force-with-lease` before merging.
+
+6. **Move to the next PR.** After merging, the next PR's branch is now behind `main` — rebasing it (step 1) is where you resolve the conflicts that the just-merged PR introduced.
+
 ### Step 1: Identify New Entries
 
-Run these commands to find the current branch and new entries:
+After checking out the PR branch, find the new entries:
 
 ```bash
 git branch --show-current
@@ -80,6 +124,14 @@ When updating based on a PR:
 3. Rewrite the entry title and description to accurately reflect the PR's changes
 4. Show the proposed update to the user for approval before applying
 
+#### 2.0.2 Split over-grouped entries (common)
+
+The automation's LLM groups several PRs into 2–3 "buckets" per release to keep the widget compact, but that grouping is a guess and frequently fuses **unrelated features** into one entry (e.g. "nested dynamic pipelines AND a Databricks step operator", or "bigger secrets AND Run:AI settings"). Splitting these into separate cards gives each a clean headline, the correct label, and its own natural docs page.
+
+**Heuristic for where to split:** count the distinct **source PRs** behind a bucket (from the GitBook markdown). Several unrelated PRs → split into one entry each. A cluster of genuinely small fixes (keyboard-interrupt handling, an import-failure fix) → keep them together as one "reliability roundup". A standalone example or a one-line fix bullet that the markdown lists under another release's "Fixed" section → usually drop it or fold it in, rather than give it a headline card.
+
+When splitting, ask the user how granular they want each bucket (per the 0.94.x examples in this repo's history). After splitting, **renumber** so ids stay unique and sequential, newest on top.
+
 #### 2.1 Audience
 - **oss** - Only open-source users see this
 - **pro** - Only ZenML Pro users see this
@@ -111,9 +163,31 @@ Ask if there's a blog post or article. If yes, get the URL.
 - If no blog post, this field will be removed from the entry
 
 #### 2.6 Docs URL
-Ask if there's relevant documentation. If yes, get the URL.
-- Usually https://docs.zenml.io/...
-- If no docs URL, this field will be removed from the entry
+
+Don't just ask the user to find a docs page — **investigate the source PRs first and suggest a verified URL**. The change behind an entry almost always shipped docs alongside the code, so the work is to find them:
+
+1. **Find the source PRs for the entry.** For the **OSS path**, the companion `Release notes:` GitBook PR (usually already merged into `gitbook-release-notes/server-sdk.md`) lists every source PR with a link — extract the section for this release:
+   ```bash
+   awk '/## <TAG>/{f=1} f{print} /## <PREV_TAG>/{if(f)exit}' gitbook-release-notes/server-sdk.md
+   ```
+   For the **Pro path**, `pro-control-plane.md` omits PR links by convention, so you may only have the prose description (source repos are the private `zenml-cloud-api` / `zenml-cloud-ui`).
+
+2. **Check each source PR for docs it added.** A PR that touches `docs/` or `*.md` files almost certainly has a docs page:
+   ```bash
+   gh pr view <PR_NUMBER> --repo zenml-io/zenml --json title,files \
+     --jq '.title, (.files[].path | select(test("docs/|\\.md$")))'
+   ```
+   The PR file list is the **source of truth** for whether docs exist — do not guess from the entry text alone. (A PR with no `docs/` files, e.g. a pure API endpoint, legitimately has no docs page — leave `docs_url` off.)
+
+3. **Map the `docs/book/*.md` file path to the live URL and verify it.** The live site does **not** mirror the file path (e.g. `docs/book/component-guide/step-operators/databricks.md` → `https://docs.zenml.io/stacks/stack-components/step-operators/databricks`). Verify every candidate with an HTTP check against a known-bad control so you don't trust a soft-404:
+   ```bash
+   probe() { curl -sL -o /dev/null -w "%{http_code}  %{url_effective}\n" "$1"; }
+   probe "https://docs.zenml.io/<candidate-path>"
+   probe "https://docs.zenml.io/this-path-should-404"   # control: must return 404
+   ```
+   Common path rewrites: `component-guide/...` → `stacks/stack-components/...`; `how-to/steps-pipelines/...` → `concepts/steps_and_pipelines/...`.
+
+4. **Suggest the verified URL** to the user as the recommended option (they can override). If no source PR added docs, present "No docs link" as the recommendation.
 
 #### 2.7 Should Highlight
 Ask if this announcement should be highlighted (pops up for users).
