@@ -1,6 +1,6 @@
 [
   {
-    "id": 54,
+    "id": 53,
     "slug": "streamlined-organization-invitations-with-sso",
     "title": "Streamlined organization invitations with SSO",
     "description": "Organization admins can now invite existing ZenML users directly to their organization when SSO is enabled, bypassing the traditional email invitation flow. Members with existing accounts are added immediately with proper roles and permissions, making team onboarding faster and more seamless.",
@@ -11,14 +11,10 @@
       "feature",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/organization"
   },
   {
-    "id": 53,
+    "id": 52,
     "slug": "ui-improvements-and-bug-fixes",
     "title": "UI improvements and bug fixes",
     "description": "Fixed several UI issues including tag overflow in columns, improved error messaging for step logs when permissions are missing, corrected artifact version status display, and resolved organization access permission handling. Additionally fixed a bug where mixed-case email addresses could block invitation acceptance.",
@@ -28,29 +24,7 @@
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 52,
-    "slug": "kitaru-workspace-deployment-support",
-    "title": "Kitaru workspace deployment support",
-    "description": "Added support for deploying Kitaru workspaces, expanding deployment options for ZenML Pro users.",
-    "published_at": "2026-06-01T09:40:24Z",
-    "published": true,
-    "audience": "pro",
-    "labels": [
-      "feature"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 51,
