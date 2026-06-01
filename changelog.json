@@ -1,5 +1,18 @@
 [
   {
+    "id": 39,
+    "slug": "improved-helm-deployment-security-and-flexibility",
+    "title": "Improved Helm deployment security and flexibility",
+    "description": "ZenML Helm charts now support loading sensitive credentials (admin passwords and OAuth SSO settings) from existing Kubernetes secrets, following security best practices. Additionally, workspace filtering has been fixed to correctly handle managed workspace queries for all users.",
+    "published_at": "2026-05-12T08:41:10Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "feature"
+    ]
+  },
+  {
     "id": 38,
     "slug": "secret-sharing-permissions-fixed",
     "title": "Secret Sharing Permissions Fixed",
