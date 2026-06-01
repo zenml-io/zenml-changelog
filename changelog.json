@@ -1,5 +1,32 @@
 [
   {
+    "id": 53,
+    "slug": "streamlined-organization-invitations-with-sso",
+    "title": "Streamlined organization invitations with SSO",
+    "description": "Organization admins can now invite existing ZenML users directly to their organization when SSO is enabled, bypassing the traditional email invitation flow. Members with existing accounts are added immediately with proper roles and permissions, making team onboarding faster and more seamless.",
+    "published_at": "2026-06-01T09:40:24Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/organization"
+  },
+  {
+    "id": 52,
+    "slug": "ui-improvements-and-bug-fixes",
+    "title": "UI improvements and bug fixes",
+    "description": "Fixed several UI issues including tag overflow in columns, improved error messaging for step logs when permissions are missing, corrected artifact version status display, and resolved organization access permission handling. Additionally fixed a bug where mixed-case email addresses could block invitation acceptance.",
+    "published_at": "2026-06-01T09:40:24Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 51,
     "slug": "live-event-streaming-for-pipeline-runs",
     "title": "Live Event Streaming for Pipeline Runs",
@@ -16,7 +43,7 @@
     "id": 50,
     "slug": "pipeline-run-statistics-endpoint",
     "title": "Pipeline Run Statistics Endpoint",
-    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata—ideal for building dashboards and analytics.",
+    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata\u2014ideal for building dashboards and analytics.",
     "published_at": "2026-05-29T10:10:53Z",
     "published": true,
     "audience": "oss",
@@ -81,7 +108,7 @@
     "id": 45,
     "slug": "improved-service-connector-sharing",
     "title": "Improved service connector sharing",
-    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata—matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
+    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata\u2014matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
     "published_at": "2026-05-13T07:56:45Z",
     "published": true,
     "audience": "pro",
