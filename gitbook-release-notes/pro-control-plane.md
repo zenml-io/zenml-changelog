@@ -19,10 +19,6 @@ Inviting existing ZenML users to your organization is now faster and more seamle
 
 The organization members table now displays email addresses alongside usernames when available, making it easier to identify team members at a glance.
 
-#### Workspace Deployment
-
-Added support for deploying Kitaru workspaces, expanding deployment options for your ZenML infrastructure.
-
 <details><summary>Fixed</summary>
 
 - **Tag display overflow**: Tags in table columns now wrap properly instead of overflowing their containers
