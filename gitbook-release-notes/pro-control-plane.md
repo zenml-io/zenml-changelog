@@ -7,6 +7,30 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.15 (2026-06-01)
+
+See what's new and improved in version 0.13.15.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/12.jpg" align="left" alt="ZenML Pro 0.13.15" width="800">
+
+#### Organization Member Management Improvements
+
+Inviting existing ZenML users to your organization is now faster and more seamless. When you invite someone who already has a ZenML account, they can be added directly to your organization without needing to accept a pending email invitation. This streamlined flow works automatically when SSO is enabled and applies to both SaaS and on-premise deployments.
+
+The organization members table now displays email addresses alongside usernames when available, making it easier to identify team members at a glance.
+
+<details><summary>Fixed</summary>
+
+- **Tag display overflow**: Tags in table columns now wrap properly instead of overflowing their containers
+- **Step log permissions**: Users without proper permissions now see clear error messages when attempting to view step logs, instead of encountering unclear failures
+- **Artifact version status**: The producer run status in the artifact version sidebar now displays the correct current status instead of a hardcoded value
+- **Organization access controls**: Users who access an organization without proper permissions can now still log out and access their personal settings
+- **Email case sensitivity**: Fixed an issue where invitation emails with mixed-case characters (e.g., from Slack authentication) would fail to match, preventing users from accepting invitations. Email matching is now case-insensitive throughout the invitation flow
+
+</details>
+
+***
+
 ## 0.13.14 (2026-05-13)
 
 See what's new and improved in version 0.13.14.
