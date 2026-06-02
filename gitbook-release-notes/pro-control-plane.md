@@ -7,6 +7,30 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.16 (2026-06-02)
+
+See what's new and improved in version 0.13.16.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/13.jpg" align="left" alt="ZenML Pro 0.13.16" width="800">
+
+#### Organization Member Management
+
+When inviting members to your organization, the flow now intelligently handles existing ZenML accounts. If the invited user already has an account, they will be added directly to your organization without requiring an email invitation. The success message and confirmation dialog will reflect whether the member was added directly or sent an invitation.
+
+Additionally, the organization members table now displays email addresses alongside member names when available, making it easier to identify team members at a glance.
+
+<details>
+<summary>Fixed</summary>
+
+- Fixed tag overflow issues in table columns that previously caused display problems
+- Added proper error messaging when viewing step logs without sufficient permissions
+- Corrected the producer run status display in the artifact version sidebar, which was previously showing a hardcoded value
+- Improved navigation when accessing an organization without proper permissions - you can now still log out and access personal settings
+
+</details>
+
+***
+
 ## 0.13.15 (2026-06-01)
 
 See what's new and improved in version 0.13.15.
