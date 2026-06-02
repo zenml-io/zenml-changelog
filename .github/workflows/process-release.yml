@@ -35,6 +35,7 @@ jobs:
       markdown_file: ${{ steps.extract_md.outputs.markdown_file }}
       breaking_changes: ${{ steps.extract_breaking.outputs.breaking_changes }}
       needs_attention: ${{ steps.extract_attention.outputs.needs_attention }}
+      source_windows: ${{ steps.extract_source_windows.outputs.source_windows }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -108,19 +109,39 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Extract source windows
+        if: steps.check_changes.outputs.has_changes == 'true'
+        id: extract_source_windows
+        run: |
+          set -euo pipefail
+          if ! grep -q '^SOURCE_WINDOWS$' changelog_output.txt || ! grep -q '^END_SOURCE_WINDOWS$' changelog_output.txt; then
+            echo "ERROR: SOURCE_WINDOWS markers not found in changelog_output.txt" >&2
+            exit 1
+          fi
+          source_windows=$(awk '/^SOURCE_WINDOWS$/{flag=1;next}/^END_SOURCE_WINDOWS$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
+          if [ -z "$source_windows" ]; then
+            echo "ERROR: SOURCE_WINDOWS block was empty" >&2
+            exit 1
+          fi
+          {
+            echo "source_windows<<EOF"
+            echo "${source_windows}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Create widget patch
         if: steps.check_changes.outputs.has_changes == 'true'
         run: |
           set -euo pipefail
           git diff --binary -- changelog.json .image_state > widget.patch
 
-      - name: Create gitbook patch
+      - name: Create release notes patch
         if: steps.check_changes.outputs.has_changes == 'true'
         env:
           MARKDOWN_FILE: ${{ steps.extract_md.outputs.markdown_file }}
         run: |
           set -euo pipefail
-          git diff --binary -- "$MARKDOWN_FILE" > gitbook.patch
+          git diff --binary -- "$MARKDOWN_FILE" .consumed_sources_state > release-notes.patch
 
       - name: Upload widget patch artifact
         if: steps.check_changes.outputs.has_changes == 'true'
@@ -130,12 +151,12 @@ jobs:
           path: widget.patch
           if-no-files-found: error
 
-      - name: Upload gitbook patch artifact
+      - name: Upload release notes patch artifact
         if: steps.check_changes.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: gitbook-patch
-          path: gitbook.patch
+          name: release-notes-patch
+          path: release-notes.patch
           if-no-files-found: error
 
   pr-widget:
@@ -168,7 +189,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update changelog widget for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
+          commit-message: "Update changelog widget for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
           branch: changelog/${{ env.SOURCE_REPO_SLUG }}/${{ env.RELEASE_TAG }}
           base: main
           title: "Changelog widget: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
@@ -177,11 +198,19 @@ jobs:
             - **Repository:** ${{ env.SOURCE_REPO }}
             - **Tag:** ${{ env.RELEASE_TAG }}
 
+            This PR intentionally contains only dashboard widget state: `changelog.json` and `.image_state`. The release-notes PR for the same run owns the markdown file and `.consumed_sources_state` ledger.
+
+            ### Source windows
+
+            ```text
+            ${{ needs.generate.outputs.source_windows }}
+            ```
+
             ${{ needs.generate.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
             ${{ needs.generate.outputs.needs_attention }}
 
             **Please review:**
-            - [ ] LLM-generated grouped summaries (2-3 per release) are accurate and reflect the most important changes
+            - [ ] LLM-generated grouped summaries are accurate and reflect the most important changes
             - [ ] changelog.json entries have correct labels
             - [ ] Schema validation passes
             - [ ] Optional fields (`learn_more_url`, `docs_url`, `feature_image_url`) populated where applicable
@@ -191,7 +220,7 @@ jobs:
             changelog.json
             .image_state
 
-  pr-gitbook:
+  pr-release-notes:
     runs-on: ubuntu-latest
     needs: generate
     if: needs.generate.outputs.has_changes == 'true'
@@ -206,16 +235,16 @@ jobs:
           set -euo pipefail
           echo "SOURCE_REPO_SLUG=${SOURCE_REPO//\//-}" >> "$GITHUB_ENV"
 
-      - name: Download gitbook patch artifact
+      - name: Download release notes patch artifact
         uses: actions/download-artifact@v4
         with:
-          name: gitbook-patch
+          name: release-notes-patch
           path: .
 
-      - name: Apply gitbook patch
+      - name: Apply release notes patch
         run: |
           set -euo pipefail
-          git apply gitbook.patch
+          git apply release-notes.patch
 
       - name: Select reviewers and labels
         id: routing
@@ -236,11 +265,11 @@ jobs:
               ;;
           esac
 
-      - name: Create Pull Request (gitbook)
+      - name: Create Pull Request (release notes)
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update release notes for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
+          commit-message: "Update release notes for ${{ env.SOURCE_REPO }}@${{ env.RELEASE_TAG }}"
           branch: release-notes/${{ env.SOURCE_REPO_SLUG }}/${{ env.RELEASE_TAG }}
           base: main
           title: "Release notes: ${{ env.SOURCE_REPO }} ${{ env.RELEASE_TAG }}"
@@ -258,13 +287,23 @@ jobs:
             - **Tag:** ${{ env.RELEASE_TAG }}
             - **Markdown file:** `${{ needs.generate.outputs.markdown_file }}`
 
+            This PR owns the release-note markdown and `.consumed_sources_state`. Keeping the consumed-source ledger in this PR prevents a source window from being marked consumed unless the markdown that represents it is merged.
+
+            ### Source windows
+
+            ```text
+            ${{ needs.generate.outputs.source_windows }}
+            ```
+
             ${{ needs.generate.outputs.breaking_changes && '### ⚠️ Breaking Changes' || '' }}
             ${{ needs.generate.outputs.breaking_changes }}
 
             **Please review:**
             - [ ] Markdown formatting looks good in GitBook
             - [ ] Breaking changes are accurately described and migration guidance is clear (if applicable)
+            - [ ] Source windows make sense; skipped windows are finalized and will not be reopened for late-labeled PRs
           reviewers: ${{ steps.routing.outputs.reviewers }}
           labels: ${{ steps.routing.outputs.labels }}
           add-paths: |
             ${{ needs.generate.outputs.markdown_file }}
+            .consumed_sources_state

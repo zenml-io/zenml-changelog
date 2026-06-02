@@ -13,15 +13,18 @@ This repo is the canonical source of ZenML release metadata:
 ## Directory Structure
 
 - `changelog.json` — Array of announcements consumed by the dashboard.
-- `.image_state` — Persists rotating image index (1–49) for release note headers.
+- `.image_state` — Persists rotating image index (1–49) for release note headers only.
+- `.consumed_sources_state` — Dedicated ledger of consumed source release windows and PR keys, used to prevent bundled repo PRs from being summarized again on later trigger releases.
 - `gitbook-release-notes/`
   - `server-sdk.md` — OSS release notes (bundles content from zenml + zenml-dashboard).
-  - `pro-control-plane.md` — Pro release notes (bundles content from zenml-pro-api + zenml-cloud-ui).
+  - `pro-control-plane.md` — Pro release notes (bundles content from zenml-cloud-api + zenml-cloud-ui).
   - `README.md` — Notes for GitBook syncing.
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
   - `README.md` — Field documentation and examples.
-- `scripts/update_changelog.py` — Main automation script (fetch PRs, LLM summaries, update JSON/markdown, image rotation, validation).
+- `scripts/update_changelog.py` — High-level automation flow (LLM summaries, JSON/markdown writes, image rotation, validation).
+- `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
+- `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
 - `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
 - `scripts/install-hooks.sh` — Installs git pre-commit hook for local validation.
 - `.github/workflows/`
@@ -42,18 +45,20 @@ This repo is the canonical source of ZenML release metadata:
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
   - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
-  - Opens **two PRs**:
-    - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state`. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
-    - **GitBook PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file. Reviewers: `schustmi,bcdurak`. Labels: `core-squad,internal`.
+  - Opens **two PRs** with separate ownership:
+    - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state` only. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
+    - **Release notes PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file and `.consumed_sources_state`. Reviewers: `schustmi,bcdurak`. Labels: `core-squad,internal`.
 - Script: `scripts/update_changelog.py`
   - Uses `REPO_CONFIG` with nested `sources[]` arrays to define bundled repos per trigger.
-  - For each source repo: finds its previous tag, computes release window, fetches merged PRs with `release-notes` label.
+  - For each source repo: finds its previous tag, computes release window, and checks `.consumed_sources_state` before fetching PRs.
+  - Already-consumed windows are finalized windows: they are skipped before the LLM prompt is built and are not reopened for late-labeled PRs. Already-consumed repo-qualified PR keys are filtered as a second guardrail.
   - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
   - Generates 2-3 grouped changelog entries via Anthropic structured outputs (validated with Pydantic models).
   - Prepends entries to `changelog.json`, validates against `announcement-schema.json`.
   - Rotates header image using `.image_state` (cycles 1–49).
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.
-  - Prints summary and exits; workflow handles PR creation.
+  - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then prints source-window metadata for PR bodies.
+  - Prints summary and exits; workflow keeps `.consumed_sources_state` in the release-notes PR, so a source window is only marked consumed when the markdown that represents it is merged.
 
 ## Manually Adding Changelog Entries
 
@@ -128,7 +133,8 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 
 - Keep `changelog.json` ordered newest-first; IDs must be unique and sequential.
 - If automation produces a PR conflict in `changelog.json`, rebase and re-run the workflow or fix ordering manually.
-- `.image_state` must stay committed so image rotation persists across runs.
+- `.image_state` must stay committed so image rotation persists across runs; keep it image-only.
+- `.consumed_sources_state` must stay committed so source windows/PRs are consumed once. Its current bootstrap is intentionally narrow, and recorded windows are finalized: late-labeled PRs inside them are ignored rather than replaying old release notes. If duplicate release notes appear, inspect this file rather than overloading `.image_state`.
 - For OSS markdown, include PR links; for Pro markdown, keep concise and omit PR links.
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
 - Never commit secrets; use repo/org secrets for workflows.

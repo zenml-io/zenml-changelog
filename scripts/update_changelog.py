@@ -29,6 +29,49 @@ from pydantic import BaseModel, Field, ValidationError
 from slugify import slugify
 from tenacity import retry, retry_if_exception_type, retry_if_not_exception_type, stop_after_attempt, wait_exponential
 
+try:
+    from scripts.consumed_sources import (
+        CONSUMED_SOURCE_STATE_FILE,
+        ConsumedPR,
+        ConsumedSourceState,
+        ConsumedTargetState,
+        ConsumedWindow,
+        format_source_window,
+        mark_consumed_after_success,
+        read_consumed_source_state,
+        target_state_key,
+        write_consumed_source_state,
+    )
+    from scripts.source_windows import (
+        SKIP_REASON_ALREADY_CONSUMED_WINDOW,
+        SOURCE_WINDOWS_END_MARKER,
+        SOURCE_WINDOWS_START_MARKER,
+        MultiSourceCollectionResult,
+        collect_multi_source_prs as _collect_multi_source_prs,
+        format_source_window_report,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_changelog.py`
+    from consumed_sources import (  # type: ignore[no-redef]
+        CONSUMED_SOURCE_STATE_FILE,
+        ConsumedPR,
+        ConsumedSourceState,
+        ConsumedTargetState,
+        ConsumedWindow,
+        format_source_window,
+        mark_consumed_after_success,
+        read_consumed_source_state,
+        target_state_key,
+        write_consumed_source_state,
+    )
+    from source_windows import (  # type: ignore[no-redef]
+        SKIP_REASON_ALREADY_CONSUMED_WINDOW,
+        SOURCE_WINDOWS_END_MARKER,
+        SOURCE_WINDOWS_START_MARKER,
+        MultiSourceCollectionResult,
+        collect_multi_source_prs as _collect_multi_source_prs,
+        format_source_window_report,
+    )
+
 IMAGE_STATE_FILE = Path(".image_state")
 MAX_IMAGE_NUMBER = 49
 
@@ -187,6 +230,7 @@ class ImageState(BaseModel):
     last_markdown_file: Optional[str] = None
     updated_at: Optional[str] = None
 
+
 class MarkdownSection(BaseModel):
     content: str = Field(..., description="Complete markdown section for the release notes")
 
@@ -221,9 +265,13 @@ def read_image_state(path: Path = IMAGE_STATE_FILE) -> ImageState:
     except ValueError:
         return ImageState()
 
+def _model_dump(model: BaseModel) -> Dict[str, Any]:
+    return model.model_dump() if hasattr(model, "model_dump") else model.dict()  # type: ignore[attr-defined]
+
+
 def write_image_state(state: ImageState, path: Path = IMAGE_STATE_FILE) -> None:
-    payload = state.model_dump() if hasattr(state, "model_dump") else state.dict()  # type: ignore[attr-defined]
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    path.write_text(json.dumps(_model_dump(state), indent=2, sort_keys=True) + "\n")
+
 
 def infer_latest_image_from_markdown(md_path: Path) -> Optional[int]:
     try:
@@ -471,108 +519,25 @@ def is_major_bump(previous_tag: Optional[str], current_tag: str) -> bool:
         return False
     return current[0] > previous[0]
 
-def get_multi_source_release_prs(
+def collect_multi_source_prs(
     gh: Github,
     trigger_repo: str,
     trigger_release_tag: str,
-) -> List[Dict[str, Any]]:
-    """Collect release-notes PRs for a trigger repo across its configured sources."""
-    config = REPO_CONFIG.get(trigger_repo)
-    if config is None:
-        raise RuntimeError(f"Repository {trigger_repo} is not configured for changelog updates")
-
-    sources = config.get("sources", [])
-    if not sources:
-        return []
-
-    # Primary source is the trigger repo itself (first in list)
-    primary_source = sources[0]["repo"]
-
-    all_prs: List[Dict[str, Any]] = []
-    for source in sources:
-        source_repo = source["repo"]
-
-        if source_repo == primary_source:
-            # Trigger repo: use the provided trigger_release_tag
-            current_tag = trigger_release_tag
-        else:
-            # Bundled repo: find its latest release (guaranteed to exist per team agreements)
-            current_tag = find_latest_release_tag(gh, source_repo)
-            if current_tag is None:
-                print(f"Warning: No releases found for bundled repo {source_repo}, skipping")
-                continue
-
-        previous_tag = find_previous_tag(gh, source_repo, current_tag)
-        since_date, until_date = get_release_window(
-            gh=gh,
-            repo_name=source_repo,
-            since_tag=previous_tag,
-            until_tag=current_tag,
-        )
-        source_prs = search_merged_prs(
-            gh=gh,
-            repo_name=source_repo,
-            base_branch=source.get("default_branch", "main"),
-            since_date=since_date,
-            until_date=until_date,
-            label="release-notes",
-        )
-        print(f"  {source_repo}: {len(source_prs)} PRs ({previous_tag or 'start'} → {current_tag})")
-        all_prs.extend(source_prs)
-
-    return dedupe_prs_by_number(all_prs)
-
-
-def get_multi_source_breaking_prs(
-    gh: Github,
-    trigger_repo: str,
-    trigger_release_tag: str,
-) -> List[Dict[str, Any]]:
-    """Collect breaking-change PRs for a trigger repo across its configured sources."""
-    config = REPO_CONFIG.get(trigger_repo)
-    if config is None:
-        raise RuntimeError(f"Repository {trigger_repo} is not configured for changelog updates")
-
-    sources = config.get("sources", [])
-    if not sources:
-        return []
-
-    # Primary source is the trigger repo itself (first in list)
-    primary_source = sources[0]["repo"]
-
-    all_prs: List[Dict[str, Any]] = []
-    for source in sources:
-        source_repo = source["repo"]
-
-        if source_repo == primary_source:
-            # Trigger repo: use the provided trigger_release_tag
-            current_tag = trigger_release_tag
-        else:
-            # Bundled repo: find its latest release (guaranteed to exist per team agreements)
-            current_tag = find_latest_release_tag(gh, source_repo)
-            if current_tag is None:
-                print(f"Warning: No releases found for bundled repo {source_repo}, skipping")
-                continue
-
-        previous_tag = find_previous_tag(gh, source_repo, current_tag)
-        since_date, until_date = get_release_window(
-            gh=gh,
-            repo_name=source_repo,
-            since_tag=previous_tag,
-            until_tag=current_tag,
-        )
-        for breaking_label in BREAKING_CHANGE_LABELS:
-            source_prs = search_merged_prs(
-                gh=gh,
-                repo_name=source_repo,
-                base_branch=source.get("default_branch", "main"),
-                since_date=since_date,
-                until_date=until_date,
-                label=breaking_label,
-            )
-            all_prs.extend(source_prs)
-
-    return dedupe_prs_by_number(all_prs)
+    consumed_state: ConsumedSourceState,
+) -> MultiSourceCollectionResult:
+    return _collect_multi_source_prs(
+        gh=gh,
+        trigger_repo=trigger_repo,
+        trigger_release_tag=trigger_release_tag,
+        consumed_state=consumed_state,
+        repo_config=REPO_CONFIG,
+        breaking_change_labels=BREAKING_CHANGE_LABELS,
+        find_latest_release_tag=find_latest_release_tag,
+        find_previous_tag=find_previous_tag,
+        get_release_window=get_release_window,
+        search_merged_prs=search_merged_prs,
+        dedupe_prs_by_number=dedupe_prs_by_number,
+    )
 
 
 def slugify_title(title: str) -> str:
@@ -1270,10 +1235,19 @@ def main() -> None:
         f"(primary previous: {primary_previous_tag or 'first release'})"
     )
 
-    release_notes_prs = get_multi_source_release_prs(gh, source_repo, env["RELEASE_TAG"])
+    consumed_state = read_consumed_source_state()
+    collection = collect_multi_source_prs(
+        gh=gh,
+        trigger_repo=source_repo,
+        trigger_release_tag=env["RELEASE_TAG"],
+        consumed_state=consumed_state,
+    )
+    print(format_source_window_report(collection))
+
+    release_notes_prs = collection.release_notes_prs
     print(f"Found {len(release_notes_prs)} PRs with release-notes label across all sources")
 
-    breaking_prs = get_multi_source_breaking_prs(gh, source_repo, env["RELEASE_TAG"])
+    breaking_prs = collection.breaking_prs
     print(f"Found {len(breaking_prs)} PRs with breaking-change labels across all sources")
 
     major_bump = is_major_bump(primary_previous_tag, env["RELEASE_TAG"])
@@ -1345,9 +1319,21 @@ def main() -> None:
     md_section = header + breaking_section + body + "\n\n" + footer
 
     update_markdown_file(Path(markdown_file), md_section)
+
+    consumed_state = mark_consumed_after_success(
+        state=consumed_state,
+        trigger_repo=source_repo,
+        markdown_file=markdown_file,
+        trigger_release_tag=env["RELEASE_TAG"],
+        collection=collection,
+        now=datetime.now(timezone.utc),
+    )
+    write_consumed_source_state(consumed_state)
+
     print(
-        f"Updated changelog.json (+{len(new_entries)} entries) and "
-        f"{config['markdown_file']} (image {image_number})."
+        f"Updated changelog.json (+{len(new_entries)} entries), "
+        f"{config['markdown_file']} (image {image_number}), and "
+        f"{CONSUMED_SOURCE_STATE_FILE}."
     )
 
     if breaking_section.strip():

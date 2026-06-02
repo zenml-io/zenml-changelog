@@ -7,7 +7,8 @@ Central hub for ZenML release metadata and release notes. This repo stores struc
 ```
 zenml-changelog/
 ├── changelog.json                  # Announcement entries consumed by the dashboard
-├── .image_state                    # Tracks rotating header image (1-49)
+├── .image_state                    # Tracks rotating header image (1-49) only
+├── .consumed_sources_state         # Tracks consumed source windows/PRs to prevent replay
 ├── gitbook-release-notes/
 │   ├── server-sdk.md               # OSS + dashboard release notes
 │   ├── pro-control-plane.md        # Pro/Cloud release notes
@@ -16,7 +17,9 @@ zenml-changelog/
 │   ├── announcement-schema.json    # JSON Schema for changelog.json
 │   └── README.md                   # Field documentation
 ├── scripts/
-│   └── update_changelog.py         # Automation script: PR fetch, LLM summaries, updates
+│   ├── update_changelog.py         # High-level automation flow and LLM/write steps
+│   ├── consumed_sources.py         # Consumed-window/PR ledger models and validation
+│   └── source_windows.py           # Source-window resolution and PR collection
 ├── .github/workflows/
 │   ├── process-release.yml         # repository_dispatch receiver, runs automation, opens PR
 │   └── validate-changelog.yml      # PR-time validation for changelog.json
@@ -31,29 +34,29 @@ flowchart TD
     A[Source repo release] -->|repository_dispatch<br/>event_type: release-published| B[process-release.yml]
     B --> C[Run update_changelog.py]
     C --> D[changelog.json + .image_state]
-    C --> E[gitbook-release-notes/*.md]
+    C --> E[gitbook-release-notes/*.md + .consumed_sources_state]
     D --> F[Schema validation]
     B --> G[Widget PR<br/>changelog/{repo}/{tag}]
-    B --> H[GitBook PR<br/>release-notes/{repo}/{tag}]
+    B --> H[Release notes PR<br/>release-notes/{repo}/{tag}]
 ```
 
-- Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-pro-api`) emits `repository_dispatch` (`release-published`).
-- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on trigger repo.
-- Script tasks: fetch `release-notes` PRs from all bundled source repos, aggregate and deduplicate, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON.
+- Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-cloud-api`) emits `repository_dispatch` (`release-published`).
+- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on ownership: a widget PR for dashboard files and a release-notes PR for markdown plus the consumed-source ledger.
+- Script tasks: resolve each source repo's release window, skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries (Anthropic structured outputs), rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
 
 ### PR Routing
 
-**Widget PR** (updates `changelog.json` and `.image_state`):
+**Widget PR** (updates `changelog.json` and `.image_state` only):
 - Reviewers: `htahir1`, `znegrin`, `strickvl`
 - Labels: `internal`, `x-squad`
 
-**GitBook PR** (updates release notes markdown):
+**Release notes PR** (updates release-note markdown and `.consumed_sources_state`):
 
 | Trigger Repository | Reviewers | Labels |
 | --- | --- | --- |
 | `zenml-io/zenml` (OSS) | schustmi, bcdurak | core-squad, internal |
-| `zenml-io/zenml-pro-api` (Pro) | htahir1, strickvl, znegrin | internal, x-squad |
+| `zenml-io/zenml-cloud-api` (Pro) | schustmi, bcdurak | core-squad, internal |
 
 ## Two-Path Architecture
 
@@ -62,9 +65,15 @@ The automation uses a **two-path flow** where each trigger aggregates PRs from m
 | Trigger Repository | Bundled Sources | Files Updated |
 | --- | --- | --- |
 | `zenml-io/zenml` (OSS) | zenml + zenml-dashboard | `changelog.json`, `gitbook-release-notes/server-sdk.md` |
-| `zenml-io/zenml-pro-api` (Pro) | zenml-pro-api + zenml-cloud-ui | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
+| `zenml-io/zenml-cloud-api` (Pro) | zenml-cloud-api + zenml-cloud-ui | `changelog.json`, `gitbook-release-notes/pro-control-plane.md` |
 
-When a release is published on a trigger repo, the script automatically fetches PRs from all bundled source repos, aggregates them, and generates unified release notes.
+When a release is published on a trigger repo, the script automatically fetches PRs from all bundled source repos, aggregates them, and generates unified release notes. Bundled repos may have their own latest release tag, so the automation records each consumed source window (for example `zenml-cloud-ui 0.13.14 -> 0.13.15`) in `.consumed_sources_state`. On later trigger releases, an already-consumed window is skipped before any LLM prompt is built.
+
+Consumed windows are **finalized windows**: if a PR gains a `release-notes` or breaking-change label after its window was recorded, that window is not reopened. This avoids replaying already-published release notes.
+
+The committed bootstrap is intentionally narrow: it seeds only the confirmed PR75 Pro UI window from the investigation, not all historical OSS/Pro windows. Future successful automation runs build the ledger forward.
+
+Generated PR bodies include a `Source windows` block. Reviewers should check which windows were included, skipped, or filtered, especially when the bundled repo did not advance with the trigger repo. `.consumed_sources_state` belongs in the release-notes PR, not the widget PR, so a source window is only marked consumed when the markdown that represents it is merged.
 
 ## Manual vs Automated Entries
 
