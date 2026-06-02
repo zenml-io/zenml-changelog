@@ -9,29 +9,19 @@
     "audience": "oss",
     "labels": [
       "bugfix"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 54,
-    "slug": "docker-build-and-ui-enhancements",
-    "title": "Docker Build and UI Enhancements",
-    "description": "Resolved an issue where Docker build checksum computation would fail even when `skip_build=True` was specified and no container engine was available. Additionally improved scrolling behavior in the dashboard's timeline view for a smoother user experience.",
+    "slug": "skip-docker-builds-without-a-container-engine",
+    "title": "Skip Docker Builds Without a Container Engine",
+    "description": "Resolved an issue where Docker build checksum computation would fail when no container engine was available, even with `skip_build=True` set in your DockerSettings. The build step now respects the skip_build flag, so pipelines can run in environments where Docker isn't installed.",
     "published_at": "2026-06-02T10:57:18Z",
     "published": true,
     "audience": "oss",
     "labels": [
       "bugfix"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 53,
