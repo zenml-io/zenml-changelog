@@ -7,7 +7,7 @@ This repository is the canonical source for ZenML release metadata and GitBook r
 - `changelog.json` stores dashboard announcement entries, newest first.
 - `gitbook-release-notes/server-sdk.md` contains OSS release notes; `pro-control-plane.md` contains Pro release notes.
 - `changelog_schema/` documents and validates the `changelog.json` format.
-- `scripts/` contains the Python automation: `update_changelog.py`, `source_windows.py`, `consumed_sources.py`, and validation/sync helpers.
+- `scripts/` contains the Python automation: `update_changelog.py`, `workflow_result.py`, `source_windows.py`, `consumed_sources.py`, and validation/sync helpers.
 - `tests/` contains pytest coverage for changelog generation and consumed-source replay prevention.
 - `.github/workflows/` runs dispatch processing, schema validation, and release-note sync workflows.
 
