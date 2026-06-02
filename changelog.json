@@ -1,5 +1,29 @@
 [
   {
+    "id": 55,
+    "slug": "improved-gcp-service-connector-for-private-gke-clusters",
+    "title": "Improved GCP Service Connector for Private GKE Clusters",
+    "description": "Fixed connectivity issues when using GCP service connectors with private GKE clusters that have DNS-based control plane endpoints. ZenML now properly connects to these clusters using the same DNS endpoint method as `gcloud`, ensuring seamless access to private Kubernetes environments.",
+    "published_at": "2026-06-02T10:57:18Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
+    "id": 54,
+    "slug": "skip-docker-builds-without-a-container-engine",
+    "title": "Skip Docker Builds Without a Container Engine",
+    "description": "Resolved an issue where Docker build checksum computation would fail when no container engine was available, even with `skip_build=True` set in your DockerSettings. The build step now respects the skip_build flag, so pipelines can run in environments where Docker isn't installed.",
+    "published_at": "2026-06-02T10:57:18Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix"
+    ]
+  },
+  {
     "id": 53,
     "slug": "streamlined-organization-invitations-with-sso",
     "title": "Streamlined organization invitations with SSO",
