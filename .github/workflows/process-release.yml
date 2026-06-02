@@ -31,11 +31,11 @@ jobs:
   generate:
     runs-on: ubuntu-latest
     outputs:
-      has_changes: ${{ steps.check_changes.outputs.has_changes }}
-      markdown_file: ${{ steps.extract_md.outputs.markdown_file }}
-      breaking_changes: ${{ steps.extract_breaking.outputs.breaking_changes }}
-      needs_attention: ${{ steps.extract_attention.outputs.needs_attention }}
-      source_windows: ${{ steps.extract_source_windows.outputs.source_windows }}
+      has_changes: ${{ steps.workflow_outputs.outputs.has_changes }}
+      markdown_file: ${{ steps.workflow_outputs.outputs.markdown_file }}
+      breaking_changes: ${{ steps.workflow_outputs.outputs.breaking_changes }}
+      needs_attention: ${{ steps.workflow_outputs.outputs.needs_attention }}
+      source_windows: ${{ steps.workflow_outputs.outputs.source_windows }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -52,99 +52,42 @@ jobs:
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
           RELEASE_URL: ${{ env.RELEASE_URL }}
           PUBLISHED_AT: ${{ env.PUBLISHED_AT }}
+          CHANGELOG_WORKFLOW_RESULT: changelog_workflow_result.json
         run: |
           set -euo pipefail
-          uv run scripts/update_changelog.py | tee changelog_output.txt
+          uv run scripts/update_changelog.py
 
-      - name: Check for changes
-        id: check_changes
+      - name: Publish changelog workflow outputs
+        id: workflow_outputs
+        env:
+          CHANGELOG_WORKFLOW_RESULT: changelog_workflow_result.json
         run: |
-          if grep -q '^NO_CHANGES_NEEDED$' changelog_output.txt; then
-            echo "No release-notes PRs found — skipping changelog generation."
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          fi
+          set -euo pipefail
+          uv run scripts/workflow_result.py write-github-outputs
 
       - name: Validate changelog.json
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.workflow_outputs.outputs.has_changes == 'true'
         uses: cardinalby/schema-validator-action@v3
         with:
           file: ./changelog.json
           schema: ./changelog_schema/announcement-schema.json
 
-      - name: Extract updated markdown file
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: extract_md
-        run: |
-          set -euo pipefail
-          md=$(awk '/^UPDATED_MARKDOWN_FILE$/{flag=1;next}/^END_UPDATED_MARKDOWN_FILE$/{flag=0}flag{print; exit}' changelog_output.txt | tr -d '\r')
-          if [ -z "$md" ]; then
-            echo "ERROR: UPDATED_MARKDOWN_FILE marker not found in changelog_output.txt" >&2
-            exit 1
-          fi
-          echo "markdown_file=$md" >> "$GITHUB_OUTPUT"
-
-      - name: Extract breaking changes
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: extract_breaking
-        run: |
-          set -euo pipefail
-          breaking=$(awk '/^BREAKING_CHANGES$/{flag=1;next}/^END_BREAKING_CHANGES$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
-          {
-            echo "breaking_changes<<EOF"
-            echo "${breaking}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Extract attention items
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: extract_attention
-        run: |
-          set -euo pipefail
-          attention=$(awk '/^NEEDS_ATTENTION$/{flag=1;next}/^UPDATED_MARKDOWN_FILE$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
-          {
-            echo "needs_attention<<EOF"
-            echo "${attention}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Extract source windows
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: extract_source_windows
-        run: |
-          set -euo pipefail
-          if ! grep -q '^SOURCE_WINDOWS$' changelog_output.txt || ! grep -q '^END_SOURCE_WINDOWS$' changelog_output.txt; then
-            echo "ERROR: SOURCE_WINDOWS markers not found in changelog_output.txt" >&2
-            exit 1
-          fi
-          source_windows=$(awk '/^SOURCE_WINDOWS$/{flag=1;next}/^END_SOURCE_WINDOWS$/{flag=0}flag{print}' changelog_output.txt | tr -d '\r')
-          if [ -z "$source_windows" ]; then
-            echo "ERROR: SOURCE_WINDOWS block was empty" >&2
-            exit 1
-          fi
-          {
-            echo "source_windows<<EOF"
-            echo "${source_windows}"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-
       - name: Create widget patch
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.workflow_outputs.outputs.has_changes == 'true'
         run: |
           set -euo pipefail
           git diff --binary -- changelog.json .image_state > widget.patch
 
       - name: Create release notes patch
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.workflow_outputs.outputs.has_changes == 'true'
         env:
-          MARKDOWN_FILE: ${{ steps.extract_md.outputs.markdown_file }}
+          MARKDOWN_FILE: ${{ steps.workflow_outputs.outputs.markdown_file }}
         run: |
           set -euo pipefail
           git diff --binary -- "$MARKDOWN_FILE" .consumed_sources_state > release-notes.patch
 
       - name: Upload widget patch artifact
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.workflow_outputs.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: widget-patch
@@ -152,7 +95,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload release notes patch artifact
-        if: steps.check_changes.outputs.has_changes == 'true'
+        if: steps.workflow_outputs.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: release-notes-patch

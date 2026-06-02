@@ -6,7 +6,7 @@
 #     "PyGithub",
 #     "anthropic",
 #     "jsonschema",
-#     "pydantic",
+#     "pydantic>=2",
 #     "python-slugify",
 #     "tenacity",
 # ]
@@ -44,11 +44,18 @@ try:
     )
     from scripts.source_windows import (
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
-        SOURCE_WINDOWS_END_MARKER,
-        SOURCE_WINDOWS_START_MARKER,
         MultiSourceCollectionResult,
         collect_multi_source_prs as _collect_multi_source_prs,
-        format_source_window_report,
+        format_source_window_body,
+    )
+    from scripts.workflow_result import (
+        ChangelogWorkflowResult,
+        NeedsAttentionItem,
+        clear_changelog_workflow_result,
+        format_breaking_changes_output,
+        format_needs_attention_output,
+        get_changelog_workflow_result_path,
+        write_changelog_workflow_result,
     )
 except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_changelog.py`
     from consumed_sources import (  # type: ignore[no-redef]
@@ -65,11 +72,18 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
     )
     from source_windows import (  # type: ignore[no-redef]
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
-        SOURCE_WINDOWS_END_MARKER,
-        SOURCE_WINDOWS_START_MARKER,
         MultiSourceCollectionResult,
         collect_multi_source_prs as _collect_multi_source_prs,
-        format_source_window_report,
+        format_source_window_body,
+    )
+    from workflow_result import (  # type: ignore[no-redef]
+        ChangelogWorkflowResult,
+        NeedsAttentionItem,
+        clear_changelog_workflow_result,
+        format_breaking_changes_output,
+        format_needs_attention_output,
+        get_changelog_workflow_result_path,
+        write_changelog_workflow_result,
     )
 
 IMAGE_STATE_FILE = Path(".image_state")
@@ -224,6 +238,7 @@ class BreakingChangesOutput(BaseModel):
         description="List of breaking change bullet points, one per significant breaking change.",
     )
 
+
 class ImageState(BaseModel):
     last_image_number: int = Field(default=0, ge=0, le=MAX_IMAGE_NUMBER)
     last_release_tag: Optional[str] = None
@@ -269,8 +284,10 @@ def _model_dump(model: BaseModel) -> Dict[str, Any]:
     return model.model_dump() if hasattr(model, "model_dump") else model.dict()  # type: ignore[attr-defined]
 
 
+
 def write_image_state(state: ImageState, path: Path = IMAGE_STATE_FILE) -> None:
     path.write_text(json.dumps(_model_dump(state), indent=2, sort_keys=True) + "\n")
+
 
 
 def infer_latest_image_from_markdown(md_path: Path) -> Optional[int]:
@@ -940,9 +957,9 @@ def is_short_body(pr_body: str, threshold: int = 50) -> bool:
 def collect_needs_attention(
     prs: List[Dict[str, Any]],
     threshold: int = 50,
-) -> List[Dict[str, str]]:
+) -> List[NeedsAttentionItem]:
     """Identify PRs with insufficient bodies that should be highlighted for manual review."""
-    needs_attention: List[Dict[str, str]] = []
+    needs_attention: List[NeedsAttentionItem] = []
     for pr in prs:
         if is_short_body(pr.get("body", ""), threshold=threshold):
             needs_attention.append(
@@ -1209,6 +1226,9 @@ def get_release_info(gh: Github, repo_name: str, tag: str) -> tuple[str, str]:
 
 
 def main() -> None:
+    workflow_result_path = get_changelog_workflow_result_path()
+    clear_changelog_workflow_result(workflow_result_path)
+
     env = ensure_required_env(
         ["SOURCE_REPO", "RELEASE_TAG", "GITHUB_TOKEN", "ANTHROPIC_API_KEY"]
     )
@@ -1242,7 +1262,10 @@ def main() -> None:
         trigger_release_tag=env["RELEASE_TAG"],
         consumed_state=consumed_state,
     )
-    print(format_source_window_report(collection))
+    source_windows_body = format_source_window_body(collection)
+    if source_windows_body:
+        print("Source windows:")
+        print(source_windows_body)
 
     release_notes_prs = collection.release_notes_prs
     print(f"Found {len(release_notes_prs)} PRs with release-notes label across all sources")
@@ -1256,8 +1279,23 @@ def main() -> None:
 
     if not release_notes_prs and not breaking_prs:
         print("No release-notes or breaking-change PRs found for this release. Nothing to do.")
-        print("NO_CHANGES_NEEDED")
+        write_changelog_workflow_result(
+            ChangelogWorkflowResult(
+                has_changes=False,
+                markdown_file=config["markdown_file"],
+                breaking_changes="",
+                needs_attention="",
+                source_windows=source_windows_body,
+            ),
+            workflow_result_path,
+        )
         raise SystemExit(0)
+
+    if not source_windows_body.strip():
+        raise RuntimeError(
+            "Release-note or breaking-change PRs were collected, but the source-window body is empty. "
+            "Refusing to write changelog artifacts without source-window metadata."
+        )
 
     # Use release-notes PRs for changelog entries; fall back to breaking PRs if none
     grouping_prs = release_notes_prs if release_notes_prs else breaking_prs
@@ -1336,27 +1374,20 @@ def main() -> None:
         f"{CONSUMED_SOURCE_STATE_FILE}."
     )
 
-    if breaking_section.strip():
-        print()
-        print("BREAKING_CHANGES")
-        # Print just the bullets portion for extraction
-        for bullet in breaking_bullets:
-            print(f"- {bullet}")
-        if major_bump and not breaking_bullets:
-            print("- Major version bump detected; manual review recommended")
-        print("END_BREAKING_CHANGES")
+    write_changelog_workflow_result(
+        ChangelogWorkflowResult(
+            has_changes=True,
+            markdown_file=markdown_file,
+            breaking_changes=format_breaking_changes_output(
+                breaking_bullets,
+                is_major_bump=major_bump,
+            ),
+            needs_attention=format_needs_attention_output(needs_attention),
+            source_windows=source_windows_body,
+        ),
+        workflow_result_path,
+    )
 
-    if needs_attention:
-        print()
-        print("NEEDS_ATTENTION")
-        print("The following PRs had empty or insufficient descriptions and need manual review:")
-        for pr in needs_attention:
-            print(f"- PR #{pr['number']}: {pr['title']} ({pr['url']})")
-
-    print()
-    print("UPDATED_MARKDOWN_FILE")
-    print(config["markdown_file"])
-    print("END_UPDATED_MARKDOWN_FILE")
 
 if __name__ == "__main__":
     main()

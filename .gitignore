@@ -215,5 +215,5 @@ design/
 .agents/**
 
 # Workflow temp files
-changelog_output.txt
+changelog_workflow_result.json
 prompt-exports/

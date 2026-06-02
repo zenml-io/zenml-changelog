@@ -23,6 +23,7 @@ This repo is the canonical source of ZenML release metadata:
   - `announcement-schema.json` — Validation schema for `changelog.json`.
   - `README.md` — Field documentation and examples.
 - `scripts/update_changelog.py` — High-level automation flow (LLM summaries, JSON/markdown writes, image rotation, validation).
+- `scripts/workflow_result.py` — Deterministic workflow-result JSON model and GitHub Actions output writer.
 - `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
 - `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
 - `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
@@ -43,7 +44,7 @@ This repo is the canonical source of ZenML release metadata:
   - **Pro Path**: Triggered by `zenml-io/zenml-cloud-api` release → aggregates PRs from zenml-cloud-api + zenml-cloud-ui → updates `pro-control-plane.md`
 - Workflow: `.github/workflows/process-release.yml`
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
-  - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.).
+  - Runs `scripts/update_changelog.py` with payload env vars (`SOURCE_REPO`, `RELEASE_TAG`, `RELEASE_URL`, `PUBLISHED_AT`, etc.), then uses `scripts/workflow_result.py write-github-outputs` to publish the stable workflow outputs.
   - Validates `changelog.json` against `changelog_schema/announcement-schema.json` via `cardinalby/schema-validator-action@v3`.
   - Opens **two PRs** with separate ownership:
     - **Widget PR** (`changelog/{repo_slug}/{tag}`): Updates `changelog.json` and `.image_state` only. Reviewers: `htahir1,znegrin,strickvl`. Labels: `internal,x-squad`.
@@ -57,7 +58,7 @@ This repo is the canonical source of ZenML release metadata:
   - Prepends entries to `changelog.json`, validates against `announcement-schema.json`.
   - Rotates header image using `.image_state` (cycles 1–49).
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.
-  - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then prints source-window metadata for PR bodies.
+  - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then writes structured source-window metadata for PR bodies to `changelog_workflow_result.json`.
   - Prints summary and exits; workflow keeps `.consumed_sources_state` in the release-notes PR, so a source window is only marked consumed when the markdown that represents it is merged.
 
 ## Manually Adding Changelog Entries

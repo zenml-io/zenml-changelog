@@ -367,7 +367,7 @@ def test_consumed_pr_key_is_filtered_even_when_window_is_new(
     assert ui_collection.filtered_pr_keys == ["zenml-io/zenml-cloud-ui#1317"]
 
 
-def test_source_window_report_exposes_included_and_skipped_windows(
+def test_source_window_body_exposes_included_and_skipped_windows(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     patch_release_window_resolution(monkeypatch)
@@ -379,13 +379,13 @@ def test_source_window_report_exposes_included_and_skipped_windows(
         consumed_state=consumed_ui_01314_to_01315_state(),
     )
 
-    report = uc.format_source_window_report(collection)
+    body = uc.format_source_window_body(collection)
 
-    assert report.startswith(f"{uc.SOURCE_WINDOWS_START_MARKER}\n")
-    assert "included zenml-io/zenml-cloud-api 0.13.15 -> 0.13.16" in report
-    assert "skipped zenml-io/zenml-cloud-ui 0.13.14 -> 0.13.15" in report
-    assert "reason=already_consumed_window" in report
-    assert report.endswith(f"\n{uc.SOURCE_WINDOWS_END_MARKER}")
+    assert "SOURCE_WINDOWS" not in body.splitlines()
+    assert "END_SOURCE_WINDOWS" not in body.splitlines()
+    assert "included zenml-io/zenml-cloud-api 0.13.15 -> 0.13.16" in body
+    assert "skipped zenml-io/zenml-cloud-ui 0.13.14 -> 0.13.15" in body
+    assert "reason=already_consumed_window" in body
 
 def test_image_state_remains_separate_from_consumed_source_state(tmp_path: Path) -> None:
     image_state_path = tmp_path / ".image_state"

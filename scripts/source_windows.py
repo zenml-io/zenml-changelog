@@ -27,8 +27,6 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
         pr_key_from_dict,
     )
 
-SOURCE_WINDOWS_START_MARKER = "SOURCE_WINDOWS"
-SOURCE_WINDOWS_END_MARKER = "END_SOURCE_WINDOWS"
 SKIP_REASON_NO_RELEASES_FOUND = "no_releases_found"
 SKIP_REASON_ALREADY_CONSUMED_WINDOW = "already_consumed_window"
 SkipReason = Literal["no_releases_found", "already_consumed_window"]
@@ -271,8 +269,8 @@ def collect_multi_source_prs(
     return result
 
 
-def format_source_window_report(collection: MultiSourceCollectionResult) -> str:
-    lines = [SOURCE_WINDOWS_START_MARKER]
+def _format_source_window_lines(collection: MultiSourceCollectionResult) -> list[str]:
+    lines: list[str] = []
     for source_collection in collection.included_windows:
         window = source_collection.window
         lines.append(
@@ -291,5 +289,9 @@ def format_source_window_report(collection: MultiSourceCollectionResult) -> str:
             f"reason={skipped_window.reason} "
             f"consumed_by={skipped_window.consumed_by_release_tag or '<none>'}"
         )
-    lines.append(SOURCE_WINDOWS_END_MARKER)
-    return "\n".join(lines)
+    return lines
+
+
+def format_source_window_body(collection: MultiSourceCollectionResult) -> str:
+    return "\n".join(_format_source_window_lines(collection))
+
