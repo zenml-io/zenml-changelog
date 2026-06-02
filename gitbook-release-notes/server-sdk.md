@@ -21,8 +21,6 @@ See what's new and improved in version 0.94.6.
 
 - **Docker Build Requirements**: Resolved an issue where ZenML would fail when no container engine was available, even when users explicitly set `skip_build=True` in their DockerSettings. The build checksum computation now correctly respects the skip_build flag. [PR #4879](https://github.com/zenml-io/zenml/pull/4879)
 
-- **Dashboard Timeline View**: Improved scrolling behavior in the timeline view for better navigation and user experience. [PR #1053](https://github.com/zenml-io/zenml-dashboard/pull/1053)
-
 </details>
 
 [View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.6)
