@@ -91,6 +91,17 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 - From a source repo, send a `repository_dispatch` with `event_type: release-published` and payload fields: `repo`, `repo_name`, `release_tag`, `release_name`, `release_url`, `release_body`, `published_at`, `is_prerelease`.
 - In this repo, you can also re-run the `Process release` workflow from the Actions tab on a past dispatch if needed.
 - Validate locally (optional) by running a JSON Schema check of `changelog.json` against `changelog_schema/announcement-schema.json`.
+- Run the local pytest suite with the same dependency set used by CI:
+
+```bash
+uv run scripts/run_pytest.py
+```
+
+## OSS GitHub Release Sync Contract
+
+Release-notes PR bodies include a hidden `ZENML_CHANGELOG_SYNC_META` block. After a release-notes PR is merged, `.github/workflows/sync-zenml-release-notes.yml` parses that block with `scripts/sync_zenml_github_release_notes.py parse-sync-meta`.
+
+The GitHub Release sync only proceeds when the parsed `source_repo` is `zenml-io/zenml`. The actual OSS sync step is currently pinned to `gitbook-release-notes/server-sdk.md`; the parsed `markdown_file` is required and must match that pinned path, but it is not used as a dynamic sync input yet.
 
 ## Uploading Feature Images
 
