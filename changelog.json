@@ -1,5 +1,39 @@
 [
   {
+    "id": 55,
+    "slug": "streamlined-organization-member-management",
+    "title": "Streamlined organization member management",
+    "description": "Organization admins can now add existing users directly to their organization without sending email invitations, making team onboarding faster and more seamless. The invite flow automatically detects when a user already has an account and adds them immediately.",
+    "published_at": "2026-06-02T11:57:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 54,
+    "slug": "ui-polish-and-error-handling-improvements",
+    "title": "UI polish and error handling improvements",
+    "description": "Fixed several UI issues including tag overflow in columns, improved error messages for step logs when permissions are missing, corrected artifact version status display, and better handling of unauthorized organization access.",
+    "published_at": "2026-06-02T11:57:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 53,
     "slug": "streamlined-organization-invitations-with-sso",
     "title": "Streamlined organization invitations with SSO",
