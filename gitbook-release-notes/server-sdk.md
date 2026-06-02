@@ -7,6 +7,26 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.94.6 (2026-06-02)
+
+See what's new and improved in version 0.94.6.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/12.jpg" align="left" alt="ZenML 0.94.6" width="800">
+
+#### Infrastructure & Deployment Improvements
+
+- **Enhanced GKE Private Cluster Support**: Fixed GCP service connector failures when connecting to private GKE clusters that use Google's DNS-based control plane endpoint. ZenML now connects using the same method as `gcloud container clusters get-credentials --dns-endpoint`, ensuring reliable access to private clusters. [PR #4856](https://github.com/zenml-io/zenml/pull/4856)
+
+<details><summary>Fixed</summary>
+
+- **Docker Build Requirements**: Resolved an issue where ZenML would fail when no container engine was available, even when users explicitly set `skip_build=True` in their DockerSettings. The build checksum computation now correctly respects the skip_build flag. [PR #4879](https://github.com/zenml-io/zenml/pull/4879)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.94.6)
+
+***
+
 ## 0.94.5 (2026-05-29)
 
 See what's new and improved in version 0.94.5.
