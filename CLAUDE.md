@@ -22,7 +22,15 @@ This repo is the canonical source of ZenML release metadata:
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
   - `README.md` — Field documentation and examples.
-- `scripts/update_changelog.py` — High-level automation flow (LLM summaries, JSON/markdown writes, image rotation, validation).
+- `scripts/update_changelog.py` — High-level automation flow (source collection, LLM generation calls, JSON/markdown writes, image rotation, validation, workflow handoff).
+- `scripts/changelog_config.py` — Shared repo configuration, label mapping, placeholder URLs, and tag prefix helpers.
+- `scripts/changelog_llm_outputs.py` — Strict Pydantic models for structured LLM outputs.
+- `scripts/changelog_llm_providers.py` — Anthropic/OpenAI structured-output clients and provider/model env parsing.
+- `scripts/changelog_prompts.py` — Prompt builders for widget summaries, breaking changes, and release-note bodies.
+- `scripts/changelog_validators.py` — Hard validators for model output and grouped PR assignment.
+- `scripts/changelog_entry_builder.py` — Converts grouped LLM output into schema-compliant `changelog.json` entries.
+- `scripts/changelog_rendering.py` — Deterministic release-note header/body/footer assembly and markdown insertion.
+- `scripts/changelog_schema_validation.py` — In-memory and file-based `changelog.json` schema validation.
 - `scripts/workflow_result.py` — Deterministic workflow-result JSON model and GitHub Actions output writer.
 - `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
 - `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
@@ -54,12 +62,13 @@ This repo is the canonical source of ZenML release metadata:
   - For each source repo: finds its previous tag, computes release window, and checks `.consumed_sources_state` before fetching PRs.
   - Already-consumed windows are finalized windows: they are skipped before the LLM prompt is built and are not reopened for late-labeled PRs. Already-consumed repo-qualified PR keys are filtered as a second guardrail.
   - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
-  - Generates 2-3 grouped changelog entries via Anthropic structured outputs (validated with Pydantic models).
+  - Generates 2-3 grouped changelog entries via the configured structured-output provider (Anthropic by default, OpenAI when `CHANGELOG_LLM_PROVIDER=openai`).
   - Prepends entries to `changelog.json`, validates against `announcement-schema.json`.
   - Rotates header image using `.image_state` (cycles 1–49).
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.
   - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then writes structured source-window metadata for PR bodies to `changelog_workflow_result.json`.
   - Prints summary and exits; workflow keeps `.consumed_sources_state` in the release-notes PR, so a source window is only marked consumed when the markdown that represents it is merged.
+  - When `CHANGELOG_OPENAI_SHADOW_MODE=true`, also generates OpenAI shadow-mode comment files for reviewers. These files are labeled by provider, model, and output type, and are posted to the generated widget/release-notes PRs. Shadow output is never used to write production artifacts.
 
 ## Manually Adding Changelog Entries
 
@@ -79,9 +88,13 @@ This repo is the canonical source of ZenML release metadata:
 - Automated in the dispatch workflow after generation via `process-release.yml`.
 - Manual: run `uv run scripts/validate_changelog.py` to validate locally.
 
-## Secrets
+## Secrets and Provider Configuration
 
-- `ANTHROPIC_API_KEY` (required) — Used by `scripts/update_changelog.py` for LLM summarization.
+- `ANTHROPIC_API_KEY` — Required when production generation uses Anthropic.
+- `OPENAI_API_KEY` — Required when production generation uses OpenAI. Also required to produce workflow shadow comments when `CHANGELOG_OPENAI_SHADOW_MODE=true`; if absent or blank, shadow comments are skipped and the production workflow continues.
+- `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. Defaults to Anthropic.
+- `CHANGELOG_LLM_MODEL=<model>` — Optional production model override.
+- `CHANGELOG_OPENAI_SHADOW_MODEL=<model>` — Optional model override for OpenAI shadow comments.
 - `PRIVATE_REPO_TOKEN` (optional) — Use when the source repo is private (e.g., `zenml-cloud-ui`, `zenml-cloud-api`). If absent, the script falls back to `GITHUB_TOKEN` but will lack private repo access.
 
 ## Running Scripts Locally
@@ -138,5 +151,6 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 - `.consumed_sources_state` must stay committed so source windows/PRs are consumed once. Its current bootstrap is intentionally narrow, and recorded windows are finalized: late-labeled PRs inside them are ignored rather than replaying old release notes. If duplicate release notes appear, inspect this file rather than overloading `.image_state`.
 - For OSS markdown, include PR links; for Pro markdown, keep concise and omit PR links.
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
+- Do not commit intermediary plans, implementation reviews, prompt exports, oracle exports, or temporary investigation outputs unless explicitly requested. Keep working notes under ignored locations such as `design/`, `prompt-exports/`, `eval-results/`, `.agents/`, or `.claude/`.
 - Never commit secrets; use repo/org secrets for workflows.
 - IMPORTANT: **Before opening a PR or making a large commit**, always run `/simplify` to review changed code for reuse opportunities, quality issues, and efficiency improvements. Fix any issues it finds before committing.

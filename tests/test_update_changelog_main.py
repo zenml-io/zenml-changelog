@@ -25,6 +25,64 @@ class FakeGithub:
         self.auth = auth
 
 
+class FakeOpenAIForShadow:
+    def __init__(self, **kwargs: Any) -> None:
+        self.kwargs = kwargs
+        self.responses = self
+
+    def parse(self, **kwargs: Any) -> Any:
+        output_model = kwargs["text_format"]
+        if output_model is uc.GroupedChangelogOutput:
+            return type(
+                "Response",
+                (),
+                {
+                    "output_parsed": uc.GroupedChangelogOutput(
+                        entries=[
+                            uc.GroupedChangelogEntry(
+                                title="Shadow grouped entry",
+                                description="Shadow grouped entry description",
+                                suggested_labels=[uc.ChangelogLabel.IMPROVEMENT],
+                                pr_numbers=[1],
+                            )
+                        ]
+                    ),
+                    "status": "completed",
+                    "output": [],
+                    "incomplete_details": None,
+                },
+            )()
+        if output_model is uc.BreakingChangesOutput:
+            return type(
+                "Response",
+                (),
+                {
+                    "output_parsed": uc.BreakingChangesOutput(
+                        bullets=[
+                            "Update configuration as described in [PR #2](https://github.com/zenml-io/zenml/pull/2)"
+                        ]
+                    ),
+                    "status": "completed",
+                    "output": [],
+                    "incomplete_details": None,
+                },
+            )()
+        if output_model is uc.MarkdownSection:
+            return type(
+                "Response",
+                (),
+                {
+                    "output_parsed": uc.MarkdownSection(
+                        content="#### Improved\n\nUsers can compare output from [PR #1](https://github.com/zenml-io/zenml/pull/1)."
+                    ),
+                    "status": "completed",
+                    "output": [],
+                    "incomplete_details": None,
+                },
+            )()
+        raise AssertionError(f"Unexpected output model: {output_model}")
+
+
 def make_pr(number: int, body: str = "short") -> dict[str, Any]:
     return {
         "number": number,
@@ -156,21 +214,26 @@ def test_main_happy_path_writes_structured_result(
         lambda **kwargs: [
             {
                 "id": kwargs["starting_id"],
+                "slug": "grouped-release-note",
                 "title": "Grouped release note",
                 "description": "Grouped release note description",
-                "label": "improvement",
-                "source_prs": [1],
-                "source_repo": "zenml-io/zenml",
                 "published_at": "2026-06-02T10:00:00Z",
+                "published": True,
+                "audience": "oss",
+                "labels": ["improvement"],
+                "feature_image_url": "",
+                "video_url": "",
+                "learn_more_url": uc.PLACEHOLDER_LEARN_MORE_URL,
+                "docs_url": uc.PLACEHOLDER_DOCS_URL,
+                "should_highlight": False,
             }
         ],
     )
+    monkeypatch.setattr(uc, "validate_changelog_data", lambda *args, **kwargs: None)
     monkeypatch.setattr(uc, "validate_changelog", lambda *args, **kwargs: None)
     monkeypatch.setattr(uc, "get_next_image_number", lambda **kwargs: 3)
-    monkeypatch.setattr(uc, "render_release_header", lambda *args, **kwargs: "HEADER\n")
-    monkeypatch.setattr(uc, "render_breaking_section", lambda *args, **kwargs: "BREAKING\n")
     monkeypatch.setattr(uc, "llm_generate_release_notes_body", lambda *args, **kwargs: "BODY")
-    monkeypatch.setattr(uc, "render_release_footer", lambda *args, **kwargs: "FOOTER")
+    monkeypatch.setattr(uc, "render_release_notes_section", lambda *args, **kwargs: "RELEASE NOTES\n")
     monkeypatch.setattr(uc, "update_markdown_file", lambda *args, **kwargs: None)
     monkeypatch.setattr(uc, "mark_consumed_after_success", lambda **kwargs: kwargs["state"])
     monkeypatch.setattr(uc, "write_consumed_source_state", lambda *args, **kwargs: None)
@@ -242,3 +305,197 @@ def test_main_validates_release_note_body_before_writing_artifacts(
     assert not (tmp_path / ".image_state").exists()
     assert not (tmp_path / ".consumed_sources_state").exists()
     assert not result_path.exists()
+
+
+def test_main_validates_changelog_schema_before_replacing_file(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    result_path = configure_common_main_stubs(monkeypatch, tmp_path)
+    release_pr = make_pr(1, body="This PR has enough body text to avoid manual-review noise.")
+    collection = make_collection(release_notes_prs=[release_pr], breaking_prs=[])
+    changelog_path = tmp_path / "changelog.json"
+    changelog_path.write_text("[]\n", encoding="utf-8")
+
+    monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: collection)
+    monkeypatch.setattr(uc, "llm_generate_breaking_changes_bullets", lambda **kwargs: [])
+    monkeypatch.setattr(uc, "llm_generate_release_notes_body", lambda *args, **kwargs: "BODY")
+    monkeypatch.setattr(
+        uc,
+        "generate_valid_grouped_changelog_entries",
+        lambda **kwargs: [
+            {
+                "id": kwargs["starting_id"],
+                "slug": "bad-entry",
+                "title": "Bad entry",
+                "description": "This entry has an extra field and must fail schema validation.",
+                "published_at": "2026-06-02T10:00:00Z",
+                "unexpected": "not allowed",
+            }
+        ],
+    )
+
+    def fail_if_called(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("production artifact writer should not be called after schema failure")
+
+    monkeypatch.setattr(uc, "get_next_image_number", fail_if_called)
+    monkeypatch.setattr(uc, "update_markdown_file", fail_if_called)
+    monkeypatch.setattr(uc, "write_consumed_source_state", fail_if_called)
+    monkeypatch.setattr(uc, "write_changelog_workflow_result", fail_if_called)
+
+    with pytest.raises(Exception, match="Additional properties are not allowed|unexpected"):
+        uc.main()
+
+    assert changelog_path.read_text(encoding="utf-8") == "[]\n"
+    assert not (tmp_path / ".image_state").exists()
+    assert not (tmp_path / ".consumed_sources_state").exists()
+    assert not result_path.exists()
+
+
+def test_blank_private_repo_token_falls_back_to_github_token(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    configure_common_main_stubs(monkeypatch, tmp_path)
+    created: dict[str, object] = {}
+
+    class CapturingGithub:
+        def __init__(self, auth: object) -> None:
+            created["auth"] = auth
+
+    monkeypatch.setenv("PRIVATE_REPO_TOKEN", "   ")
+    monkeypatch.setattr(uc.Auth, "Token", lambda token: f"auth:{token}")
+    monkeypatch.setattr(uc, "Github", CapturingGithub)
+    monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: uc.MultiSourceCollectionResult())
+
+    with pytest.raises(SystemExit):
+        uc.main()
+
+    assert created["auth"] == "auth:token"
+
+
+def test_openai_shadow_comments_write_labeled_review_files_only(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(uc.OPENAI_SHADOW_MODE_ENV, "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-token")
+    monkeypatch.setenv(uc.OPENAI_SHADOW_MODEL_ENV, "gpt-shadow")
+    monkeypatch.setattr(uc, "OpenAI", FakeOpenAIForShadow)
+
+    uc.write_openai_shadow_comments(
+        grouping_prs=[make_pr(1, body="This PR has enough detail for output.")],
+        body_prs=[make_pr(1, body="This PR has enough detail for output.")],
+        breaking_prs=[make_pr(2, body="This breaking PR has enough detail for output.")],
+        source_repo="zenml-io/zenml",
+        published_at="2026-06-02T10:00:00Z",
+        starting_id=10,
+        include_pr_links=True,
+    )
+
+    widget_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT).read_text(encoding="utf-8")
+    release_notes_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).read_text(encoding="utf-8")
+
+    assert uc.OPENAI_SHADOW_WIDGET_MARKER in widget_comment
+    assert "- Provider: `openai`" in widget_comment
+    assert "- Model: `gpt-shadow`" in widget_comment
+    assert "dashboard grouped changelog entries" in widget_comment
+    assert "Shadow grouped entry" in widget_comment
+    assert "schema_entries" in widget_comment
+
+    assert uc.OPENAI_SHADOW_RELEASE_NOTES_MARKER in release_notes_comment
+    assert "### Output type: `breaking_changes`" in release_notes_comment
+    assert "### Output type: `release_notes_body`" in release_notes_comment
+    assert "Users can compare output" in release_notes_comment
+
+    assert not (tmp_path / "changelog.json").exists()
+    assert not (tmp_path / "gitbook-release-notes").exists()
+    assert not (tmp_path / ".image_state").exists()
+    assert not (tmp_path / ".consumed_sources_state").exists()
+
+
+def test_openai_shadow_mode_skips_without_openai_key(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(uc.OPENAI_SHADOW_MODE_ENV, "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "   ")
+
+    uc.write_openai_shadow_comments(
+        grouping_prs=[make_pr(1)],
+        body_prs=[make_pr(1)],
+        breaking_prs=[],
+        source_repo="zenml-io/zenml",
+        published_at="2026-06-02T10:00:00Z",
+        starting_id=1,
+        include_pr_links=True,
+    )
+
+    assert not (tmp_path / uc.DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT).exists()
+    assert not (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).exists()
+
+
+def test_openai_shadow_mode_rejects_production_artifact_paths(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    changelog_path = tmp_path / "changelog.json"
+    changelog_path.write_text("original changelog\n", encoding="utf-8")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(uc.OPENAI_SHADOW_MODE_ENV, "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-token")
+    monkeypatch.setenv(uc.OPENAI_SHADOW_WIDGET_COMMENT_ENV, "changelog.json")
+    monkeypatch.setattr(uc, "OpenAI", FakeOpenAIForShadow)
+
+    uc.write_openai_shadow_comments(
+        grouping_prs=[make_pr(1)],
+        body_prs=[make_pr(1)],
+        breaking_prs=[],
+        source_repo="zenml-io/zenml",
+        published_at="2026-06-02T10:00:00Z",
+        starting_id=1,
+        include_pr_links=True,
+    )
+
+    assert changelog_path.read_text(encoding="utf-8") == "original changelog\n"
+    assert not (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).exists()
+
+
+def test_openai_shadow_failure_writes_failure_comment_without_raising(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    class FailingOpenAIForShadow:
+        def __init__(self, **kwargs: Any) -> None:
+            self.responses = self
+
+        def parse(self, **kwargs: Any) -> Any:
+            raise RuntimeError("shadow provider unavailable")
+
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv(uc.OPENAI_SHADOW_MODE_ENV, "true")
+    monkeypatch.setenv("OPENAI_API_KEY", "openai-token")
+    monkeypatch.setattr(uc, "OpenAI", FailingOpenAIForShadow)
+
+    uc.write_openai_shadow_comments(
+        grouping_prs=[make_pr(1)],
+        body_prs=[make_pr(1)],
+        breaking_prs=[],
+        source_repo="zenml-io/zenml",
+        published_at="2026-06-02T10:00:00Z",
+        starting_id=1,
+        include_pr_links=True,
+    )
+
+    widget_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT).read_text(encoding="utf-8")
+    release_notes_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).read_text(encoding="utf-8")
+
+    assert "- Status: `failed`" in widget_comment
+    assert "shadow provider unavailable" in widget_comment
+    assert "### Output type: `breaking_changes`" in release_notes_comment
+    assert "- Status: `passed`" in release_notes_comment
+    assert "### Output type: `release_notes_body`" in release_notes_comment
+    assert "- Status: `failed`" in release_notes_comment

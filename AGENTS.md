@@ -12,6 +12,7 @@ This repository is the canonical source for ZenML release metadata and GitBook r
 - `.github/workflows/` runs dispatch processing, schema validation, and release-note sync workflows.
 
 Do not add files from `design/` to git history.
+Do not commit intermediary plans, implementation reviews, prompt exports, oracle exports, or temporary investigation outputs unless explicitly requested. Keep them under ignored locations such as `design/`, `prompt-exports/`, `eval-results/`, `.agents/`, or `.claude/` when they are only working notes.
 
 ## Build, Test, and Development Commands
 

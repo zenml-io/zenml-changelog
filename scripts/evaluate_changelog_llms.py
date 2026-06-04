@@ -36,18 +36,26 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts import update_changelog as uc
+from scripts import changelog_artifact_safety as artifact_safety
+from scripts import changelog_config as cfg
+from scripts import changelog_entry_builder as entry_builder
+from scripts import changelog_env as env
+from scripts import changelog_llm_generation as generation
+from scripts import changelog_llm_providers as providers
+from scripts import changelog_rendering as rendering
+from scripts import changelog_schema_validation as schema_validation
+from scripts import changelog_validators as validators
+from scripts.changelog_llm_outputs import (
+    LLM_CALL_BREAKING_CHANGES,
+    LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    LLM_CALL_RELEASE_NOTES_BODY,
+    GroupedChangelogOutput,
+)
 
 DEFAULT_FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures" / "changelog-evals"
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "eval-results" / "openai-migration"
 SCHEMA_PATH = REPO_ROOT / "changelog_schema" / "announcement-schema.json"
-PRODUCTION_ARTIFACTS = {
-    (REPO_ROOT / "changelog.json").resolve(),
-    (REPO_ROOT / ".image_state").resolve(),
-    (REPO_ROOT / ".consumed_sources_state").resolve(),
-    (REPO_ROOT / "gitbook-release-notes" / "server-sdk.md").resolve(),
-    (REPO_ROOT / "gitbook-release-notes" / "pro-control-plane.md").resolve(),
-}
+PRODUCTION_ARTIFACTS = artifact_safety.production_artifact_paths(REPO_ROOT)
 
 # These are planning-time estimates only. Re-verify pricing before using cost as
 # a decision input for a real migration choice.
@@ -76,10 +84,17 @@ class OfflineCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     candidate_id: str
-    provider: str
+    provider: providers.LLMProviderName
     model: str
     display_name: str
     outputs: CandidateOutputs = Field(default_factory=CandidateOutputs)
+
+
+LLM_CALL_FIXTURE_FIELDS = {
+    LLM_CALL_GROUPED_CHANGELOG_ENTRIES: "grouped_changelog_entries",
+    LLM_CALL_BREAKING_CHANGES: "breaking_changes",
+    LLM_CALL_RELEASE_NOTES_BODY: "release_notes_body",
+}
 
 
 class EvalFixture(BaseModel):
@@ -105,7 +120,7 @@ class LiveCandidate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     candidate_id: str
-    provider: Literal["anthropic", "openai"]
+    provider: providers.LLMProviderName
     model: str
     display_name: str
 
@@ -131,7 +146,7 @@ class HardCheck(BaseModel):
 class CandidateEvalResult(BaseModel):
     fixture_id: str
     candidate_id: str
-    provider: str
+    provider: providers.LLMProviderName
     model: str
     display_name: str
     hard_gate_status: Literal["pass", "fail"]
@@ -213,7 +228,10 @@ class OfflineFixtureProvider:
         call_name: str,
     ) -> TOutput:
         start = time.perf_counter()
-        raw_output = getattr(self.outputs, call_name, None)
+        fixture_field = LLM_CALL_FIXTURE_FIELDS.get(call_name)
+        if fixture_field is None:
+            raise EvalHarnessError(f"Offline fixture lookup is not configured for LLM call {call_name!r}.")
+        raw_output = getattr(self.outputs, fixture_field)
         if raw_output is None:
             self.calls.append(
                 make_provider_call_record(
@@ -247,7 +265,7 @@ class OfflineFixtureProvider:
 class MeasuredLiveProvider:
     """Thin measurement wrapper around the real structured-output provider seam."""
 
-    def __init__(self, *, provider: str, model: str, client: uc.StructuredLLMClient) -> None:
+    def __init__(self, *, provider: providers.LLMProviderName, model: str, client: providers.StructuredLLMClient) -> None:
         self.provider = provider
         self.model = model
         self.client = client
@@ -292,9 +310,9 @@ def check_fail(name: str, details: Sequence[str], warnings: Sequence[str] | None
 
 def is_production_artifact_path(path: Path) -> bool:
     resolved = path.resolve()
-    gitbook_dir = (REPO_ROOT / "gitbook-release-notes").resolve()
-    return resolved in PRODUCTION_ARTIFACTS or (
-        resolved.is_relative_to(gitbook_dir) and resolved.suffix == ".md"
+    return resolved in PRODUCTION_ARTIFACTS or artifact_safety.is_production_artifact_path(
+        resolved,
+        repo_root=REPO_ROOT,
     )
 
 
@@ -364,7 +382,7 @@ def load_fixtures(fixtures_dir: Path, fixture_ids: set[str] | None = None) -> li
         fixture = EvalFixture.model_validate_json(fixture_path.read_text(encoding="utf-8"))
         if fixture_ids and fixture.fixture_id not in fixture_ids:
             continue
-        if fixture.source_repo not in uc.REPO_CONFIG:
+        if fixture.source_repo not in cfg.REPO_CONFIG:
             raise EvalHarnessError(f"Unknown source_repo in {fixture_path}: {fixture.source_repo}")
         fixtures.append(fixture)
     if fixture_ids:
@@ -385,40 +403,53 @@ def parse_live_candidate(value: str) -> LiveCandidate:
     provider = provider.strip().lower()
     model = model.strip()
     label = label.strip()
-    if provider not in {"anthropic", "openai"}:
+    if not provider:
         raise argparse.ArgumentTypeError("Live provider must be 'anthropic' or 'openai'.")
+    try:
+        provider_name = providers.normalize_llm_provider(provider)
+    except RuntimeError as error:
+        raise argparse.ArgumentTypeError("Live provider must be 'anthropic' or 'openai'.") from error
     if not model or not label:
         raise argparse.ArgumentTypeError("Live candidate model and label must be non-empty.")
-    candidate_id = f"live-{provider}-{uc.slugify_title(model)}"
+    candidate_id = f"live-{provider_name}-{entry_builder.slugify_title(model)}"
     return LiveCandidate(
         candidate_id=candidate_id,
-        provider=provider,  # type: ignore[arg-type]
+        provider=provider_name,
         model=model,
         display_name=label,
     )
 
 
 def build_live_provider(candidate: LiveCandidate) -> MeasuredLiveProvider:
-    if candidate.provider == "anthropic":
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if candidate.provider == providers.LLM_PROVIDER_ANTHROPIC:
+        api_key = env.env_value("ANTHROPIC_API_KEY")
         if not api_key:
             raise EvalHarnessError("ANTHROPIC_API_KEY is required for live Anthropic evaluation.")
-        client = uc.AnthropicStructuredLLMClient(
-            uc.Anthropic(api_key=api_key),
+        client = providers.build_anthropic_structured_llm_client(
+            api_key=api_key,
             model=candidate.model,
         )
-        return MeasuredLiveProvider(provider="anthropic", model=candidate.model, client=client)
+        return MeasuredLiveProvider(
+            provider=providers.LLM_PROVIDER_ANTHROPIC,
+            model=candidate.model,
+            client=client,
+        )
 
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = env.env_value("OPENAI_API_KEY")
     if not api_key:
         raise EvalHarnessError("OPENAI_API_KEY is required for live OpenAI evaluation.")
-    if uc.OpenAI is None:
-        raise EvalHarnessError("The openai package is required for live OpenAI evaluation.")
-    client = uc.OpenAIStructuredLLMClient(
-        uc.OpenAI(api_key=api_key, max_retries=0),
+    try:
+        client = providers.build_openai_structured_llm_client(
+            api_key=api_key,
+            model=candidate.model,
+        )
+    except RuntimeError as error:
+        raise EvalHarnessError(str(error)) from error
+    return MeasuredLiveProvider(
+        provider=providers.LLM_PROVIDER_OPENAI,
         model=candidate.model,
+        client=client,
     )
-    return MeasuredLiveProvider(provider="openai", model=candidate.model, client=client)
 
 
 def fixture_candidates(
@@ -454,11 +485,11 @@ def body_prs_for_fixture(fixture: EvalFixture) -> list[dict[str, Any]]:
 
 
 def include_pr_links_for_fixture(fixture: EvalFixture) -> bool:
-    return uc.REPO_CONFIG[fixture.source_repo]["type"] == "oss"
+    return cfg.REPO_CONFIG[fixture.source_repo]["type"] == "oss"
 
 
 def render_candidate_markdown(fixture: EvalFixture, breaking_bullets: list[str], body: str) -> str:
-    return uc.render_release_notes_section(
+    return rendering.render_release_notes_section(
         release_tag=fixture.release_tag,
         published_at=fixture.published_at,
         image_number=fixture.image_number,
@@ -489,7 +520,7 @@ class CandidateEvaluationState:
         self.hard_checks: list[HardCheck] = []
         self.errors: list[str] = []
         self.written_files: list[str] = []
-        self.grouped_output: uc.GroupedChangelogOutput | None = None
+        self.grouped_output: GroupedChangelogOutput | None = None
         self.generated_entries: list[dict[str, Any]] | None = None
         self.breaking_bullets: list[str] = []
         self.release_body = ""
@@ -534,24 +565,22 @@ def evaluate_candidate(
         return state.finish()
 
     try:
-        uc.assert_unique_grouped_pr_numbers(grouping_prs)
+        validators.assert_unique_grouped_pr_numbers(grouping_prs)
         state.hard_checks.append(check_pass("input_pr_numbers_unambiguous"))
     except Exception as error:  # noqa: BLE001 - evaluator records any hard-gate failure
         return state.fail("input_pr_numbers_unambiguous", error)
 
     try:
         state.provider = provider_for_candidate(candidate)
-        prompt = uc.build_grouped_changelog_entries_prompt(grouping_prs, fixture.source_repo)
-        state.grouped_output = state.provider.parse_structured_output(
-            prompt=prompt,
-            output_model=uc.GroupedChangelogOutput,
-            max_output_tokens=1200,
-            call_name=uc.LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+        state.grouped_output = generation.generate_grouped_changelog_output(
+            client=state.provider,
+            prs=grouping_prs,
+            source_repo=fixture.source_repo,
         )
         state.hard_checks.append(check_pass("grouped_structured_parse"))
-        uc.validate_grouped_changelog_output(state.grouped_output, grouping_prs)
+        validators.validate_grouped_changelog_output(state.grouped_output, grouping_prs)
         state.hard_checks.append(check_pass("grouped_pr_assignment"))
-        state.generated_entries = uc.build_grouped_changelog_entries(
+        state.generated_entries = entry_builder.build_grouped_changelog_entries(
             grouped_output=state.grouped_output,
             prs=grouping_prs,
             source_repo=fixture.source_repo,
@@ -561,31 +590,21 @@ def evaluate_candidate(
         state.hard_checks.append(check_pass("candidate_changelog_render"))
         changelog_rel = state.candidate_dir / "candidate-changelog.json"
         state.written_files.append(safe_write_json(run_dir, changelog_rel, state.generated_entries))
-        uc.validate_changelog(run_dir / changelog_rel, SCHEMA_PATH)
+        schema_validation.validate_changelog(run_dir / changelog_rel, SCHEMA_PATH)
         state.hard_checks.append(check_pass("candidate_changelog_schema"))
     except Exception as error:  # noqa: BLE001 - keep evaluating reportable hard gate failures
         return state.fail("grouped_changelog_hard_gate", error)
 
     try:
         if fixture.breaking_prs:
-            prompt = uc.build_breaking_changes_prompt(
-                fixture.breaking_prs,
-                fixture.source_repo,
-                include_pr_links,
-            )
-            breaking_output = state.provider.parse_structured_output(
-                prompt=prompt,
-                output_model=uc.BreakingChangesOutput,
-                max_output_tokens=900,
-                call_name=uc.LLM_CALL_BREAKING_CHANGES,
+            breaking_output, warnings = generation.generate_breaking_changes_output(
+                client=state.provider,
+                breaking_prs=fixture.breaking_prs,
+                source_repo=fixture.source_repo,
+                include_pr_links=include_pr_links,
             )
             state.hard_checks.append(check_pass("breaking_structured_parse"))
             state.breaking_bullets = breaking_output.bullets
-            warnings = uc.validate_breaking_changes_output(
-                bullets=state.breaking_bullets,
-                breaking_prs=fixture.breaking_prs,
-                include_pr_links=include_pr_links,
-            )
             state.hard_checks.append(check_pass("breaking_validator", warnings=warnings))
         else:
             state.hard_checks.append(check_pass("breaking_skipped_no_breaking_prs"))
@@ -594,20 +613,14 @@ def evaluate_candidate(
 
     try:
         if body_prs:
-            prompt = uc.build_release_notes_body_prompt(body_prs, fixture.source_repo, include_pr_links)
-            body_output = state.provider.parse_structured_output(
-                prompt=prompt,
-                output_model=uc.MarkdownSection,
-                max_output_tokens=1800,
-                call_name=uc.LLM_CALL_RELEASE_NOTES_BODY,
+            body_output, warnings = generation.generate_release_notes_body_output(
+                client=state.provider,
+                prs=body_prs,
+                source_repo=fixture.source_repo,
+                include_pr_links=include_pr_links,
             )
             state.hard_checks.append(check_pass("release_notes_body_structured_parse"))
             state.release_body = body_output.content
-            warnings = uc.validate_release_notes_body_output(
-                body=state.release_body,
-                prs=body_prs,
-                include_pr_links=include_pr_links,
-            )
             state.hard_checks.append(check_pass("release_notes_body_validator", warnings=warnings))
         else:
             state.hard_checks.append(check_pass("release_notes_body_skipped_no_body_prs"))
@@ -623,11 +636,11 @@ def evaluate_candidate(
         safe_write_text(run_dir, state.candidate_dir / "candidate-release-notes.md", state.release_markdown)
     )
     generated_outputs = {
-        uc.LLM_CALL_GROUPED_CHANGELOG_ENTRIES: state.grouped_output.model_dump(mode="json")
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES: state.grouped_output.model_dump(mode="json")
         if state.grouped_output
         else None,
         "breaking_bullets": state.breaking_bullets,
-        uc.LLM_CALL_RELEASE_NOTES_BODY: state.release_body,
+        LLM_CALL_RELEASE_NOTES_BODY: state.release_body,
     }
     state.written_files.append(
         safe_write_json(run_dir, state.candidate_dir / "generated-outputs.json", generated_outputs)

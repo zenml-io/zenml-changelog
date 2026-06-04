@@ -10,6 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts import changelog_rendering as rendering
 from scripts import evaluate_changelog_llms as evaluator
 from scripts import update_changelog as uc
 
@@ -128,6 +129,7 @@ def test_eval_never_calls_production_write_paths(
         "write_changelog_workflow_result",
     ]:
         monkeypatch.setattr(uc, name, forbidden)
+    monkeypatch.setattr(rendering, "update_markdown_file", forbidden)
 
     summary = run_static_eval(tmp_path, fixture_ids={"synthetic-oss-small"})
     run_dir = Path(summary.run_dir).resolve()
@@ -229,6 +231,11 @@ def test_run_eval_rejects_live_candidates_without_explicit_allow_flag(tmp_path: 
             candidate_filter={live_candidate.candidate_id},
             live_candidates=[live_candidate],
         )
+
+
+def test_parse_live_candidate_rejects_empty_provider() -> None:
+    with pytest.raises(Exception, match="Live provider"):
+        evaluator.parse_live_candidate(":gpt-5.4-mini:OpenAI mini")
 
 
 def test_live_candidates_require_explicit_allow_flag_in_cli() -> None:
