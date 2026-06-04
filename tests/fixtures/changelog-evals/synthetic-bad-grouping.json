@@ -1,0 +1,63 @@
+{
+  "fixture_id": "synthetic-bad-grouping",
+  "description": "Synthetic candidate that duplicates one PR assignment and omits another.",
+  "source_repo": "zenml-io/zenml",
+  "release_tag": "0.93.0",
+  "release_url": "https://github.com/zenml-io/zenml/releases/tag/0.93.0",
+  "published_at": "2026-05-25T12:00:00Z",
+  "image_number": 14,
+  "starting_id": 1050,
+  "major_bump": false,
+  "expected_hard_gate_status": "fail",
+  "expected_failure": "invalid grouped PR assignment",
+  "release_notes_prs": [
+    {
+      "number": 501,
+      "title": "Add artifact cleanup preview",
+      "url": "https://github.com/zenml-io/zenml/pull/501",
+      "author": "fixture-user",
+      "body": "Adds a preview command so users can inspect artifact cleanup candidates before deleting anything.",
+      "labels": ["release-notes", "feature"],
+      "repo": "zenml-io/zenml"
+    },
+    {
+      "number": 502,
+      "title": "Improve cleanup dry-run output",
+      "url": "https://github.com/zenml-io/zenml/pull/502",
+      "author": "fixture-user",
+      "body": "Improves dry-run output for artifact cleanup so users can see why each artifact was selected.",
+      "labels": ["release-notes", "improvement"],
+      "repo": "zenml-io/zenml"
+    }
+  ],
+  "breaking_prs": [],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-openai-mini-bad",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini bad grouping",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Artifact cleanup preview",
+              "description": "Users can inspect cleanup candidates before deleting artifacts.",
+              "suggested_labels": ["feature"],
+              "pr_numbers": [501]
+            },
+            {
+              "title": "Cleanup reporting",
+              "description": "Dry-run output is easier to inspect.",
+              "suggested_labels": ["improvement"],
+              "pr_numbers": [501]
+            }
+          ]
+        },
+        "release_notes_body": {
+          "content": "#### Artifact cleanup preview\n\nUsers can inspect cleanup candidates before deleting artifacts ([PR #501](https://github.com/zenml-io/zenml/pull/501)).\n\nDry-run output now explains why each artifact was selected ([PR #502](https://github.com/zenml-io/zenml/pull/502))."
+        }
+      }
+    }
+  ]
+}

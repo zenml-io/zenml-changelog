@@ -1,0 +1,54 @@
+{
+  "fixture_id": "synthetic-ambiguous-pr-numbers",
+  "description": "Synthetic bundled-source input where two source repos share the same bare PR number.",
+  "source_repo": "zenml-io/zenml",
+  "release_tag": "0.92.0",
+  "release_url": "https://github.com/zenml-io/zenml/releases/tag/0.92.0",
+  "published_at": "2026-05-22T12:00:00Z",
+  "image_number": 13,
+  "starting_id": 1040,
+  "major_bump": false,
+  "expected_hard_gate_status": "fail",
+  "expected_failure": "ambiguous bare PR numbers",
+  "release_notes_prs": [
+    {
+      "number": 401,
+      "title": "Improve OSS stack deployment messages",
+      "url": "https://github.com/zenml-io/zenml/pull/401",
+      "author": "fixture-user",
+      "body": "Improves deployment status messages for stack deployments.",
+      "labels": ["release-notes", "improvement"],
+      "repo": "zenml-io/zenml"
+    },
+    {
+      "number": 401,
+      "title": "Refresh dashboard stack deployment copy",
+      "url": "https://github.com/zenml-io/zenml-dashboard/pull/401",
+      "author": "fixture-user",
+      "body": "Refreshes dashboard copy for stack deployment status.",
+      "labels": ["release-notes", "improvement"],
+      "repo": "zenml-io/zenml-dashboard"
+    }
+  ],
+  "breaking_prs": [],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-openai-mini",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Deployment status copy",
+              "description": "Deployment status messages are clearer across the product.",
+              "suggested_labels": ["improvement"],
+              "pr_numbers": [401]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

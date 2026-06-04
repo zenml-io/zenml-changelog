@@ -84,7 +84,9 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 
 ## Required Secrets and Setup
 
-- `ANTHROPIC_API_KEY` — Required for LLM generation in `scripts/update_changelog.py`.
+- `ANTHROPIC_API_KEY` — Required only when `scripts/update_changelog.py` or live evaluation uses Anthropic.
+- `OPENAI_API_KEY` — Required only when `scripts/update_changelog.py` or live evaluation uses OpenAI.
+- No-changes release runs do not initialize an LLM client and need no LLM provider key.
 - `PRIVATE_REPO_TOKEN` — Optional PAT with access to private repos (used instead of `GITHUB_TOKEN` when set).
 - Source repos need a dispatch token (e.g., `CHANGELOG_DISPATCH_TOKEN`) to send `repository_dispatch` events to this repo.
 
@@ -98,6 +100,48 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 ```bash
 uv run scripts/run_pytest.py
 ```
+
+## Offline LLM Evaluation Harness
+
+`scripts/evaluate_changelog_llms.py` is a non-production rehearsal space for comparing changelog LLM outputs. It reads static fixtures, runs provider/model outputs through the same hard validators used by `update_changelog.py`, and writes reports only under `eval-results/openai-migration/<run-id>/`.
+
+Offline fixture run:
+
+```bash
+uv run scripts/evaluate_changelog_llms.py run-eval \
+  --fixtures-dir tests/fixtures/changelog-evals \
+  --output-root eval-results/openai-migration
+```
+
+Each run writes `summary.md`, `summary.json`, per-case reports, and a labeled `comparison.html` page. Provider/model names are visible in the reports so PR-facing review is not blind by accident.
+
+Safety boundary:
+
+- The evaluator does **not** call `scripts/update_changelog.py main()`.
+- It does **not** write `changelog.json`, `gitbook-release-notes/*.md`, `.image_state`, or `.consumed_sources_state`.
+- `eval-results/` is ignored and should not be committed.
+- Unit tests use fake/offline provider outputs only.
+
+Once live API keys are deliberately available, run live comparisons explicitly. Set only the key(s) for the live provider candidates you include:
+
+```bash
+ANTHROPIC_API_KEY=... OPENAI_API_KEY=... \
+uv run scripts/evaluate_changelog_llms.py run-eval \
+  --fixtures-dir tests/fixtures/changelog-evals \
+  --output-root eval-results/openai-migration \
+  --allow-live-provider-calls \
+  --live-candidate anthropic:claude-sonnet-4-5-20250929:"Claude baseline" \
+  --live-candidate openai:gpt-5.4-mini:"OpenAI mini"
+```
+
+Production provider configuration remains separate from evaluation:
+
+- `CHANGELOG_LLM_PROVIDER=anthropic|openai`
+- `CHANGELOG_LLM_MODEL=<model override>`
+- `ANTHROPIC_API_KEY` when `CHANGELOG_LLM_PROVIDER=anthropic`
+- `OPENAI_API_KEY` when `CHANGELOG_LLM_PROVIDER=openai`
+
+Rollback during migration is intentionally simple: set `CHANGELOG_LLM_PROVIDER=anthropic`.
 
 ## OSS GitHub Release Sync Contract
 

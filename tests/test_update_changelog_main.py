@@ -106,6 +106,32 @@ def test_main_no_changes_writes_structured_result_and_exits_cleanly(
     assert result.source_windows == ""
 
 
+def test_main_no_changes_does_not_require_llm_api_key(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    result_path = configure_common_main_stubs(monkeypatch, tmp_path)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setattr(
+        uc,
+        "collect_multi_source_prs",
+        lambda **kwargs: uc.MultiSourceCollectionResult(),
+    )
+
+    def fail_if_llm_client_is_built() -> uc.StructuredLLMClient:
+        raise AssertionError("No-changes path must not initialize an LLM client")
+
+    monkeypatch.setattr(uc, "build_structured_llm_client_from_env", fail_if_llm_client_is_built)
+
+    with pytest.raises(SystemExit) as exit_info:
+        uc.main()
+
+    assert exit_info.value.code == 0
+    result = wr.read_changelog_workflow_result(result_path)
+    assert result.has_changes is False
+
+
 def test_main_happy_path_writes_structured_result(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -162,3 +188,57 @@ def test_main_happy_path_writes_structured_result(
     assert "included zenml-io/zenml 0.84.0 -> 0.85.0" in result.source_windows
     assert "release_notes=1" in result.source_windows
     assert "breaking=1" in result.source_windows
+
+
+def test_main_validates_release_note_body_before_writing_artifacts(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    result_path = configure_common_main_stubs(monkeypatch, tmp_path)
+    release_pr = make_pr(1, body="This PR has enough body text to avoid manual-review noise.")
+    collection = make_collection(release_notes_prs=[release_pr], breaking_prs=[])
+    changelog_path = tmp_path / "changelog.json"
+    changelog_path.write_text("[]\n", encoding="utf-8")
+
+    monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: collection)
+    monkeypatch.setattr(
+        uc,
+        "generate_valid_grouped_changelog_entries",
+        lambda **kwargs: [
+            {
+                "id": kwargs["starting_id"],
+                "title": "Grouped release note",
+                "description": "Grouped release note description",
+                "published_at": "2026-06-02T10:00:00Z",
+                "published": True,
+                "audience": "oss",
+                "labels": ["improvement"],
+                "feature_image_url": "",
+                "video_url": "",
+                "learn_more_url": uc.PLACEHOLDER_LEARN_MORE_URL,
+                "docs_url": uc.PLACEHOLDER_DOCS_URL,
+                "should_highlight": False,
+            }
+        ],
+    )
+
+    def fail_release_note_body(*args: Any, **kwargs: Any) -> str:
+        raise uc.LLMOutputValidationError(["bad release-note body"])
+
+    def fail_if_called(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("production artifact writer should not be called")
+
+    monkeypatch.setattr(uc, "llm_generate_release_notes_body", fail_release_note_body)
+    monkeypatch.setattr(uc, "validate_changelog", fail_if_called)
+    monkeypatch.setattr(uc, "get_next_image_number", fail_if_called)
+    monkeypatch.setattr(uc, "update_markdown_file", fail_if_called)
+    monkeypatch.setattr(uc, "write_consumed_source_state", fail_if_called)
+    monkeypatch.setattr(uc, "write_changelog_workflow_result", fail_if_called)
+
+    with pytest.raises(uc.LLMOutputValidationError, match="bad release-note body"):
+        uc.main()
+
+    assert changelog_path.read_text(encoding="utf-8") == "[]\n"
+    assert not (tmp_path / ".image_state").exists()
+    assert not (tmp_path / ".consumed_sources_state").exists()
+    assert not result_path.exists()

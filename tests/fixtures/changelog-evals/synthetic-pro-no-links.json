@@ -1,0 +1,57 @@
+{
+  "fixture_id": "synthetic-pro-no-links",
+  "description": "Synthetic Pro release where generated prose must not include PR links or PR numbers.",
+  "source_repo": "zenml-io/zenml-cloud-api",
+  "release_tag": "0.14.0",
+  "release_url": "https://github.com/zenml-io/zenml-cloud-api/releases/tag/0.14.0",
+  "published_at": "2026-05-08T09:30:00Z",
+  "image_number": 9,
+  "starting_id": 1010,
+  "major_bump": false,
+  "expected_hard_gate_status": "pass",
+  "expected_failure": null,
+  "release_notes_prs": [
+    {
+      "number": 201,
+      "title": "Add organization-level access presets",
+      "url": "https://github.com/zenml-io/zenml-cloud-api/pull/201",
+      "author": "fixture-user",
+      "body": "Adds organization-level role presets so admins can apply consistent access policies across teams.",
+      "labels": ["release-notes", "feature"],
+      "repo": "zenml-io/zenml-cloud-api"
+    },
+    {
+      "number": 202,
+      "title": "Improve service account audit events",
+      "url": "https://github.com/zenml-io/zenml-cloud-api/pull/202",
+      "author": "fixture-user",
+      "body": "Improves audit events for service account creation and token rotation.",
+      "labels": ["release-notes", "improvement"],
+      "repo": "zenml-io/zenml-cloud-api"
+    }
+  ],
+  "breaking_prs": [],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-openai-mini",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Stronger organization controls",
+              "description": "Admins can apply consistent access presets and inspect service-account activity with clearer audit events.",
+              "suggested_labels": ["feature", "improvement"],
+              "pr_numbers": [201, 202]
+            }
+          ]
+        },
+        "release_notes_body": {
+          "content": "#### Stronger organization controls\n\nOrganization admins can now apply reusable access presets across teams, making policy rollout more consistent. Service account audit events are also clearer, especially around credential creation and rotation."
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "fixture_id": "synthetic-oss-small",
+  "description": "Small synthetic OSS release with one feature and one bugfix PR.",
+  "source_repo": "zenml-io/zenml",
+  "release_tag": "0.91.0",
+  "release_url": "https://github.com/zenml-io/zenml/releases/tag/0.91.0",
+  "published_at": "2026-05-01T12:00:00Z",
+  "image_number": 7,
+  "starting_id": 1000,
+  "major_bump": false,
+  "expected_hard_gate_status": "pass",
+  "expected_failure": null,
+  "release_notes_prs": [
+    {
+      "number": 101,
+      "title": "Add reusable pipeline templates",
+      "url": "https://github.com/zenml-io/zenml/pull/101",
+      "author": "fixture-user",
+      "body": "Adds a small library of starter pipeline templates so new users can bootstrap common training workflows without copying examples by hand.",
+      "labels": ["release-notes", "feature"],
+      "repo": "zenml-io/zenml"
+    },
+    {
+      "number": 102,
+      "title": "Show retry status in pipeline run summaries",
+      "url": "https://github.com/zenml-io/zenml/pull/102",
+      "author": "fixture-user",
+      "body": "Fixes the run summary panel so retried steps clearly show their latest status and users can see whether a retry recovered successfully.",
+      "labels": ["release-notes", "bugfix"],
+      "repo": "zenml-io/zenml"
+    }
+  ],
+  "breaking_prs": [],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-claude-baseline",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "display_name": "Fake Claude baseline",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Faster pipeline starts",
+              "description": "Starter templates help teams create common training pipelines more quickly, while clearer retry status makes run summaries easier to trust.",
+              "suggested_labels": ["feature", "bugfix"],
+              "pr_numbers": [101, 102]
+            }
+          ]
+        },
+        "release_notes_body": {
+          "content": "#### Faster pipeline starts\n\nStarter templates make it easier to create common training workflows without copying example code by hand ([PR #101](https://github.com/zenml-io/zenml/pull/101)).\n\n<details><summary>Fixed</summary>\n\n- Pipeline run summaries now show the latest retry status so users can tell whether a retry recovered successfully ([PR #102](https://github.com/zenml-io/zenml/pull/102)).\n\n</details>"
+        }
+      }
+    },
+    {
+      "candidate_id": "fake-openai-mini",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Pipeline setup polish",
+              "description": "Users get a quicker path to reusable pipelines and clearer feedback when retried steps recover inside a run summary.",
+              "suggested_labels": ["improvement", "bugfix"],
+              "pr_numbers": [101, 102]
+            }
+          ]
+        },
+        "release_notes_body": {
+          "content": "#### Pipeline setup polish\n\nReusable templates give new projects a faster starting point for common training pipelines ([PR #101](https://github.com/zenml-io/zenml/pull/101)).\n\n<details><summary>Fixed</summary>\n\n- Retry status is now clearer in pipeline run summaries, making recovered runs easier to inspect ([PR #102](https://github.com/zenml-io/zenml/pull/102)).\n\n</details>"
+        }
+      }
+    }
+  ]
+}

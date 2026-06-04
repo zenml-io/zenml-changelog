@@ -1,0 +1,50 @@
+{
+  "fixture_id": "synthetic-oss-breaking",
+  "description": "Synthetic OSS release with a breaking-change-only PR.",
+  "source_repo": "zenml-io/zenml",
+  "release_tag": "1.0.0",
+  "release_url": "https://github.com/zenml-io/zenml/releases/tag/1.0.0",
+  "published_at": "2026-05-15T10:00:00Z",
+  "image_number": 11,
+  "starting_id": 1020,
+  "major_bump": true,
+  "expected_hard_gate_status": "pass",
+  "expected_failure": null,
+  "release_notes_prs": [],
+  "breaking_prs": [
+    {
+      "number": 301,
+      "title": "Rename stack component configuration keys",
+      "url": "https://github.com/zenml-io/zenml/pull/301",
+      "author": "fixture-user",
+      "body": "Renames several stack component configuration keys and adds migration guidance for existing YAML files.",
+      "labels": ["breaking-change"],
+      "repo": "zenml-io/zenml"
+    }
+  ],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-openai-mini",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini",
+      "outputs": {
+        "grouped_changelog_entries": {
+          "entries": [
+            {
+              "title": "Stack config key cleanup",
+              "description": "Stack component configuration now uses clearer key names, with migration guidance for existing YAML files.",
+              "suggested_labels": ["deprecation"],
+              "pr_numbers": [301]
+            }
+          ]
+        },
+        "breaking_changes": {
+          "bullets": [
+            "Update existing stack component YAML files to use the renamed configuration keys before upgrading [PR #301](https://github.com/zenml-io/zenml/pull/301)."
+          ]
+        }
+      }
+    }
+  ]
+}

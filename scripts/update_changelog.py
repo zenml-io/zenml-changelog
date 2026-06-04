@@ -5,6 +5,7 @@
 #     "requests",
 #     "PyGithub",
 #     "anthropic",
+#     "openai",
 #     "jsonschema",
 #     "pydantic>=2",
 #     "python-slugify",
@@ -19,15 +20,55 @@ import re
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Protocol, Tuple, TypeVar
 
-from anthropic import Anthropic, APIError, AuthenticationError, RateLimitError
+from anthropic import (
+    Anthropic,
+    APIError as AnthropicAPIError,
+    AuthenticationError as AnthropicAuthenticationError,
+    RateLimitError as AnthropicRateLimitError,
+)
 from github import Auth, Github
 from jsonschema import validate as jsonschema_validate
 from jsonschema.exceptions import ValidationError as JSONSchemaValidationError
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from slugify import slugify
-from tenacity import retry, retry_if_exception_type, retry_if_not_exception_type, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
+
+try:
+    from openai import (
+        OpenAI,
+        APIConnectionError as OpenAIAPIConnectionError,
+        APIError as OpenAIAPIError,
+        APITimeoutError as OpenAIAPITimeoutError,
+        AuthenticationError as OpenAIAuthenticationError,
+        BadRequestError as OpenAIBadRequestError,
+        PermissionDeniedError as OpenAIPermissionDeniedError,
+        RateLimitError as OpenAIRateLimitError,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct runs without PEP 723 resolution
+    OpenAI = None  # type: ignore[assignment]
+
+    class OpenAIAPIConnectionError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIAPIError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIAPITimeoutError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIAuthenticationError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIBadRequestError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIPermissionDeniedError(Exception):  # type: ignore[no-redef]
+        pass
+
+    class OpenAIRateLimitError(Exception):  # type: ignore[no-redef]
+        pass
 
 try:
     from scripts.consumed_sources import (
@@ -188,12 +229,38 @@ class Audience(str, Enum):
     ALL = "all"
 
 
-class ChangelogCopy(BaseModel):
+TLLMOutput = TypeVar("TLLMOutput", bound=BaseModel)
+
+DEFAULT_LLM_PROVIDER = "anthropic"
+DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
+DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
+LLM_PROVIDER_ENV = "CHANGELOG_LLM_PROVIDER"
+LLM_MODEL_ENV = "CHANGELOG_LLM_MODEL"
+
+LLM_CALL_CHANGELOG_COPY = "changelog_copy"
+LLM_CALL_GROUPED_CHANGELOG_ENTRIES = "grouped_changelog_entries"
+LLM_CALL_BREAKING_CHANGES = "breaking_changes"
+LLM_CALL_RELEASE_NOTES_BODY = "release_notes_body"
+LLM_CALL_MARKDOWN_SECTION = "markdown_section"
+
+
+class StrictLLMOutput(BaseModel):
+    """Base for model-produced structured outputs.
+
+    OpenAI strict structured outputs require every field to be present and reject
+    extra object keys, so the model-output schemas use explicit required lists
+    instead of Pydantic defaults.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ChangelogCopy(StrictLLMOutput):
     title: str = Field(..., max_length=60, description="Clear, user-facing title without PR number")
     description: str = Field(..., description="1-3 sentences explaining the user-facing value, markdown allowed")
-    suggested_labels: List[ChangelogLabel] = Field(default_factory=list, description="Suggested labels based on the PR content")
+    suggested_labels: List[ChangelogLabel] = Field(..., description="Suggested labels based on the PR content; use [] when none apply")
 
-class GroupedChangelogEntry(BaseModel):
+class GroupedChangelogEntry(StrictLLMOutput):
     title: str = Field(
         ...,
         max_length=60,
@@ -204,8 +271,8 @@ class GroupedChangelogEntry(BaseModel):
         description="1-3 sentences summarizing the grouped theme in user terms, markdown allowed.",
     )
     suggested_labels: List[ChangelogLabel] = Field(
-        default_factory=list,
-        description="Suggested labels based on all PRs in this group.",
+        ...,
+        description="Suggested labels based on all PRs in this group; use [] when none apply.",
     )
     pr_numbers: List[int] = Field(
         ...,
@@ -213,7 +280,7 @@ class GroupedChangelogEntry(BaseModel):
         description="List of PR numbers covered by this group.",
     )
 
-class GroupedChangelogOutput(BaseModel):
+class GroupedChangelogOutput(StrictLLMOutput):
     entries: List[GroupedChangelogEntry] = Field(
         ...,
         min_length=1,
@@ -232,10 +299,10 @@ class GroupedChangelogSemanticError(RuntimeError):
         super().__init__(message)
 
 
-class BreakingChangesOutput(BaseModel):
+class BreakingChangesOutput(StrictLLMOutput):
     bullets: List[str] = Field(
-        default_factory=list,
-        description="List of breaking change bullet points, one per significant breaking change.",
+        ...,
+        description="List of breaking change bullet points, one per significant breaking change; use [] when none apply.",
     )
 
 
@@ -246,11 +313,115 @@ class ImageState(BaseModel):
     updated_at: Optional[str] = None
 
 
-class MarkdownSection(BaseModel):
+class MarkdownSection(StrictLLMOutput):
     content: str = Field(..., description="Complete markdown section for the release notes")
 
 
-anthropic_client: Optional[Anthropic] = None
+class LLMProviderRetryableError(RuntimeError):
+    """Retryable provider/API failure at the structured-output seam."""
+
+
+class LLMProviderNonRetryableError(RuntimeError):
+    """Non-retryable provider/API failure at the structured-output seam."""
+
+
+class LLMOutputValidationError(LLMProviderRetryableError):
+    """Retryable failure when structured model content violates hard contracts."""
+
+    def __init__(self, details: List[str]) -> None:
+        self.details = details
+        super().__init__("\n".join(f"- {detail}" for detail in details))
+
+
+class StructuredLLMClient(Protocol):
+    def parse_structured_output(
+        self,
+        *,
+        prompt: str,
+        output_model: type[TLLMOutput],
+        max_output_tokens: int,
+        call_name: str,
+    ) -> TLLMOutput:
+        """Parse a prompt into a Pydantic model using the configured provider."""
+
+
+class AnthropicStructuredLLMClient:
+    def __init__(self, client: Anthropic, model: str = DEFAULT_ANTHROPIC_MODEL) -> None:
+        self.client = client
+        self.model = model
+
+    def parse_structured_output(
+        self,
+        *,
+        prompt: str,
+        output_model: type[TLLMOutput],
+        max_output_tokens: int,
+        call_name: str,
+    ) -> TLLMOutput:
+        try:
+            response = self.client.beta.messages.parse(
+                model=self.model,
+                betas=["structured-outputs-2025-11-13"],
+                max_tokens=max_output_tokens,
+                temperature=0,
+                output_format=output_model,
+                messages=[{"role": "user", "content": prompt}],
+            )
+        except AnthropicAuthenticationError:
+            raise
+        except (AnthropicAPIError, AnthropicRateLimitError) as error:
+            raise LLMProviderRetryableError(str(error)) from error
+        return response.parsed_output
+
+
+class OpenAIStructuredLLMClient:
+    def __init__(self, client: Any, model: str = DEFAULT_OPENAI_MODEL) -> None:
+        self.client = client
+        self.model = model
+
+    def parse_structured_output(
+        self,
+        *,
+        prompt: str,
+        output_model: type[TLLMOutput],
+        max_output_tokens: int,
+        call_name: str,
+    ) -> TLLMOutput:
+        try:
+            response = self.client.responses.parse(
+                model=self.model,
+                input=[{"role": "user", "content": prompt}],
+                text_format=output_model,
+                max_output_tokens=max_output_tokens,
+                temperature=0,
+                store=False,
+            )
+        except (OpenAIAuthenticationError, OpenAIPermissionDeniedError, OpenAIBadRequestError):
+            raise
+        except (
+            OpenAIAPIConnectionError,
+            OpenAIAPITimeoutError,
+            OpenAIRateLimitError,
+            OpenAIAPIError,
+        ) as error:
+            raise LLMProviderRetryableError(str(error)) from error
+
+        if getattr(response, "status", None) == "incomplete":
+            details = getattr(response, "incomplete_details", None)
+            raise LLMProviderNonRetryableError(
+                f"OpenAI structured output for {call_name} was incomplete; details={details}. "
+                "Increase the max_output_tokens cap or inspect the prompt."
+            )
+        if openai_response_has_refusal(response):
+            raise LLMProviderNonRetryableError(f"OpenAI structured output for {call_name} was refused")
+
+        parsed = getattr(response, "output_parsed", None)
+        if parsed is None:
+            raise LLMProviderRetryableError(f"OpenAI structured output for {call_name} did not include output_parsed")
+        return parsed
+
+
+llm_client: Optional[StructuredLLMClient] = None
 
 def read_image_state(path: Path = IMAGE_STATE_FILE) -> ImageState:
     if not path.exists():
@@ -561,65 +732,87 @@ def slugify_title(title: str) -> str:
     return slugify(title)
 
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
-)
-def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
-    # NOTE: This helper is primarily intended for ad-hoc or manual usage.
-    # The main automation flow uses llm_generate_grouped_changelog_entries to create grouped entries per release.
-    if anthropic_client is None:
-        raise RuntimeError("Anthropic client not initialized")
-    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
-    response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250929",
-        betas=["structured-outputs-2025-11-13"],
-        max_tokens=700,
-        temperature=0,
-        output_format=ChangelogCopy,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    "You are writing changelog entries for ZenML, an MLOps platform.\n\n"
-                    f"PR Title: {pr_title}\n"
-                    f"PR URL: {pr_url}\n"
-                    f"PR Body:\n{pr_body[:3500]}\n\n"
-                    f"The audience is {audience}. Focus on what users can now do or benefit from.\n"
-                    "Generate a concise title (max 60 characters, no PR number), a 1-3 sentence markdown-friendly "
-                    "description, and suggest appropriate labels. "
-                    "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
-                    "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
-                    "Prefer linking to GitHub repos when available."
-                ),
-            }
-        ],
-    )
-    return response.parsed_output
+def openai_response_has_refusal(response: Any) -> bool:
+    """Detect refusals across the common Responses SDK object shapes."""
+    if getattr(response, "refusal", None):
+        return True
+    for output_item in getattr(response, "output", []) or []:
+        if getattr(output_item, "type", None) == "refusal":
+            return True
+        for content_item in getattr(output_item, "content", []) or []:
+            if getattr(content_item, "type", None) == "refusal":
+                return True
+            if getattr(content_item, "refusal", None):
+                return True
+    return False
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
-)
-def llm_generate_grouped_changelog_entries(
+
+def build_structured_llm_client_from_env() -> StructuredLLMClient:
+    """Build the configured structured-output client, requiring keys only for LLM work."""
+    provider = os.environ.get(LLM_PROVIDER_ENV, DEFAULT_LLM_PROVIDER).strip().lower()
+    model_override = os.environ.get(LLM_MODEL_ENV)
+
+    if provider == "anthropic":
+        api_key = ensure_required_env(["ANTHROPIC_API_KEY"])["ANTHROPIC_API_KEY"]
+        return AnthropicStructuredLLMClient(
+            Anthropic(api_key=api_key),
+            model=model_override or DEFAULT_ANTHROPIC_MODEL,
+        )
+
+    if provider == "openai":
+        api_key = ensure_required_env(["OPENAI_API_KEY"])["OPENAI_API_KEY"]
+        if OpenAI is None:
+            raise RuntimeError("The openai package is required when CHANGELOG_LLM_PROVIDER=openai")
+        return OpenAIStructuredLLMClient(
+            OpenAI(api_key=api_key, max_retries=0),
+            model=model_override or DEFAULT_OPENAI_MODEL,
+        )
+
+    raise RuntimeError(
+        f"Unsupported {LLM_PROVIDER_ENV}={provider!r}. Expected 'anthropic' or 'openai'."
+    )
+
+
+def require_llm_client() -> StructuredLLMClient:
+    """Return the configured structured-output LLM client."""
+    if llm_client is not None:
+        return llm_client
+    raise RuntimeError("LLM client not initialized")
+
+
+def llm_retryable() -> Any:
+    return retry(
+        reraise=True,
+        stop=stop_after_attempt(5),
+        wait=wait_exponential(multiplier=2, min=2, max=60),
+        retry=retry_if_exception_type((LLMProviderRetryableError, ValidationError)),
+    )
+
+
+def build_changelog_copy_prompt(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> str:
+    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
+    return (
+        "You are writing changelog entries for ZenML, an MLOps platform.\n\n"
+        f"PR Title: {pr_title}\n"
+        f"PR URL: {pr_url}\n"
+        f"PR Body:\n{pr_body[:3500]}\n\n"
+        f"The audience is {audience}. Focus on what users can now do or benefit from.\n"
+        "Generate a concise title (max 60 characters, no PR number), a 1-3 sentence markdown-friendly "
+        "description, and suggest appropriate labels. Always set `suggested_labels`; return [] when none apply. "
+        "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
+        "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
+        "Prefer linking to GitHub repos when available."
+    )
+
+
+def build_grouped_changelog_entries_prompt(
     prs: List[Dict[str, Any]],
     source_repo: str,
     retry_feedback: Optional[str] = None,
-) -> GroupedChangelogOutput:
-    if anthropic_client is None:
-        raise RuntimeError("Anthropic client not initialized")
-
+) -> str:
     config = REPO_CONFIG[source_repo]
     repo_type = config["type"]
     audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
-
-    if not prs:
-        raise RuntimeError("No PRs provided to llm_generate_grouped_changelog_entries")
-
     pr_summaries = "\n".join(
         (
             f"- #{pr['number']}: {pr['title']}\n"
@@ -649,7 +842,7 @@ def llm_generate_grouped_changelog_entries(
         "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
         "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
         "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
-        "feature, improvement, bugfix, deprecation.\n"
+        "feature, improvement, bugfix, deprecation. Return [] if no label applies.\n"
         "Avoid low-level implementation details and emphasize user-facing value."
     )
 
@@ -660,39 +853,17 @@ def llm_generate_grouped_changelog_entries(
             "Generate the grouped changelog entries again. Every PR number from the input list "
             "must appear exactly once. Do not invent, duplicate, or omit PR numbers."
         )
+    return prompt
 
-    response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250929",
-        betas=["structured-outputs-2025-11-13"],
-        max_tokens=1200,
-        temperature=0,
-        output_format=GroupedChangelogOutput,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return response.parsed_output
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
-)
-def llm_generate_breaking_changes_bullets(
+def build_breaking_changes_prompt(
     breaking_prs: List[Dict[str, Any]],
     source_repo: str,
     include_pr_links: bool,
-) -> List[str]:
-    """Generate user-facing bullet points summarizing breaking changes from PRs."""
-    if not breaking_prs:
-        return []
-
-    if anthropic_client is None:
-        raise RuntimeError("Anthropic client not initialized")
-
+) -> str:
     config = REPO_CONFIG[source_repo]
     repo_type = config["type"]
     audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
-
     pr_summaries = "\n".join(
         (
             f"- #{pr['number']}: {pr['title']}\n"
@@ -702,44 +873,177 @@ def llm_generate_breaking_changes_bullets(
         )
         for pr in breaking_prs
     )
-
     link_instruction = (
         "Include a markdown link to the PR in each bullet using the exact format "
         "[PR #<number>](<url>). If you combine closely related breaking PRs into one bullet, "
         "include all relevant PR links in that bullet."
         if include_pr_links
-        else "Do not include PR links, URLs, or PR numbers in the bullets; keep the prose concise."
+        else "Do not include PR links, raw URLs, or PR numbers in the bullets; keep the prose concise."
+    )
+    return (
+        "You are writing the \"Breaking Changes\" section for ZenML release notes.\n\n"
+        f"Repository: {source_repo}\n"
+        f"Audience: {audience}\n\n"
+        "Here are PRs labeled as breaking changes for this release:\n\n"
+        f"{pr_summaries}\n\n"
+        "Task:\n"
+        "- Write user-facing bullet point text summarizing what is breaking and how users should adapt.\n"
+        "- Produce one bullet per breaking PR, unless a small grouping is clearly warranted.\n"
+        f"- {link_instruction}\n"
+        "- Each bullet must be plain text only and must NOT start with '-' or '*'. "
+        "The caller will format bullets.\n"
+        "- Always set `bullets`; if there is nothing meaningful to summarize, return an empty list.\n"
+        "- Avoid implementation details; focus on behavioral changes, removals, renamed APIs, "
+        "compatibility requirements, or required migration steps.\n"
     )
 
-    response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250929",
-        betas=["structured-outputs-2025-11-13"],
-        max_tokens=900,
-        temperature=0,
-        output_format=BreakingChangesOutput,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    "You are writing the \"Breaking Changes\" section for ZenML release notes.\n\n"
-                    f"Repository: {source_repo}\n"
-                    f"Audience: {audience}\n\n"
-                    "Here are PRs labeled as breaking changes for this release:\n\n"
-                    f"{pr_summaries}\n\n"
-                    "Task:\n"
-                    "- Write user-facing bullet point text summarizing what is breaking and how users should adapt.\n"
-                    "- Produce one bullet per breaking PR, unless a small grouping is clearly warranted.\n"
-                    f"- {link_instruction}\n"
-                    "- Each bullet must be plain text only and must NOT start with '-' or '*'. "
-                    "The caller will format bullets.\n"
-                    "- Avoid implementation details; focus on behavioral changes, removals, renamed APIs, "
-                    "compatibility requirements, or required migration steps.\n"
-                    "- If there is nothing meaningful to summarize, return an empty list.\n"
-                ),
-            }
-        ],
+
+def build_release_notes_body_prompt(
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+    include_pr_links: bool,
+) -> str:
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
+    pr_summaries = "\n".join(
+        f"- {pr['title']} (#{pr['number']}): {pr['url']} — {(pr.get('body') or '')[:500].replace(chr(10), ' ')}"
+        for pr in prs
     )
-    return response.parsed_output.bullets
+    include_links_instruction = (
+        "Include a markdown link to every input PR using the exact format [PR #<number>](<url>)."
+        if include_pr_links
+        else "Do not include PR links, raw URLs, or PR numbers; keep the prose concise."
+    )
+    return (
+        "You are writing the release notes body for ZenML.\n\n"
+        f"Repository: {source_repo}\n"
+        f"Audience: {audience}\n\n"
+        "Merged PRs to cover (release-notes label):\n"
+        f"{pr_summaries}\n\n"
+        "Output rules (CRITICAL):\n"
+        "- Output markdown for the body only.\n"
+        "- Do NOT include the `## <release_tag>` header (the caller will render the release header).\n"
+        "- Do NOT include the `<img>` tag.\n"
+        "- Do NOT include a \"Breaking Changes\" heading.\n"
+        "- Do NOT include the footer, any release link section, or `***`.\n\n"
+        "Formatting requirements:\n"
+        "- Use `####` subsection headers to group related changes by theme.\n"
+        "- Use `<details><summary>Fixed</summary>...</details>` for bug fixes.\n"
+        f"- {include_links_instruction}\n\n"
+        "Writing guidance:\n"
+        "- Highlight the most user-facing improvements first.\n"
+        "- Avoid low-level implementation details; focus on what users can now do.\n"
+        "- Keep it readable and scannable.\n"
+    )
+
+
+def build_markdown_section_prompt(
+    prs: List[Dict[str, Any]],
+    release_tag: str,
+    release_url: str,
+    published_at: str,
+    source_repo: str,
+    image_number: int,
+) -> str:
+    config = REPO_CONFIG[source_repo]
+    repo_type = config["type"]
+    pr_summaries = "\n".join(
+        f"- {pr['title']} (#{pr['number']}): {pr['url']} — {pr['body'][:300].replace(chr(10), ' ')}"
+        for pr in prs
+    )
+    include_links_instruction = (
+        "Include a markdown link to each PR using the format [PR #<number>](<url>) for each bullet."
+        if repo_type == "oss"
+        else "Do not include PR links, raw URLs, or PR numbers; keep the prose concise for Pro audiences."
+    )
+    footer_parts: List[str] = []
+    if config.get("include_release_link"):
+        footer_parts.append(f"[View full release on GitHub]({release_url})")
+    if config.get("include_compatibility_note"):
+        footer_parts.append("> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.")
+    if footer_parts:
+        footer_instruction = "Append at the end:\n" + "\n\n".join(footer_parts) + "\n\n***"
+    else:
+        footer_instruction = "End the section with *** on its own line."
+    return (
+        f"Write release notes for repository {source_repo} version {release_tag}.\n"
+        f"Release URL: {release_url}\n"
+        f"Published at: {published_at}\n\n"
+        "PRs with the release-notes label:\n"
+        f"{pr_summaries}\n\n"
+        "Generate a markdown section with this structure:\n"
+        f"## {release_tag} ({published_at[:10]})\n\n"
+        f"See what's new and improved in version {release_tag}.\n\n"
+        f'<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/{image_number}.jpg" '
+        f'align="left" alt="ZenML {release_tag}" width="800">\n\n'
+        "Use bolded subsection headers (####) to group related changes. "
+        "Use <details><summary>Fixed</summary>...</details> for bug fixes and "
+        "<details><summary>Improved</summary>...</details> for minor improvements when appropriate. "
+        f"{include_links_instruction} "
+        "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
+        "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
+        "Prefer linking to GitHub repos when available. "
+        "Highlight the top user-facing improvements first. "
+        f"{footer_instruction}"
+    )
+
+
+@llm_retryable()
+def llm_generate_changelog_copy(pr_title: str, pr_body: str, pr_url: str, repo_type: str) -> ChangelogCopy:
+    # NOTE: This helper is primarily intended for ad-hoc or manual usage.
+    # The main automation flow uses llm_generate_grouped_changelog_entries to create grouped entries per release.
+    prompt = build_changelog_copy_prompt(pr_title, pr_body, pr_url, repo_type)
+    return require_llm_client().parse_structured_output(
+        prompt=prompt,
+        output_model=ChangelogCopy,
+        max_output_tokens=700,
+        call_name=LLM_CALL_CHANGELOG_COPY,
+    )
+
+
+@llm_retryable()
+def llm_generate_grouped_changelog_entries(
+    prs: List[Dict[str, Any]],
+    source_repo: str,
+    retry_feedback: Optional[str] = None,
+) -> GroupedChangelogOutput:
+    if not prs:
+        raise RuntimeError("No PRs provided to llm_generate_grouped_changelog_entries")
+    prompt = build_grouped_changelog_entries_prompt(prs, source_repo, retry_feedback)
+    return require_llm_client().parse_structured_output(
+        prompt=prompt,
+        output_model=GroupedChangelogOutput,
+        max_output_tokens=1200,
+        call_name=LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    )
+
+
+@llm_retryable()
+def llm_generate_breaking_changes_bullets(
+    breaking_prs: List[Dict[str, Any]],
+    source_repo: str,
+    include_pr_links: bool,
+) -> List[str]:
+    """Generate user-facing bullet points summarizing breaking changes from PRs."""
+    if not breaking_prs:
+        return []
+    prompt = build_breaking_changes_prompt(breaking_prs, source_repo, include_pr_links)
+    output = require_llm_client().parse_structured_output(
+        prompt=prompt,
+        output_model=BreakingChangesOutput,
+        max_output_tokens=900,
+        call_name=LLM_CALL_BREAKING_CHANGES,
+    )
+    warnings = validate_breaking_changes_output(
+        bullets=output.bullets,
+        breaking_prs=breaking_prs,
+        include_pr_links=include_pr_links,
+    )
+    for warning in warnings:
+        print(f"Warning: {warning}")
+    return output.bullets
+
 
 def render_release_header(
     release_tag: str,
@@ -798,12 +1102,34 @@ def render_release_footer(source_repo: str, release_url: str) -> str:
         return "\n\n".join(footer_parts) + "\n\n***"
     return "***"
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
-)
+
+def render_release_notes_section(
+    *,
+    release_tag: str,
+    published_at: str,
+    image_number: int,
+    source_repo: str,
+    release_url: str,
+    breaking_bullets: List[str],
+    body: str,
+    force_breaking_placeholder: bool,
+    is_major_bump: bool,
+) -> str:
+    """Assemble the deterministic release-note shell around the generated body."""
+    section = render_release_header(release_tag, published_at, image_number, source_repo)
+    section += render_breaking_section(
+        breaking_bullets,
+        force_placeholder=force_breaking_placeholder,
+        is_major_bump=is_major_bump,
+    )
+    body_clean = body.strip()
+    if body_clean:
+        section += body_clean + "\n\n"
+    section += render_release_footer(source_repo, release_url)
+    return section.rstrip() + "\n"
+
+
+@llm_retryable()
 def llm_generate_release_notes_body(
     prs: List[Dict[str, Any]],
     source_repo: str,
@@ -812,66 +1138,24 @@ def llm_generate_release_notes_body(
     """Generate the body portion of release notes (no header, footer, or breaking section)."""
     if not prs:
         return ""
-
-    if anthropic_client is None:
-        raise RuntimeError("Anthropic client not initialized")
-
-    config = REPO_CONFIG[source_repo]
-    repo_type = config["type"]
-    audience = "open source users" if repo_type == "oss" else "ZenML Pro users"
-
-    pr_summaries = "\n".join(
-        f"- {pr['title']} (#{pr['number']}): {pr['url']} — {(pr.get('body') or '')[:500].replace(chr(10), ' ')}"
-        for pr in prs
+    prompt = build_release_notes_body_prompt(prs, source_repo, include_pr_links)
+    output = require_llm_client().parse_structured_output(
+        prompt=prompt,
+        output_model=MarkdownSection,
+        max_output_tokens=1800,
+        call_name=LLM_CALL_RELEASE_NOTES_BODY,
     )
-
-    include_links_instruction = (
-        "Include a markdown link to each PR using the format [PR #<number>](<url>) where relevant."
-        if include_pr_links
-        else "Do not include PR links, URLs, or PR numbers; keep the prose concise."
+    warnings = validate_release_notes_body_output(
+        body=output.content,
+        prs=prs,
+        include_pr_links=include_pr_links,
     )
+    for warning in warnings:
+        print(f"Warning: {warning}")
+    return output.content
 
-    response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250929",
-        betas=["structured-outputs-2025-11-13"],
-        max_tokens=1800,
-        temperature=0,
-        output_format=MarkdownSection,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    "You are writing the release notes body for ZenML.\n\n"
-                    f"Repository: {source_repo}\n"
-                    f"Audience: {audience}\n\n"
-                    "Merged PRs to cover (release-notes label):\n"
-                    f"{pr_summaries}\n\n"
-                    "Output rules (CRITICAL):\n"
-                    "- Output markdown for the body only.\n"
-                    "- Do NOT include the `## <release_tag>` header (the caller will render the release header).\n"
-                    "- Do NOT include the `<img>` tag.\n"
-                    "- Do NOT include a \"Breaking Changes\" heading.\n"
-                    "- Do NOT include the footer, any release link section, or `***`.\n\n"
-                    "Formatting requirements:\n"
-                    "- Use `####` subsection headers to group related changes by theme.\n"
-                    "- Use `<details><summary>Fixed</summary>...</details>` for bug fixes.\n"
-                    f"- {include_links_instruction}\n\n"
-                    "Writing guidance:\n"
-                    "- Highlight the most user-facing improvements first.\n"
-                    "- Avoid low-level implementation details; focus on what users can now do.\n"
-                    "- Keep it readable and scannable.\n"
-                ),
-            }
-        ],
-    )
-    return response.parsed_output.content
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(5),
-    wait=wait_exponential(multiplier=2, min=2, max=60),
-    retry=retry_if_exception_type((APIError, RateLimitError, ValidationError)) & retry_if_not_exception_type(AuthenticationError),
-)
+@llm_retryable()
 def llm_generate_markdown_section(
     prs: List[Dict[str, Any]],
     release_tag: str,
@@ -880,62 +1164,131 @@ def llm_generate_markdown_section(
     source_repo: str,
     image_number: int,
 ) -> str:
-    if anthropic_client is None:
-        raise RuntimeError("Anthropic client not initialized")
-    config = REPO_CONFIG[source_repo]
-    repo_type = config["type"]
-    pr_summaries = "\n".join(
-        f"- {pr['title']} (#{pr['number']}): {pr['url']} — {pr['body'][:300].replace(chr(10), ' ')}"
+    prompt = build_markdown_section_prompt(
+        prs=prs,
+        release_tag=release_tag,
+        release_url=release_url,
+        published_at=published_at,
+        source_repo=source_repo,
+        image_number=image_number,
+    )
+    output = require_llm_client().parse_structured_output(
+        prompt=prompt,
+        output_model=MarkdownSection,
+        max_output_tokens=2000,
+        call_name=LLM_CALL_MARKDOWN_SECTION,
+    )
+    return output.content
+
+
+def markdown_pr_link_pattern(pr: Dict[str, Any]) -> str:
+    number = int(pr["number"])
+    url = re.escape(str(pr.get("url", "")))
+    return rf"\[PR #{number}\]\({url}\)"
+
+
+def missing_markdown_pr_links(text: str, prs: List[Dict[str, Any]]) -> List[int]:
+    missing: List[int] = []
+    for pr in prs:
+        if not re.search(markdown_pr_link_pattern(pr), text):
+            missing.append(int(pr["number"]))
+    return missing
+
+
+def contains_forbidden_pr_reference(text: str, prs: List[Dict[str, Any]]) -> bool:
+    if re.search(r"https://github\.com/[^\s)]+/pull/\d+", text):
+        return True
+    for pr in prs:
+        number = int(pr["number"])
+        if re.search(rf"\[[^\]]*(?:PR\s*#?\s*{number}|#{number})[^\]]*\]\([^)]*\)", text, flags=re.IGNORECASE):
+            return True
+        if re.search(rf"\bPR\s*#?\s*{number}\b", text, flags=re.IGNORECASE):
+            return True
+        if re.search(rf"(?<![\w/])#{number}\b", text):
+            return True
+    return False
+
+
+def validate_release_notes_body_output(
+    *,
+    body: str,
+    prs: List[Dict[str, Any]],
+    include_pr_links: bool,
+) -> List[str]:
+    """Validate model-generated release-note body before deterministic assembly."""
+    details: List[str] = []
+    warnings: List[str] = []
+    lines = body.splitlines()
+
+    if any(line.startswith("## ") for line in lines):
+        details.append("Release-note body must not include the deterministic `##` release header.")
+    if re.search(r"<\s*img\b", body, flags=re.IGNORECASE):
+        details.append("Release-note body must not include the deterministic image tag.")
+    if re.search(r"^#+\s+Breaking Changes\b", body, flags=re.IGNORECASE | re.MULTILINE):
+        details.append("Release-note body must not include a Breaking Changes heading.")
+    if "[View full release on GitHub]" in body:
+        details.append("Release-note body must not include the deterministic release footer link.")
+    if any(line.strip() == "***" for line in lines):
+        details.append("Release-note body must not include the deterministic `***` footer.")
+
+    if prs and include_pr_links:
+        missing = missing_markdown_pr_links(body, prs)
+        if missing:
+            missing_str = ", ".join(f"#{number}" for number in missing)
+            details.append(f"Release-note body is missing required PR links for: {missing_str}.")
+    if not include_pr_links and contains_forbidden_pr_reference(body, prs):
+        details.append("Release-note body must not include PR links, raw PR URLs, or PR numbers for this audience.")
+
+    has_bugfix_prs = any(
+        any(label.lower() in {"bug", "bugfix", "fix"} for label in pr.get("labels", []))
         for pr in prs
     )
-    include_links_instruction = (
-        "Include a markdown link to each PR using the format [PR #<number>](<url>) for each bullet."
-        if repo_type == "oss"
-        else "Do not include PR links; keep the prose concise for Pro audiences."
-    )
-    footer_parts: List[str] = []
-    if config.get("include_release_link"):
-        footer_parts.append(f"[View full release on GitHub]({release_url})")
-    if config.get("include_compatibility_note"):
-        footer_parts.append("> **Compatibility:** Requires ZenML Server and SDK v0.85.0 or later.")
-    if footer_parts:
-        footer_instruction = "Append at the end:\n" + "\n\n".join(footer_parts) + "\n\n***"
-    else:
-        footer_instruction = "End the section with *** on its own line."
-    response = anthropic_client.beta.messages.parse(
-        model="claude-sonnet-4-5-20250929",
-        betas=["structured-outputs-2025-11-13"],
-        max_tokens=2000,
-        temperature=0,
-        output_format=MarkdownSection,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    f"Write release notes for repository {source_repo} version {release_tag}.\n"
-                    f"Release URL: {release_url}\n"
-                    f"Published at: {published_at}\n\n"
-                    "PRs with the release-notes label:\n"
-                    f"{pr_summaries}\n\n"
-                    "Generate a markdown section with this structure:\n"
-                    f"## {release_tag} ({published_at[:10]})\n\n"
-                    f"See what's new and improved in version {release_tag}.\n\n"
-                    f'<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/{image_number}.jpg" '
-                    f'align="left" alt="ZenML {release_tag}" width="800">\n\n'
-                    "Use bolded subsection headers (####) to group related changes. "
-                    "Use <details><summary>Fixed</summary>...</details> for bug fixes and "
-                    "<details><summary>Improved</summary>...</details> for minor improvements when appropriate. "
-                    f"{include_links_instruction} "
-                    "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
-                    "[MLflow](https://github.com/mlflow/mlflow), [Transformers](https://github.com/huggingface/transformers)). "
-                    "Prefer linking to GitHub repos when available. "
-                    "Highlight the top user-facing improvements first. "
-                    f"{footer_instruction}"
-                ),
-            }
-        ],
-    )
-    return response.parsed_output.content
+    if has_bugfix_prs and "<details><summary>Fixed</summary>" not in body:
+        warnings.append("Bugfix PRs exist, but the release-note body has no Fixed details block.")
+
+    if details:
+        raise LLMOutputValidationError(details)
+    return warnings
+
+
+def validate_breaking_changes_output(
+    *,
+    bullets: List[str],
+    breaking_prs: List[Dict[str, Any]],
+    include_pr_links: bool,
+) -> List[str]:
+    """Validate model-generated breaking-change bullets before formatting."""
+    details: List[str] = []
+    warnings: List[str] = []
+    combined = "\n".join(bullets)
+
+    for index, bullet in enumerate(bullets, start=1):
+        stripped = bullet.strip()
+        if stripped.startswith(("-", "*")):
+            details.append(f"Breaking-change bullet {index} must not start with '-' or '*'.")
+        if stripped and not re.search(
+            r"\b(rename|remove|update|migrate|configure|replace|requires|no longer)\b",
+            stripped,
+            flags=re.IGNORECASE,
+        ):
+            warnings.append(
+                f"Breaking-change bullet {index} may need clearer migration/action language."
+            )
+
+    if breaking_prs and include_pr_links:
+        for index, bullet in enumerate(bullets, start=1):
+            if not re.search(r"\[PR #\d+\]\([^)]*\)", bullet):
+                details.append(f"Breaking-change bullet {index} must include a markdown PR link.")
+        missing = missing_markdown_pr_links(combined, breaking_prs)
+        if missing:
+            missing_str = ", ".join(f"#{number}" for number in missing)
+            details.append(f"Breaking-change bullets are missing required PR links for: {missing_str}.")
+    if not include_pr_links and contains_forbidden_pr_reference(combined, breaking_prs):
+        details.append("Breaking-change bullets must not include PR links, raw PR URLs, or PR numbers for this audience.")
+
+    if details:
+        raise LLMOutputValidationError(details)
+    return warnings
 
 
 def map_labels(pr_labels: List[str], suggested: List[ChangelogLabel]) -> List[str]:
@@ -1226,18 +1579,17 @@ def get_release_info(gh: Github, repo_name: str, tag: str) -> tuple[str, str]:
 
 
 def main() -> None:
+    global llm_client
+    llm_client = None
+
     workflow_result_path = get_changelog_workflow_result_path()
     clear_changelog_workflow_result(workflow_result_path)
 
-    env = ensure_required_env(
-        ["SOURCE_REPO", "RELEASE_TAG", "GITHUB_TOKEN", "ANTHROPIC_API_KEY"]
-    )
+    env = ensure_required_env(["SOURCE_REPO", "RELEASE_TAG", "GITHUB_TOKEN"])
     source_repo = env["SOURCE_REPO"]
     if source_repo not in REPO_CONFIG:
         raise RuntimeError(f"Repository {source_repo} is not configured for changelog updates")
     github_token = os.environ.get("PRIVATE_REPO_TOKEN") or env["GITHUB_TOKEN"]
-    global anthropic_client
-    anthropic_client = Anthropic(api_key=env["ANTHROPIC_API_KEY"])
     gh = Github(auth=Auth.Token(github_token))
 
     # Fetch release info from GitHub if not provided (for manual triggers)
@@ -1297,6 +1649,8 @@ def main() -> None:
             "Refusing to write changelog artifacts without source-window metadata."
         )
 
+    llm_client = build_structured_llm_client_from_env()
+
     # Use release-notes PRs for changelog entries; fall back to breaking PRs if none
     grouping_prs = release_notes_prs if release_notes_prs else breaking_prs
 
@@ -1338,23 +1692,29 @@ def main() -> None:
     for entry in new_entries:
         print(f"Created grouped changelog entry #{entry['id']}: {entry['title']}")
 
+    markdown_file = config["markdown_file"]
+    body = llm_generate_release_notes_body(body_prs, source_repo, include_pr_links) if body_prs else ""
+
     new_entries.sort(key=lambda entry: entry["id"], reverse=True)
     updated_changelog = new_entries + existing_changelog
     changelog_path.write_text(json.dumps(updated_changelog, indent=2) + "\n")
     validate_changelog(changelog_path, Path("changelog_schema/announcement-schema.json"))
 
-    markdown_file = config["markdown_file"]
     image_number = get_next_image_number(
         release_tag=env["RELEASE_TAG"],
         markdown_file=markdown_file,
     )
-    header = render_release_header(env["RELEASE_TAG"], published_at, image_number, source_repo)
-    breaking_section = render_breaking_section(
-        breaking_bullets, force_placeholder=False, is_major_bump=major_bump
+    md_section = render_release_notes_section(
+        release_tag=env["RELEASE_TAG"],
+        published_at=published_at,
+        image_number=image_number,
+        source_repo=source_repo,
+        release_url=release_url,
+        breaking_bullets=breaking_bullets,
+        body=body,
+        force_breaking_placeholder=False,
+        is_major_bump=major_bump,
     )
-    body = llm_generate_release_notes_body(body_prs, source_repo, include_pr_links) if body_prs else ""
-    footer = render_release_footer(source_repo, release_url)
-    md_section = header + breaking_section + body + "\n\n" + footer
 
     update_markdown_file(Path(markdown_file), md_section)
 
