@@ -79,6 +79,8 @@ def build_grouped_changelog_entries_prompt(
         "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
         "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
         "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
+        "- Titles should be short, generic, benefit-oriented dashboard-card titles.\n"
+        "- Avoid over-specific titles that name one narrow implementation detail when the group covers a broader user benefit.\n"
         "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
         "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
         "feature, improvement, bugfix, deprecation. Return [] if no label applies.\n"
@@ -153,12 +155,14 @@ def build_release_notes_body_prompt(
         "- Do NOT include the footer, any release link section, or `***`.\n\n"
         "Formatting requirements:\n"
         "- Use `####` subsection headers to group related changes by theme.\n"
+        "- Prefer a short framing sentence under each subsection, followed by bullet points for concrete specifics.\n"
+        "- Use bullets for detailed changes, examples, and fixes instead of dense paragraphs.\n"
         "- Use `<details><summary>Fixed</summary>...</details>` for bug fixes.\n"
         f"- {include_links_instruction}\n\n"
         "Writing guidance:\n"
         "- Highlight the most user-facing improvements first.\n"
         "- Avoid low-level implementation details; focus on what users can now do.\n"
-        "- Keep it readable and scannable.\n"
+        "- Keep sections clear, readable, and scannable.\n"
     )
 
 def build_markdown_section_prompt(

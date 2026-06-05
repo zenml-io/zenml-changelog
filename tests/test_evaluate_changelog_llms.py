@@ -13,6 +13,15 @@ if str(REPO_ROOT) not in sys.path:
 from scripts import changelog_rendering as rendering
 from scripts import evaluate_changelog_llms as evaluator
 from scripts import update_changelog as uc
+from scripts.changelog_llm_outputs import (
+    LLM_CALL_BREAKING_CHANGES,
+    LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    LLM_CALL_RELEASE_NOTES_BODY,
+    BreakingChangesOutput,
+    GroupedChangelogOutput,
+    GroupedChangelogEntry,
+    MarkdownSection,
+)
 
 
 FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures" / "changelog-evals"
@@ -231,6 +240,90 @@ def test_run_eval_rejects_live_candidates_without_explicit_allow_flag(tmp_path: 
             candidate_filter={live_candidate.candidate_id},
             live_candidates=[live_candidate],
         )
+
+
+def test_parse_live_openai_routed_candidate_maps_models_by_call() -> None:
+    candidate = evaluator.parse_live_openai_routed_candidate(
+        "OpenAI routed|grouped=gpt-5.4-mini,breaking=gpt-5.4,release=gpt-5.5"
+    )
+
+    assert candidate.candidate_id == "live-openai-routed-openai-routed"
+    assert candidate.display_name == "OpenAI routed"
+    assert candidate.provider == "openai"
+    assert candidate.models_by_call == {
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES: "gpt-5.4-mini",
+        LLM_CALL_BREAKING_CHANGES: "gpt-5.4",
+        LLM_CALL_RELEASE_NOTES_BODY: "gpt-5.5",
+    }
+
+
+def test_parse_live_openai_routed_candidate_requires_all_call_sites() -> None:
+    with pytest.raises(Exception, match="missing required route"):
+        evaluator.parse_live_openai_routed_candidate("OpenAI routed|grouped=gpt-5.4-mini,release=gpt-5.4")
+
+
+def test_measured_live_provider_records_routed_client_model_per_call() -> None:
+    grouped = GroupedChangelogOutput(
+        entries=[
+            GroupedChangelogEntry(
+                title="Grouped",
+                description="Grouped description",
+                suggested_labels=[],
+                pr_numbers=[1],
+            )
+        ]
+    )
+    breaking = BreakingChangesOutput(bullets=[])
+    release = MarkdownSection(content="#### Release notes")
+
+    class FakeRoutedClient:
+        outputs = {
+            LLM_CALL_GROUPED_CHANGELOG_ENTRIES: grouped,
+            LLM_CALL_BREAKING_CHANGES: breaking,
+            LLM_CALL_RELEASE_NOTES_BODY: release,
+        }
+        models = {
+            LLM_CALL_GROUPED_CHANGELOG_ENTRIES: "gpt-5.4-mini",
+            LLM_CALL_BREAKING_CHANGES: "gpt-5.4",
+            LLM_CALL_RELEASE_NOTES_BODY: "gpt-5.5",
+        }
+
+        def model_for_call(self, call_name: str) -> str:
+            return self.models[call_name]
+
+        def parse_structured_output(self, **kwargs: Any) -> object:
+            return self.outputs[kwargs["call_name"]]
+
+    provider = evaluator.MeasuredLiveProvider(
+        provider="openai",
+        model="fallback-model",
+        client=FakeRoutedClient(),  # type: ignore[arg-type]
+    )
+
+    assert provider.parse_structured_output(
+        prompt="group",
+        output_model=GroupedChangelogOutput,
+        max_output_tokens=100,
+        call_name=LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    ) == grouped
+    assert provider.parse_structured_output(
+        prompt="break",
+        output_model=BreakingChangesOutput,
+        max_output_tokens=100,
+        call_name=LLM_CALL_BREAKING_CHANGES,
+    ) == breaking
+    assert provider.parse_structured_output(
+        prompt="release",
+        output_model=MarkdownSection,
+        max_output_tokens=100,
+        call_name=LLM_CALL_RELEASE_NOTES_BODY,
+    ) == release
+
+    assert [(call.call_name, call.estimated_cost_usd is not None) for call in provider.calls] == [
+        (LLM_CALL_GROUPED_CHANGELOG_ENTRIES, True),
+        (LLM_CALL_BREAKING_CHANGES, True),
+        (LLM_CALL_RELEASE_NOTES_BODY, True),
+    ]
 
 
 def test_parse_live_candidate_rejects_empty_provider() -> None:

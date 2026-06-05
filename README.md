@@ -28,7 +28,11 @@ zenml-changelog/
 │   ├── changelog_schema_validation.py # In-memory/file schema validation helpers
 │   ├── workflow_result.py          # Structured workflow handoff and GitHub output writer
 │   ├── consumed_sources.py         # Consumed-window/PR ledger models and validation
-│   └── source_windows.py           # Source-window resolution and PR collection
+│   ├── source_windows.py           # Source-window resolution and PR collection
+│   └── build_comparison_app.py     # Builds the offline blind-comparison web app from an eval run
+├── comparison_app/
+│   ├── template.html               # Blind A/B taste-test app shell (HTML/CSS/JS)
+│   └── vendor/marked.min.js        # Vendored markdown renderer (inlined at build time)
 ├── .github/workflows/
 │   ├── process-release.yml         # repository_dispatch receiver, runs automation, opens PR
 │   └── validate-changelog.yml      # PR-time validation for changelog.json
@@ -57,7 +61,7 @@ flowchart TD
 - Workflow handoff: `scripts/update_changelog.py` writes deterministic machine metadata to `changelog_workflow_result.json` (or the `CHANGELOG_WORKFLOW_RESULT` path). The workflow then runs `scripts/workflow_result.py write-github-outputs` to publish the stable GitHub Actions outputs: `has_changes`, `markdown_file`, `breaking_changes`, `needs_attention`, and `source_windows`. Stdout is only for human-readable logs, not workflow parsing.
 - Script tasks: resolve each source repo's release window, skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
-- OpenAI shadow mode: `process-release.yml` enables a second, review-only OpenAI generation path. The script writes labeled comment files for the dashboard grouped entries and the release-note breaking/body output. The workflow posts or updates those files as comments on the generated widget and release-notes PRs. Shadow output is a comparison aid only; it never writes `changelog.json`, GitBook markdown, `.image_state`, `.consumed_sources_state`, or workflow-result production text.
+- OpenAI shadow mode: `process-release.yml` enables a second, review-only OpenAI generation path using the same routed OpenAI model config as production OpenAI. The script writes labeled comment files for the dashboard grouped entries and the release-note breaking/body output; each section says which provider, model, and output type produced it. The workflow posts or updates those files as comments on the generated widget and release-notes PRs. Shadow output is a comparison aid only; it never writes `changelog.json`, GitBook markdown, `.image_state`, `.consumed_sources_state`, or workflow-result production text.
 
 ### PR Routing
 
@@ -104,10 +108,17 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 
 Provider and model selection:
 
-- `CHANGELOG_LLM_PROVIDER=anthropic|openai` selects the production provider. It defaults to Anthropic.
-- `CHANGELOG_LLM_MODEL=<model>` optionally overrides the production model.
-- `CHANGELOG_OPENAI_SHADOW_MODE=true` enables review-only OpenAI shadow comments in the release workflow.
-- `CHANGELOG_OPENAI_SHADOW_MODEL=<model>` optionally overrides the OpenAI shadow model without changing production generation.
+- Code/script default: `CHANGELOG_LLM_PROVIDER` defaults to Anthropic, so rollback remains the code path of least surprise.
+- Release workflow default: `.github/workflows/process-release.yml` sets `CHANGELOG_LLM_PROVIDER=${{ vars.CHANGELOG_LLM_PROVIDER || 'openai' }}` so production release runs use OpenAI unless a repo/org variable overrides it.
+- Rollback: set `CHANGELOG_LLM_PROVIDER=anthropic`. Keep `ANTHROPIC_API_KEY` configured for that rollback path.
+- `CHANGELOG_LLM_MODEL=<model>` is a global model override.
+- OpenAI production routing, when no override is set:
+  - `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4` for dashboard grouped changelog entries.
+  - `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4` for breaking-change bullets.
+  - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5` for release-note body prose.
+- Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values.
+- `gpt-5.4-mini` is not a production default.
+- `CHANGELOG_OPENAI_SHADOW_MODE=true` enables review-only OpenAI shadow comments in the release workflow. Shadow comments use the same routed OpenAI config and label every section with provider, model, and output type.
 
 The shadow path is like a second draft in the margin: reviewers can compare it against the official PR content, but the automation never copies shadow text into production files.
 
@@ -152,17 +163,66 @@ uv run scripts/evaluate_changelog_llms.py run-eval \
   --output-root eval-results/openai-migration \
   --allow-live-provider-calls \
   --live-candidate anthropic:claude-sonnet-4-5-20250929:"Claude baseline" \
-  --live-candidate openai:gpt-5.4-mini:"OpenAI mini"
+  --live-openai-routed-candidate "OpenAI routed|grouped=gpt-5.4,breaking=gpt-5.4,release=gpt-5.5"
 ```
 
 Production provider configuration remains separate from evaluation:
 
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai`
-- `CHANGELOG_LLM_MODEL=<model override>`
+- `CHANGELOG_LLM_MODEL=<global model override>`
+- `CHANGELOG_LLM_MODEL_GROUPED=<dashboard grouped model override>`
+- `CHANGELOG_LLM_MODEL_BREAKING=<breaking-change model override>`
+- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<release-note body model override>`
 - `ANTHROPIC_API_KEY` when `CHANGELOG_LLM_PROVIDER=anthropic`
 - `OPENAI_API_KEY` when `CHANGELOG_LLM_PROVIDER=openai`
 
 Rollback during migration is intentionally simple: set `CHANGELOG_LLM_PROVIDER=anthropic`.
+
+## Blind Comparison Web App
+
+`scripts/build_comparison_app.py` turns one evaluation run into a single, self-contained HTML page you can hand to colleagues for a **blind A/B preference test** ("The Changelog Taste Test"). It pairs the models' outputs head to head, hides which model produced which, and records each reviewer's picks so we can pick the model with the best human-preferred writing — not just the one that passes validators.
+
+Build from an existing run (use `--model` to keep synthetic test-double candidates out):
+
+```bash
+uv run scripts/build_comparison_app.py \
+  --run-dir eval-results/openai-migration/<run-id> \
+  --target 24 \
+  --model "Claude baseline" --model "OpenAI routed" --model "OpenAI 5.4" --model "OpenAI 5.5"
+```
+
+The output (`<run-dir>/blind-comparison.html` by default) is fully offline: the comparison data and a vendored markdown renderer are inlined, so a colleague just double-clicks the file — no server, no unzip, nothing leaves their laptop. They enter a name, pick the version they prefer for ~24 rounds (mouse or ← / → keys), then download a results JSON to paste into Discord.
+
+How it stays trustworthy:
+
+- Only `hard_gate_status: pass` outputs are paired (no broken output in the test).
+- Pairs are sampled balanced across output types and model matchups, with a fixed `--seed` for reproducible builds.
+- Model names live in the embedded data but are never shown; the page shuffles left/right per reviewer and records the true model behind each pick, so results aggregate by model.
+
+Getting a *realistic* test (vs. the synthetic fixtures) is a three-step flow with your GitHub + API keys:
+
+```bash
+# 1. Capture the last few real OSS releases (zenml + zenml-dashboard, bundled) as fixtures.
+#    Needs GITHUB_TOKEN (or PRIVATE_REPO_TOKEN); writes to tests/fixtures/changelog-evals/real/.
+uv run scripts/evaluate_changelog_llms.py capture-release --last 4
+
+# 2. Run the four models over those real fixtures (writes a new run under eval-results/).
+ANTHROPIC_API_KEY=... OPENAI_API_KEY=... \
+uv run scripts/evaluate_changelog_llms.py run-eval \
+  --fixtures-dir tests/fixtures/changelog-evals/real \
+  --allow-live-provider-calls \
+  --live-candidate anthropic:claude-sonnet-4-5-20250929:"Claude baseline" \
+  --live-openai-routed-candidate "OpenAI routed|grouped=gpt-5.4,breaking=gpt-5.4,release=gpt-5.5" \
+  --live-candidate openai:gpt-5.4:"OpenAI 5.4" \
+  --live-candidate openai:gpt-5.5:"OpenAI 5.5"
+
+# 3. Build the taste-test app from that run.
+uv run scripts/build_comparison_app.py \
+  --run-dir eval-results/openai-migration/<new-run-id> --target 24 \
+  --model "Claude baseline" --model "OpenAI routed" --model "OpenAI 5.4" --model "OpenAI 5.5"
+```
+
+`capture-release` reuses the automation's own PR-collection (previous-tag → date window → merged `release-notes`/breaking PRs), bundling `zenml` + `zenml-dashboard`, and writes `real-zenml-*.json` fixtures. The built HTML lives under the gitignored `eval-results/` tree and is a build artifact, not committed. Do not commit generated real fixtures from `tests/fixtures/changelog-evals/real/` unless explicitly requested.
 
 ## OSS GitHub Release Sync Contract
 

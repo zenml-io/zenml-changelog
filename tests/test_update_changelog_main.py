@@ -381,7 +381,6 @@ def test_openai_shadow_comments_write_labeled_review_files_only(
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv(uc.OPENAI_SHADOW_MODE_ENV, "true")
     monkeypatch.setenv("OPENAI_API_KEY", "openai-token")
-    monkeypatch.setenv(uc.OPENAI_SHADOW_MODEL_ENV, "gpt-shadow")
     monkeypatch.setattr(uc, "OpenAI", FakeOpenAIForShadow)
 
     uc.write_openai_shadow_comments(
@@ -398,15 +397,19 @@ def test_openai_shadow_comments_write_labeled_review_files_only(
     release_notes_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).read_text(encoding="utf-8")
 
     assert uc.OPENAI_SHADOW_WIDGET_MARKER in widget_comment
+    assert "### Output type: `dashboard grouped changelog entries`" in widget_comment
     assert "- Provider: `openai`" in widget_comment
-    assert "- Model: `gpt-shadow`" in widget_comment
-    assert "dashboard grouped changelog entries" in widget_comment
+    assert "- Model: `gpt-5.4`" in widget_comment
+    assert "- Status: `passed`" in widget_comment
     assert "Shadow grouped entry" in widget_comment
     assert "schema_entries" in widget_comment
 
     assert uc.OPENAI_SHADOW_RELEASE_NOTES_MARKER in release_notes_comment
     assert "### Output type: `breaking_changes`" in release_notes_comment
     assert "### Output type: `release_notes_body`" in release_notes_comment
+    assert release_notes_comment.count("- Provider: `openai`") == 2
+    assert release_notes_comment.count("- Model: `gpt-5.4`") == 1
+    assert release_notes_comment.count("- Model: `gpt-5.5`") == 1
     assert "Users can compare output" in release_notes_comment
 
     assert not (tmp_path / "changelog.json").exists()
@@ -493,9 +496,12 @@ def test_openai_shadow_failure_writes_failure_comment_without_raising(
     widget_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT).read_text(encoding="utf-8")
     release_notes_comment = (tmp_path / uc.DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT).read_text(encoding="utf-8")
 
+    assert "- Model: `gpt-5.4`" in widget_comment
     assert "- Status: `failed`" in widget_comment
     assert "shadow provider unavailable" in widget_comment
     assert "### Output type: `breaking_changes`" in release_notes_comment
+    assert "- Model: `gpt-5.4`" in release_notes_comment
     assert "- Status: `passed`" in release_notes_comment
     assert "### Output type: `release_notes_body`" in release_notes_comment
+    assert "- Model: `gpt-5.5`" in release_notes_comment
     assert "- Status: `failed`" in release_notes_comment

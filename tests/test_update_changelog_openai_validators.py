@@ -97,6 +97,23 @@ def test_release_notes_body_validator_rejects_pro_pr_references(body: str) -> No
         )
 
 
+def test_release_notes_body_validator_accepts_split_line_fixed_details_block() -> None:
+    prs = [make_pr(101, labels=["bugfix"])]
+    body = (
+        "#### Fixes\n\n"
+        "<details>\n"
+        "<summary>Fixed</summary>\n\n"
+        "Fixed an issue in [PR #101](https://github.com/zenml-io/zenml/pull/101).\n"
+        "</details>"
+    )
+
+    assert validators.validate_release_notes_body_output(
+        body=body,
+        prs=prs,
+        include_pr_links=True,
+    ) == []
+
+
 def test_release_notes_body_validator_warns_for_bugfix_without_fixed_block() -> None:
     prs = [make_pr(101, labels=["bugfix"])]
     body = "#### Fixes\n\nFixed an issue in [PR #101](https://github.com/zenml-io/zenml/pull/101)."

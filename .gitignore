@@ -218,3 +218,7 @@ design/
 changelog_workflow_result.json
 prompt-exports/
 eval-results/
+docs/investigations/
+docs/plans/
+docs/reviews/
+tests/fixtures/changelog-evals/real/

@@ -45,6 +45,7 @@ from scripts import changelog_llm_providers as providers
 from scripts import changelog_rendering as rendering
 from scripts import changelog_schema_validation as schema_validation
 from scripts import changelog_validators as validators
+from scripts import changelog_fixture_capture as capture
 from scripts.changelog_llm_outputs import (
     LLM_CALL_BREAKING_CHANGES,
     LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
@@ -53,6 +54,9 @@ from scripts.changelog_llm_outputs import (
 )
 
 DEFAULT_FIXTURES_DIR = REPO_ROOT / "tests" / "fixtures" / "changelog-evals"
+# Captured real-release fixtures live in a subdir so they never sit beside the
+# synthetic fixtures the offline tests scan (load_fixtures globs non-recursively).
+DEFAULT_REAL_FIXTURES_DIR = DEFAULT_FIXTURES_DIR / "real"
 DEFAULT_OUTPUT_ROOT = REPO_ROOT / "eval-results" / "openai-migration"
 SCHEMA_PATH = REPO_ROOT / "changelog_schema" / "announcement-schema.json"
 PRODUCTION_ARTIFACTS = artifact_safety.production_artifact_paths(REPO_ROOT)
@@ -87,6 +91,7 @@ class OfflineCandidate(BaseModel):
     provider: providers.LLMProviderName
     model: str
     display_name: str
+    expected_hard_gate_status: Literal["pass", "fail"] | None = None
     outputs: CandidateOutputs = Field(default_factory=CandidateOutputs)
 
 
@@ -123,6 +128,19 @@ class LiveCandidate(BaseModel):
     provider: providers.LLMProviderName
     model: str
     display_name: str
+
+
+class RoutedLiveCandidate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    candidate_id: str
+    provider: providers.LLMProviderName
+    model: str
+    display_name: str
+    models_by_call: dict[str, str]
+
+
+LiveCandidateConfig = LiveCandidate | RoutedLiveCandidate
 
 
 class ProviderCallRecord(BaseModel):
@@ -286,9 +304,10 @@ class MeasuredLiveProvider:
             max_output_tokens=max_output_tokens,
             call_name=call_name,
         )
+        resolved_model = getattr(self.client, "model_for_call", lambda _: self.model)(call_name)
         self.calls.append(
             make_provider_call_record(
-                model=self.model,
+                model=resolved_model,
                 call_name=call_name,
                 output_model=output_model,
                 prompt=prompt,
@@ -393,6 +412,26 @@ def load_fixtures(fixtures_dir: Path, fixture_ids: set[str] | None = None) -> li
     return fixtures
 
 
+ROUTED_CALL_ALIASES: dict[str, str] = {
+    "grouped": LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    "grouped_changelog_entries": LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+    "breaking": LLM_CALL_BREAKING_CHANGES,
+    "breaking_changes": LLM_CALL_BREAKING_CHANGES,
+    "release": LLM_CALL_RELEASE_NOTES_BODY,
+    "release_notes": LLM_CALL_RELEASE_NOTES_BODY,
+    "release_notes_body": LLM_CALL_RELEASE_NOTES_BODY,
+    "body": LLM_CALL_RELEASE_NOTES_BODY,
+}
+
+REQUIRED_ROUTED_CALLS = frozenset(
+    {
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+        LLM_CALL_BREAKING_CHANGES,
+        LLM_CALL_RELEASE_NOTES_BODY,
+    }
+)
+
+
 def parse_live_candidate(value: str) -> LiveCandidate:
     parts = value.split(":", 2)
     if len(parts) != 3:
@@ -417,6 +456,61 @@ def parse_live_candidate(value: str) -> LiveCandidate:
         provider=provider_name,
         model=model,
         display_name=label,
+    )
+
+
+def parse_live_openai_routed_candidate(value: str) -> RoutedLiveCandidate:
+    """Parse `Label|grouped=model,breaking=model,release=model` routed candidates."""
+    if "|" not in value:
+        raise argparse.ArgumentTypeError(
+            "Routed candidates must use 'Label|grouped=model,breaking=model,release=model'."
+        )
+    label, route_spec = value.split("|", 1)
+    label = label.strip()
+    if not label:
+        raise argparse.ArgumentTypeError("Routed candidate label must be non-empty.")
+
+    models_by_call: dict[str, str] = {}
+    for raw_part in route_spec.split(","):
+        part = raw_part.strip()
+        if not part:
+            continue
+        if "=" not in part:
+            raise argparse.ArgumentTypeError(
+                "Each routed candidate part must use call=model, e.g. grouped=gpt-5.4-mini."
+            )
+        alias, model = part.split("=", 1)
+        call_name = ROUTED_CALL_ALIASES.get(alias.strip().lower())
+        model = model.strip()
+        if call_name is None:
+            valid = ", ".join(sorted(ROUTED_CALL_ALIASES))
+            raise argparse.ArgumentTypeError(f"Unknown routed call alias {alias!r}. Valid aliases: {valid}.")
+        if not model:
+            raise argparse.ArgumentTypeError(f"Routed model for {alias!r} must be non-empty.")
+        models_by_call[call_name] = model
+
+    missing = REQUIRED_ROUTED_CALLS - set(models_by_call)
+    if missing:
+        missing_aliases = []
+        if LLM_CALL_GROUPED_CHANGELOG_ENTRIES in missing:
+            missing_aliases.append("grouped")
+        if LLM_CALL_BREAKING_CHANGES in missing:
+            missing_aliases.append("breaking")
+        if LLM_CALL_RELEASE_NOTES_BODY in missing:
+            missing_aliases.append("release")
+        raise argparse.ArgumentTypeError(
+            "Routed candidate is missing required route(s): " + ", ".join(missing_aliases)
+        )
+
+    route_summary = ", ".join(
+        f"{call_name}={model}" for call_name, model in sorted(models_by_call.items())
+    )
+    return RoutedLiveCandidate(
+        candidate_id=f"live-openai-routed-{entry_builder.slugify_title(label)}",
+        provider=providers.LLM_PROVIDER_OPENAI,
+        model=route_summary,
+        display_name=label,
+        models_by_call=models_by_call,
     )
 
 
@@ -452,12 +546,31 @@ def build_live_provider(candidate: LiveCandidate) -> MeasuredLiveProvider:
     )
 
 
+def build_routed_live_provider(candidate: RoutedLiveCandidate) -> MeasuredLiveProvider:
+    api_key = env.env_value("OPENAI_API_KEY")
+    if not api_key:
+        raise EvalHarnessError("OPENAI_API_KEY is required for live OpenAI evaluation.")
+    try:
+        client = providers.build_openai_structured_llm_client(
+            api_key=api_key,
+            model=candidate.model,
+            models_by_call=candidate.models_by_call,
+        )
+    except RuntimeError as error:
+        raise EvalHarnessError(str(error)) from error
+    return MeasuredLiveProvider(
+        provider=providers.LLM_PROVIDER_OPENAI,
+        model=candidate.model,
+        client=client,
+    )
+
+
 def fixture_candidates(
     fixture: EvalFixture,
-    live_candidates: Sequence[LiveCandidate],
+    live_candidates: Sequence[LiveCandidateConfig],
     candidate_filter: set[str] | None,
-) -> list[OfflineCandidate | LiveCandidate]:
-    candidates: list[OfflineCandidate | LiveCandidate] = [*fixture.offline_candidates, *live_candidates]
+) -> list[OfflineCandidate | LiveCandidateConfig]:
+    candidates: list[OfflineCandidate | LiveCandidateConfig] = [*fixture.offline_candidates, *live_candidates]
     if candidate_filter:
         candidates = [candidate for candidate in candidates if candidate.candidate_id in candidate_filter]
     if not candidates:
@@ -465,9 +578,13 @@ def fixture_candidates(
     return candidates
 
 
-def provider_for_candidate(candidate: OfflineCandidate | LiveCandidate) -> OfflineFixtureProvider | MeasuredLiveProvider:
+def provider_for_candidate(
+    candidate: OfflineCandidate | LiveCandidateConfig,
+) -> OfflineFixtureProvider | MeasuredLiveProvider:
     if isinstance(candidate, OfflineCandidate):
         return OfflineFixtureProvider(candidate)
+    if isinstance(candidate, RoutedLiveCandidate):
+        return build_routed_live_provider(candidate)
     return build_live_provider(candidate)
 
 
@@ -509,7 +626,7 @@ class CandidateEvaluationState:
         self,
         *,
         fixture: EvalFixture,
-        candidate: OfflineCandidate | LiveCandidate,
+        candidate: OfflineCandidate | LiveCandidateConfig,
         run_dir: Path,
     ) -> None:
         self.fixture = fixture
@@ -551,7 +668,7 @@ class CandidateEvaluationState:
 def evaluate_candidate(
     *,
     fixture: EvalFixture,
-    candidate: OfflineCandidate | LiveCandidate,
+    candidate: OfflineCandidate | LiveCandidateConfig,
     run_dir: Path,
 ) -> CandidateEvalResult:
     state = CandidateEvaluationState(fixture=fixture, candidate=candidate, run_dir=run_dir)
@@ -652,7 +769,7 @@ def evaluate_candidate(
 def build_result(
     *,
     fixture: EvalFixture,
-    candidate: OfflineCandidate | LiveCandidate,
+    candidate: OfflineCandidate | LiveCandidateConfig,
     provider: OfflineFixtureProvider | MeasuredLiveProvider | None,
     hard_checks: list[HardCheck],
     errors: list[str],
@@ -663,6 +780,7 @@ def build_result(
     release_notes_markdown: str = "",
 ) -> CandidateEvalResult:
     hard_gate_status: Literal["pass", "fail"] = "pass" if all(check.passed for check in hard_checks) else "fail"
+    expected_hard_gate_status = getattr(candidate, "expected_hard_gate_status", None) or fixture.expected_hard_gate_status
     return CandidateEvalResult(
         fixture_id=fixture.fixture_id,
         candidate_id=candidate.candidate_id,
@@ -670,8 +788,8 @@ def build_result(
         model=candidate.model,
         display_name=candidate.display_name,
         hard_gate_status=hard_gate_status,
-        expected_hard_gate_status=fixture.expected_hard_gate_status,
-        matched_expectation=hard_gate_status == fixture.expected_hard_gate_status,
+        expected_hard_gate_status=expected_hard_gate_status,
+        matched_expectation=hard_gate_status == expected_hard_gate_status,
         provider_call_count=len(provider.calls) if provider else 0,
         provider_calls=provider.calls if provider else [],
         hard_checks=hard_checks,
@@ -848,7 +966,7 @@ def run_eval(
     run_id: str | None,
     fixture_ids: set[str] | None,
     candidate_filter: set[str] | None,
-    live_candidates: Sequence[LiveCandidate],
+    live_candidates: Sequence[LiveCandidateConfig],
     allow_live_provider_calls: bool = False,
 ) -> RunSummary:
     if live_candidates and not allow_live_provider_calls:
@@ -890,6 +1008,69 @@ def capture_fixture(*, input_path: Path, output_path: Path) -> None:
     output_path.write_text(json.dumps(fixture.model_dump(mode="json"), indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
+def run_capture_release(
+    *,
+    fixtures_dir: Path,
+    trigger_repo: str,
+    tags: Sequence[str],
+    last: int,
+    starting_id: int,
+    image_number: int,
+) -> list[Path]:
+    """Capture real releases into fixtures using the live GitHub collection functions."""
+    from github import Github  # local import: only needed for live capture
+    from scripts import update_changelog as uc
+
+    token = env.env_value("PRIVATE_REPO_TOKEN") or env.env_value("GITHUB_TOKEN")
+    if not token:
+        print(
+            "warning: no PRIVATE_REPO_TOKEN or GITHUB_TOKEN set; GitHub API rate limits will be very low.",
+            file=sys.stderr,
+        )
+    gh = Github(token) if token else Github()
+
+    release_tags = list(tags)
+    if not release_tags:
+        release_tags = capture.resolve_last_n_tags(
+            gh=gh,
+            trigger_repo=trigger_repo,
+            count=last,
+            find_latest_release_tag=uc.find_latest_release_tag,
+            find_previous_tag=uc.find_previous_tag,
+        )
+        if not release_tags:
+            raise EvalHarnessError(f"No releases found for {trigger_repo}.")
+
+    written: list[Path] = []
+    for tag in release_tags:
+        fixture = capture.capture_release_fixture(
+            gh=gh,
+            trigger_repo=trigger_repo,
+            release_tag=tag,
+            repo_config=cfg.REPO_CONFIG,
+            breaking_change_labels=cfg.BREAKING_CHANGE_LABELS,
+            find_latest_release_tag=uc.find_latest_release_tag,
+            find_previous_tag=uc.find_previous_tag,
+            get_release_window=uc.get_release_window,
+            search_merged_prs=uc.search_merged_prs,
+            dedupe_prs_by_number=uc.dedupe_prs_by_number,
+            get_release_metadata=capture.github_release_metadata,
+            starting_id=starting_id,
+            image_number=image_number,
+        )
+        output_path = (fixtures_dir / f"{fixture['fixture_id']}.json").resolve()
+        validate_capture_output_path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(fixture, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        written.append(output_path)
+        print(
+            f"Captured {trigger_repo} {tag}: "
+            f"{len(fixture['release_notes_prs'])} release-note PRs, "
+            f"{len(fixture['breaking_prs'])} breaking PRs -> {output_path}"
+        )
+    return written
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -908,10 +1089,42 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         help="Explicit live candidate as provider:model:label. Requires --allow-live-provider-calls.",
     )
+    run_parser.add_argument(
+        "--live-openai-routed-candidate",
+        action="append",
+        type=parse_live_openai_routed_candidate,
+        default=[],
+        help=(
+            "Explicit routed OpenAI candidate as "
+            "'Label|grouped=model,breaking=model,release=model'. Requires --allow-live-provider-calls."
+        ),
+    )
 
     capture_parser = subparsers.add_parser("capture-fixture", help="Normalize a local fixture JSON file.")
     capture_parser.add_argument("--input", type=Path, required=True)
     capture_parser.add_argument("--output", type=Path, required=True)
+
+    capture_release_parser = subparsers.add_parser(
+        "capture-release",
+        help="Capture real release(s) (with bundled sources) into eval fixtures via GitHub.",
+    )
+    capture_release_parser.add_argument("--trigger-repo", default="zenml-io/zenml")
+    capture_release_parser.add_argument(
+        "--tag",
+        action="append",
+        default=[],
+        dest="tags",
+        help="Release tag to capture (repeatable). Omit to use --last.",
+    )
+    capture_release_parser.add_argument(
+        "--last",
+        type=int,
+        default=4,
+        help="Capture the last N releases when no --tag is given.",
+    )
+    capture_release_parser.add_argument("--fixtures-dir", type=Path, default=DEFAULT_REAL_FIXTURES_DIR)
+    capture_release_parser.add_argument("--starting-id", type=int, default=1000)
+    capture_release_parser.add_argument("--image-number", type=int, default=1)
     return parser
 
 
@@ -921,7 +1134,8 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         if args.command == "run-eval":
-            if args.live_candidate and not args.allow_live_provider_calls:
+            live_candidates = [*args.live_candidate, *args.live_openai_routed_candidate]
+            if live_candidates and not args.allow_live_provider_calls:
                 raise EvalHarnessError(
                     "Live candidates require --allow-live-provider-calls so provider calls are explicit."
                 )
@@ -931,7 +1145,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 run_id=args.run_id,
                 fixture_ids=set(args.fixture_id) or None,
                 candidate_filter=set(args.candidate) or None,
-                live_candidates=args.live_candidate,
+                live_candidates=live_candidates,
                 allow_live_provider_calls=args.allow_live_provider_calls,
             )
             print(f"Wrote evaluation reports to {summary.run_dir}")
@@ -945,7 +1159,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             capture_fixture(input_path=args.input, output_path=args.output)
             print(f"Wrote normalized fixture to {args.output}")
             return 0
-    except EvalHarnessError as error:
+
+        if args.command == "capture-release":
+            written = run_capture_release(
+                fixtures_dir=args.fixtures_dir,
+                trigger_repo=args.trigger_repo,
+                tags=args.tags,
+                last=args.last,
+                starting_id=args.starting_id,
+                image_number=args.image_number,
+            )
+            print(f"Wrote {len(written)} fixture(s) to {args.fixtures_dir}")
+            return 0
+    except (EvalHarnessError, capture.FixtureCaptureError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 

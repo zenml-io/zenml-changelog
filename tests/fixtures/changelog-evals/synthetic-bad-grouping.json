@@ -8,8 +8,8 @@
   "image_number": 14,
   "starting_id": 1050,
   "major_bump": false,
-  "expected_hard_gate_status": "fail",
-  "expected_failure": "invalid grouped PR assignment",
+  "expected_hard_gate_status": "pass",
+  "expected_failure": null,
   "release_notes_prs": [
     {
       "number": 501,
@@ -37,6 +37,7 @@
       "provider": "openai",
       "model": "gpt-5.4-mini",
       "display_name": "Fake OpenAI mini bad grouping",
+      "expected_hard_gate_status": "fail",
       "outputs": {
         "grouped_changelog_entries": {
           "entries": [

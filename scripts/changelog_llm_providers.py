@@ -49,8 +49,18 @@ except ModuleNotFoundError:  # pragma: no cover - direct runs without PEP 723 re
 
 try:
     from scripts.changelog_env import env_value, require_env_values
+    from scripts.changelog_llm_outputs import (
+        LLM_CALL_BREAKING_CHANGES,
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+        LLM_CALL_RELEASE_NOTES_BODY,
+    )
 except ModuleNotFoundError:  # pragma: no cover
     from changelog_env import env_value, require_env_values  # type: ignore[no-redef]
+    from changelog_llm_outputs import (  # type: ignore[no-redef]
+        LLM_CALL_BREAKING_CHANGES,
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
+        LLM_CALL_RELEASE_NOTES_BODY,
+    )
 
 TLLMOutput = TypeVar("TLLMOutput", bound=BaseModel)
 
@@ -66,11 +76,17 @@ DEFAULT_LLM_PROVIDER: Final[LLMProviderName] = LLM_PROVIDER_ANTHROPIC
 
 DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-4-5-20250929"
 
-DEFAULT_OPENAI_MODEL = "gpt-5.4-mini"
+DEFAULT_OPENAI_GROUPED_MODEL = "gpt-5.4"
+DEFAULT_OPENAI_BREAKING_MODEL = "gpt-5.4"
+DEFAULT_OPENAI_RELEASE_NOTES_MODEL = "gpt-5.5"
+DEFAULT_OPENAI_MODEL = DEFAULT_OPENAI_GROUPED_MODEL
 
 LLM_PROVIDER_ENV = "CHANGELOG_LLM_PROVIDER"
 
 LLM_MODEL_ENV = "CHANGELOG_LLM_MODEL"
+LLM_MODEL_GROUPED_ENV = "CHANGELOG_LLM_MODEL_GROUPED"
+LLM_MODEL_BREAKING_ENV = "CHANGELOG_LLM_MODEL_BREAKING"
+LLM_MODEL_RELEASE_NOTES_ENV = "CHANGELOG_LLM_MODEL_RELEASE_NOTES"
 
 class LLMProviderRetryableError(RuntimeError):
     """Retryable provider/API failure at the structured-output seam."""
@@ -125,9 +141,20 @@ class AnthropicStructuredLLMClient:
         return response.parsed_output
 
 class OpenAIStructuredLLMClient:
-    def __init__(self, client: Any, model: str = DEFAULT_OPENAI_MODEL) -> None:
+    def __init__(
+        self,
+        client: Any,
+        model: str = DEFAULT_OPENAI_MODEL,
+        temperature: float | None = None,
+        models_by_call: dict[str, str] | None = None,
+    ) -> None:
         self.client = client
         self.model = model
+        self.temperature = temperature
+        self.models_by_call = models_by_call or {}
+
+    def model_for_call(self, call_name: str) -> str:
+        return self.models_by_call.get(call_name, self.model)
 
     def parse_structured_output(
         self,
@@ -137,15 +164,18 @@ class OpenAIStructuredLLMClient:
         max_output_tokens: int,
         call_name: str,
     ) -> TLLMOutput:
+        request_kwargs: dict[str, Any] = {
+            "model": self.model_for_call(call_name),
+            "input": [{"role": "user", "content": prompt}],
+            "text_format": output_model,
+            "max_output_tokens": max_output_tokens,
+            "store": False,
+        }
+        if self.temperature is not None:
+            request_kwargs["temperature"] = self.temperature
+
         try:
-            response = self.client.responses.parse(
-                model=self.model,
-                input=[{"role": "user", "content": prompt}],
-                text_format=output_model,
-                max_output_tokens=max_output_tokens,
-                temperature=0,
-                store=False,
-            )
+            response = self.client.responses.parse(**request_kwargs)
         except (OpenAIAuthenticationError, OpenAIPermissionDeniedError, OpenAIBadRequestError):
             raise
         except (
@@ -184,6 +214,23 @@ def openai_response_has_refusal(response: Any) -> bool:
                 return True
     return False
 
+def openai_models_by_call_from_env(global_model: str | None = None) -> dict[str, str]:
+    """Return the routed OpenAI model map, treating blank values as missing."""
+    normalized_global_model = global_model.strip() if global_model else None
+    normalized_global_model = normalized_global_model or None
+    return {
+        LLM_CALL_GROUPED_CHANGELOG_ENTRIES: env_value(LLM_MODEL_GROUPED_ENV)
+        or normalized_global_model
+        or DEFAULT_OPENAI_GROUPED_MODEL,
+        LLM_CALL_BREAKING_CHANGES: env_value(LLM_MODEL_BREAKING_ENV)
+        or normalized_global_model
+        or DEFAULT_OPENAI_BREAKING_MODEL,
+        LLM_CALL_RELEASE_NOTES_BODY: env_value(LLM_MODEL_RELEASE_NOTES_ENV)
+        or normalized_global_model
+        or DEFAULT_OPENAI_RELEASE_NOTES_MODEL,
+    }
+
+
 def normalize_llm_provider(provider: str | None) -> LLMProviderName:
     """Normalize a provider name and fail closed for unsupported values."""
     normalized = (provider or DEFAULT_LLM_PROVIDER).strip().lower()
@@ -211,12 +258,14 @@ def build_openai_structured_llm_client(
     *,
     api_key: str,
     model: str | None = None,
+    models_by_call: dict[str, str] | None = None,
 ) -> OpenAIStructuredLLMClient:
     if OpenAI is None:
         raise RuntimeError("The openai package is required when CHANGELOG_LLM_PROVIDER=openai")
     return OpenAIStructuredLLMClient(
         OpenAI(api_key=api_key, max_retries=0),
         model=model or DEFAULT_OPENAI_MODEL,
+        models_by_call=models_by_call,
     )
 
 
@@ -242,9 +291,14 @@ def build_structured_llm_client_from_env() -> StructuredLLMClient:
 
     if provider == LLM_PROVIDER_ANTHROPIC:
         api_key = require_env_values(["ANTHROPIC_API_KEY"])["ANTHROPIC_API_KEY"]
-    else:
-        api_key = require_env_values(["OPENAI_API_KEY"])["OPENAI_API_KEY"]
-    return build_structured_llm_client(provider=provider, api_key=api_key, model=model_override)
+        return build_anthropic_structured_llm_client(api_key=api_key, model=model_override)
+
+    api_key = require_env_values(["OPENAI_API_KEY"])["OPENAI_API_KEY"]
+    return build_openai_structured_llm_client(
+        api_key=api_key,
+        model=model_override,
+        models_by_call=openai_models_by_call_from_env(model_override),
+    )
 
 def llm_retryable() -> Any:
     return retry(

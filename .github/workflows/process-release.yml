@@ -20,6 +20,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 env:
   SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
@@ -51,10 +52,12 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
-          CHANGELOG_LLM_PROVIDER: ${{ vars.CHANGELOG_LLM_PROVIDER || 'anthropic' }}
+          CHANGELOG_LLM_PROVIDER: ${{ vars.CHANGELOG_LLM_PROVIDER || 'openai' }}
           CHANGELOG_LLM_MODEL: ${{ vars.CHANGELOG_LLM_MODEL || '' }}
+          CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-5.4' }}
+          CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-5.4' }}
+          CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-5.5' }}
           CHANGELOG_OPENAI_SHADOW_MODE: "true"
-          CHANGELOG_OPENAI_SHADOW_MODEL: ${{ vars.CHANGELOG_OPENAI_SHADOW_MODEL || '' }}
           CHANGELOG_OPENAI_SHADOW_WIDGET_COMMENT: openai-shadow-widget-comment.md
           CHANGELOG_OPENAI_SHADOW_RELEASE_NOTES_COMMENT: openai-shadow-release-notes-comment.md
           SOURCE_REPO: ${{ env.SOURCE_REPO }}

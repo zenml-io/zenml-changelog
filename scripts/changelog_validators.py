@@ -79,7 +79,12 @@ def validate_release_notes_body_output(
         any(label.lower() in {"bug", "bugfix", "fix"} for label in pr.get("labels", []))
         for pr in prs
     )
-    if has_bugfix_prs and "<details><summary>Fixed</summary>" not in body:
+    has_fixed_details_block = re.search(
+        r"<details>\s*<summary>\s*Fixed\s*</summary>",
+        body,
+        flags=re.IGNORECASE,
+    )
+    if has_bugfix_prs and not has_fixed_details_block:
         warnings.append("Bugfix PRs exist, but the release-note body has no Fixed details block.")
 
     if details:
