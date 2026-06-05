@@ -20,7 +20,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  issues: write
 
 env:
   SOURCE_REPO: ${{ inputs.source_repo || github.event.client_payload.repo }}
@@ -37,8 +36,6 @@ jobs:
       breaking_changes: ${{ steps.workflow_outputs.outputs.breaking_changes }}
       needs_attention: ${{ steps.workflow_outputs.outputs.needs_attention }}
       source_windows: ${{ steps.workflow_outputs.outputs.source_windows }}
-      shadow_widget_comment_exists: ${{ steps.shadow_comment_outputs.outputs.widget_comment_exists }}
-      shadow_release_notes_comment_exists: ${{ steps.shadow_comment_outputs.outputs.release_notes_comment_exists }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,9 +54,6 @@ jobs:
           CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-5.4' }}
           CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-5.4' }}
           CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-5.5' }}
-          CHANGELOG_OPENAI_SHADOW_MODE: "true"
-          CHANGELOG_OPENAI_SHADOW_WIDGET_COMMENT: openai-shadow-widget-comment.md
-          CHANGELOG_OPENAI_SHADOW_RELEASE_NOTES_COMMENT: openai-shadow-release-notes-comment.md
           SOURCE_REPO: ${{ env.SOURCE_REPO }}
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
           RELEASE_URL: ${{ env.RELEASE_URL }}
@@ -76,21 +70,6 @@ jobs:
         run: |
           set -euo pipefail
           uv run scripts/workflow_result.py write-github-outputs
-
-      - name: Publish shadow comment outputs
-        id: shadow_comment_outputs
-        run: |
-          set -euo pipefail
-          if [ -s openai-shadow-widget-comment.md ]; then
-            echo "widget_comment_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "widget_comment_exists=false" >> "$GITHUB_OUTPUT"
-          fi
-          if [ -s openai-shadow-release-notes-comment.md ]; then
-            echo "release_notes_comment_exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "release_notes_comment_exists=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Validate changelog.json
         if: steps.workflow_outputs.outputs.has_changes == 'true'
@@ -127,22 +106,6 @@ jobs:
         with:
           name: release-notes-patch
           path: release-notes.patch
-          if-no-files-found: error
-
-      - name: Upload OpenAI shadow widget comment artifact
-        if: steps.shadow_comment_outputs.outputs.widget_comment_exists == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: openai-shadow-widget-comment
-          path: openai-shadow-widget-comment.md
-          if-no-files-found: error
-
-      - name: Upload OpenAI shadow release notes comment artifact
-        if: steps.shadow_comment_outputs.outputs.release_notes_comment_exists == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: openai-shadow-release-notes-comment
-          path: openai-shadow-release-notes-comment.md
           if-no-files-found: error
 
   pr-widget:
@@ -206,43 +169,6 @@ jobs:
           add-paths: |
             changelog.json
             .image_state
-
-      - name: Download OpenAI shadow widget comment artifact
-        if: needs.generate.outputs.shadow_widget_comment_exists == 'true' && steps.create_widget_pr.outputs.pull-request-number != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: openai-shadow-widget-comment
-          path: shadow-comments
-
-      - name: Read OpenAI shadow widget comment
-        if: needs.generate.outputs.shadow_widget_comment_exists == 'true' && steps.create_widget_pr.outputs.pull-request-number != ''
-        id: read_widget_shadow_comment
-        run: |
-          set -euo pipefail
-          delimiter="$(uuidgen)"
-          {
-            echo "body<<$delimiter"
-            cat shadow-comments/openai-shadow-widget-comment.md
-            echo "$delimiter"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Find OpenAI shadow widget comment
-        if: needs.generate.outputs.shadow_widget_comment_exists == 'true' && steps.create_widget_pr.outputs.pull-request-number != ''
-        id: find_widget_shadow_comment
-        uses: peter-evans/find-comment@v3
-        with:
-          issue-number: ${{ steps.create_widget_pr.outputs.pull-request-number }}
-          comment-author: github-actions[bot]
-          body-includes: zenml-changelog-openai-shadow-widget
-
-      - name: Create or update OpenAI shadow widget comment
-        if: needs.generate.outputs.shadow_widget_comment_exists == 'true' && steps.create_widget_pr.outputs.pull-request-number != ''
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.find_widget_shadow_comment.outputs.comment-id }}
-          issue-number: ${{ steps.create_widget_pr.outputs.pull-request-number }}
-          body: ${{ steps.read_widget_shadow_comment.outputs.body }}
-          edit-mode: replace
 
   pr-release-notes:
     runs-on: ubuntu-latest
@@ -332,40 +258,3 @@ jobs:
           add-paths: |
             ${{ needs.generate.outputs.markdown_file }}
             .consumed_sources_state
-
-      - name: Download OpenAI shadow release notes comment artifact
-        if: needs.generate.outputs.shadow_release_notes_comment_exists == 'true' && steps.create_release_notes_pr.outputs.pull-request-number != ''
-        uses: actions/download-artifact@v4
-        with:
-          name: openai-shadow-release-notes-comment
-          path: shadow-comments
-
-      - name: Read OpenAI shadow release notes comment
-        if: needs.generate.outputs.shadow_release_notes_comment_exists == 'true' && steps.create_release_notes_pr.outputs.pull-request-number != ''
-        id: read_release_notes_shadow_comment
-        run: |
-          set -euo pipefail
-          delimiter="$(uuidgen)"
-          {
-            echo "body<<$delimiter"
-            cat shadow-comments/openai-shadow-release-notes-comment.md
-            echo "$delimiter"
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Find OpenAI shadow release notes comment
-        if: needs.generate.outputs.shadow_release_notes_comment_exists == 'true' && steps.create_release_notes_pr.outputs.pull-request-number != ''
-        id: find_release_notes_shadow_comment
-        uses: peter-evans/find-comment@v3
-        with:
-          issue-number: ${{ steps.create_release_notes_pr.outputs.pull-request-number }}
-          comment-author: github-actions[bot]
-          body-includes: zenml-changelog-openai-shadow-release-notes
-
-      - name: Create or update OpenAI shadow release notes comment
-        if: needs.generate.outputs.shadow_release_notes_comment_exists == 'true' && steps.create_release_notes_pr.outputs.pull-request-number != ''
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          comment-id: ${{ steps.find_release_notes_shadow_comment.outputs.comment-id }}
-          issue-number: ${{ steps.create_release_notes_pr.outputs.pull-request-number }}
-          body: ${{ steps.read_release_notes_shadow_comment.outputs.body }}
-          edit-mode: replace

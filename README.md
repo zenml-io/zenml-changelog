@@ -48,12 +48,9 @@ flowchart TD
     B --> C[Run update_changelog.py]
     C --> D[changelog.json + .image_state]
     C --> E[gitbook-release-notes/*.md + .consumed_sources_state]
-    C --> I[OpenAI shadow comment files<br/>review only]
     D --> F[Schema validation]
     B --> G[Widget PR<br/>changelog/{repo}/{tag}]
     B --> H[Release notes PR<br/>release-notes/{repo}/{tag}]
-    I --> G
-    I --> H
 ```
 
 - Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-cloud-api`) emits `repository_dispatch` (`release-published`).
@@ -61,7 +58,6 @@ flowchart TD
 - Workflow handoff: `scripts/update_changelog.py` writes deterministic machine metadata to `changelog_workflow_result.json` (or the `CHANGELOG_WORKFLOW_RESULT` path). The workflow then runs `scripts/workflow_result.py write-github-outputs` to publish the stable GitHub Actions outputs: `has_changes`, `markdown_file`, `breaking_changes`, `needs_attention`, and `source_windows`. Stdout is only for human-readable logs, not workflow parsing.
 - Script tasks: resolve each source repo's release window, skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
-- OpenAI shadow mode: `process-release.yml` enables a second, review-only OpenAI generation path using the same routed OpenAI model config as production OpenAI. The script writes labeled comment files for the dashboard grouped entries and the release-note breaking/body output; each section says which provider, model, and output type produced it. The workflow posts or updates those files as comments on the generated widget and release-notes PRs. Shadow output is a comparison aid only; it never writes `changelog.json`, GitBook markdown, `.image_state`, `.consumed_sources_state`, or workflow-result production text.
 
 ### PR Routing
 
@@ -101,7 +97,7 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 ## Required Secrets and Setup
 
 - `ANTHROPIC_API_KEY` — Required only when `scripts/update_changelog.py` or live evaluation uses Anthropic.
-- `OPENAI_API_KEY` — Required when production generation uses OpenAI or when live evaluation uses OpenAI. It is also required to produce OpenAI shadow-mode comparison comments; if the secret is absent or blank, the workflow skips those comments and continues.
+- `OPENAI_API_KEY` — Required when production generation uses OpenAI or when live evaluation uses OpenAI.
 - No-changes release runs do not initialize an LLM client and need no LLM provider key.
 - `PRIVATE_REPO_TOKEN` — Optional PAT with access to private repos (used instead of `GITHUB_TOKEN` when set).
 - Source repos need a dispatch token (e.g., `CHANGELOG_DISPATCH_TOKEN`) to send `repository_dispatch` events to this repo.
@@ -118,9 +114,6 @@ Provider and model selection:
   - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5` for release-note body prose.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values.
 - `gpt-5.4-mini` is not a production default.
-- `CHANGELOG_OPENAI_SHADOW_MODE=true` enables review-only OpenAI shadow comments in the release workflow. Shadow comments use the same routed OpenAI config and label every section with provider, model, and output type.
-
-The shadow path is like a second draft in the margin: reviewers can compare it against the official PR content, but the automation never copies shadow text into production files.
 
 ## Testing or Triggering Manually
 

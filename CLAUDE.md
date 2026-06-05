@@ -71,7 +71,6 @@ This repo is the canonical source of ZenML release metadata:
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.
   - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then writes structured source-window metadata for PR bodies to `changelog_workflow_result.json`.
   - Prints summary and exits; workflow keeps `.consumed_sources_state` in the release-notes PR, so a source window is only marked consumed when the markdown that represents it is merged.
-  - When `CHANGELOG_OPENAI_SHADOW_MODE=true`, also generates OpenAI shadow-mode comment files for reviewers using the same routed OpenAI config as production OpenAI. Each output section is labeled by provider, model, and output type, and is posted to the generated widget/release-notes PRs. Shadow output is never used to write production artifacts.
 
 ## Blind Comparison Web App
 
@@ -104,7 +103,7 @@ This repo is the canonical source of ZenML release metadata:
 ## Secrets and Provider Configuration
 
 - `ANTHROPIC_API_KEY` — Required when production generation uses Anthropic. Keep this configured for rollback.
-- `OPENAI_API_KEY` — Required when production generation uses OpenAI. Also required to produce workflow shadow comments when `CHANGELOG_OPENAI_SHADOW_MODE=true`; if absent or blank, shadow comments are skipped and the production workflow continues.
+- `OPENAI_API_KEY` — Required when production generation uses OpenAI.
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. The script default is Anthropic; `process-release.yml` defaults release runs to OpenAI. Roll back the workflow by setting `CHANGELOG_LLM_PROVIDER=anthropic`.
 - `CHANGELOG_LLM_MODEL=<model>` — Optional global model override.
 - `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-5.4`.

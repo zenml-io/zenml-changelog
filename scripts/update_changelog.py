@@ -25,9 +25,6 @@ from pydantic import BaseModel, Field
 
 try:
     from scripts import changelog_llm_providers as _llm_providers
-    from scripts.changelog_artifact_safety import (
-        unsafe_relative_artifact_path_reason,
-    )
     from scripts.changelog_config import (
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -68,18 +65,14 @@ try:
         DEFAULT_LLM_PROVIDER,
         LLM_MODEL_ENV,
         LLM_PROVIDER_ENV,
-        LLM_PROVIDER_OPENAI,
         Anthropic,
         AnthropicStructuredLLMClient,
         LLMOutputValidationError,
         LLMProviderNonRetryableError,
         LLMProviderRetryableError,
         OpenAI,
-        OpenAIStructuredLLMClient,
         StructuredLLMClient,
-        build_openai_structured_llm_client,
         llm_retryable,
-        openai_models_by_call_from_env,
         openai_response_has_refusal,
     )
     from scripts.changelog_prompts import (
@@ -116,9 +109,6 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_changelog.py`
     import changelog_llm_providers as _llm_providers  # type: ignore[no-redef]
-    from changelog_artifact_safety import (  # type: ignore[no-redef]
-        unsafe_relative_artifact_path_reason,
-    )
     from changelog_config import (  # type: ignore[no-redef]
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -159,18 +149,14 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
         DEFAULT_LLM_PROVIDER,
         LLM_MODEL_ENV,
         LLM_PROVIDER_ENV,
-        LLM_PROVIDER_OPENAI,
         Anthropic,
         AnthropicStructuredLLMClient,
         LLMOutputValidationError,
         LLMProviderNonRetryableError,
         LLMProviderRetryableError,
         OpenAI,
-        OpenAIStructuredLLMClient,
         StructuredLLMClient,
-        build_openai_structured_llm_client,
         llm_retryable,
-        openai_models_by_call_from_env,
         openai_response_has_refusal,
     )
     from changelog_prompts import (  # type: ignore[no-redef]
@@ -276,13 +262,6 @@ class ImageState(BaseModel):
 
 llm_client: Optional[StructuredLLMClient] = None
 
-OPENAI_SHADOW_MODE_ENV = "CHANGELOG_OPENAI_SHADOW_MODE"
-OPENAI_SHADOW_WIDGET_COMMENT_ENV = "CHANGELOG_OPENAI_SHADOW_WIDGET_COMMENT"
-OPENAI_SHADOW_RELEASE_NOTES_COMMENT_ENV = "CHANGELOG_OPENAI_SHADOW_RELEASE_NOTES_COMMENT"
-DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT = "openai-shadow-widget-comment.md"
-DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT = "openai-shadow-release-notes-comment.md"
-OPENAI_SHADOW_WIDGET_MARKER = "<!-- zenml-changelog-openai-shadow-widget -->"
-OPENAI_SHADOW_RELEASE_NOTES_MARKER = "<!-- zenml-changelog-openai-shadow-release-notes -->"
 
 
 def ensure_required_env(vars_list: List[str]) -> Dict[str, str]:
@@ -776,221 +755,6 @@ def generate_valid_grouped_changelog_entries(
     )
 
 
-def openai_shadow_mode_enabled() -> bool:
-    """Return whether OpenAI shadow comments should be generated."""
-    return (env_value(OPENAI_SHADOW_MODE_ENV) or "").lower() in {"1", "true", "yes", "on"}
-
-
-def openai_shadow_comment_paths() -> tuple[Path, Path]:
-    """Return configured shadow comment paths, with stable workflow defaults."""
-    widget_path = Path(env_value(OPENAI_SHADOW_WIDGET_COMMENT_ENV) or DEFAULT_OPENAI_SHADOW_WIDGET_COMMENT)
-    release_notes_path = Path(
-        env_value(OPENAI_SHADOW_RELEASE_NOTES_COMMENT_ENV)
-        or DEFAULT_OPENAI_SHADOW_RELEASE_NOTES_COMMENT
-    )
-    return widget_path, release_notes_path
-
-
-def unsafe_shadow_comment_path_reason(path: Path) -> str | None:
-    """Return a reason when a shadow comment path could overwrite production artifacts."""
-    return unsafe_relative_artifact_path_reason(
-        path,
-        repo_root=Path.cwd(),
-        extra_production_relative_paths={"changelog_workflow_result.json"},
-    )
-
-
-def _write_shadow_comment(path: Path, content: str) -> None:
-    """Write a shadow comment file, logging instead of failing production."""
-    try:
-        path.write_text(content, encoding="utf-8")
-    except OSError as error:
-        print(f"Failed to write OpenAI shadow comment {path}: {error}")
-
-
-def _dump_json(value: Any) -> str:
-    """Serialize Pydantic models or normal Python data for PR comments."""
-    if isinstance(value, BaseModel):
-        value = _model_dump(value)
-    return json.dumps(value, indent=2, sort_keys=True)
-
-
-def _fenced_block(language: str, content: str) -> str:
-    """Render a safe fenced block for generated model text."""
-    safe_content = content.replace("```", "`\u200b``")
-    return f"```{language}\n{safe_content.rstrip()}\n```"
-
-
-def _shadow_success_section(output_type: str, model: str, language: str, content: str) -> str:
-    return (
-        f"### Output type: `{output_type}`\n\n"
-        f"- Provider: `{LLM_PROVIDER_OPENAI}`\n"
-        f"- Model: `{model}`\n"
-        "- Status: `passed`\n\n"
-        f"{_fenced_block(language, content)}\n"
-    )
-
-
-def _shadow_failure_section(output_type: str, model: str, error: Exception) -> str:
-    return (
-        f"### Output type: `{output_type}`\n\n"
-        f"- Provider: `{LLM_PROVIDER_OPENAI}`\n"
-        f"- Model: `{model}`\n"
-        "- Status: `failed`\n\n"
-        f"{_fenced_block('text', f'{type(error).__name__}: {error}')}\n"
-    )
-
-
-def _shadow_header(marker: str) -> str:
-    return (
-        f"{marker}\n\n"
-        "## OpenAI shadow-mode output\n\n"
-        "This is a review aid generated by the routed OpenAI shadow provider. "
-        "Each output section labels the exact provider and model used. It is not used to "
-        "write `changelog.json`, release-note markdown, `.image_state`, or "
-        "`.consumed_sources_state`.\n\n"
-    )
-
-
-def build_openai_shadow_client() -> OpenAIStructuredLLMClient | None:
-    """Build an OpenAI client for shadow mode, or return None when safely skipped."""
-    api_key = env_value("OPENAI_API_KEY")
-    if api_key is None:
-        print("OpenAI shadow mode enabled, but OPENAI_API_KEY is missing or blank. Skipping shadow comments.")
-        return None
-    if OpenAI is None:
-        print("OpenAI shadow mode enabled, but the openai package is unavailable. Skipping shadow comments.")
-        return None
-    global_model = env_value(LLM_MODEL_ENV)
-    _llm_providers.OpenAI = OpenAI
-    return build_openai_structured_llm_client(
-        api_key=api_key,
-        model=global_model,
-        models_by_call=openai_models_by_call_from_env(global_model),
-    )
-
-
-def write_openai_shadow_comments(
-    *,
-    grouping_prs: List[Dict[str, Any]],
-    body_prs: List[Dict[str, Any]],
-    breaking_prs: List[Dict[str, Any]],
-    source_repo: str,
-    published_at: str,
-    starting_id: int,
-    include_pr_links: bool,
-) -> None:
-    """Generate OpenAI shadow output files without mutating production artifacts.
-
-    This is deliberately separate from the global production `llm_client`. If it
-    fails, reviewers get a labeled failure comment where possible, but the
-    Anthropic/default production path continues unchanged.
-    """
-    if not openai_shadow_mode_enabled():
-        return
-
-    widget_path, release_notes_path = openai_shadow_comment_paths()
-    unsafe_paths = [
-        f"{path}: {reason}"
-        for path in (widget_path, release_notes_path)
-        if (reason := unsafe_shadow_comment_path_reason(path)) is not None
-    ]
-    if unsafe_paths:
-        print(
-            "OpenAI shadow mode enabled, but configured comment paths are unsafe. "
-            "Skipping shadow comments: " + "; ".join(unsafe_paths)
-        )
-        return
-
-    shadow_client = build_openai_shadow_client()
-    if shadow_client is None:
-        return
-
-    grouped_model = shadow_client.model_for_call(LLM_CALL_GROUPED_CHANGELOG_ENTRIES)
-    breaking_model = shadow_client.model_for_call(LLM_CALL_BREAKING_CHANGES)
-    release_notes_body_model = shadow_client.model_for_call(LLM_CALL_RELEASE_NOTES_BODY)
-
-    try:
-        grouped_output = generate_grouped_changelog_output(
-            client=shadow_client,
-            prs=grouping_prs,
-            source_repo=source_repo,
-        )
-        grouped_entries = build_grouped_changelog_entries(
-            grouped_output=grouped_output,
-            prs=grouping_prs,
-            source_repo=source_repo,
-            published_at=published_at,
-            starting_id=starting_id,
-        )
-        widget_section = _shadow_success_section(
-            "dashboard grouped changelog entries",
-            grouped_model,
-            "json",
-            _dump_json(
-                {
-                    "raw_grouped_output": _model_dump(grouped_output),
-                    "schema_entries": grouped_entries,
-                }
-            ),
-        )
-    except Exception as error:  # noqa: BLE001 - shadow failures must not fail production
-        print(f"OpenAI shadow widget generation failed: {error}")
-        widget_section = _shadow_failure_section(
-            "dashboard grouped changelog entries",
-            grouped_model,
-            error,
-        )
-
-    _write_shadow_comment(widget_path, _shadow_header(OPENAI_SHADOW_WIDGET_MARKER) + widget_section)
-
-    release_sections: List[str] = []
-    try:
-        breaking_output, _warnings = generate_breaking_changes_output(
-            client=shadow_client,
-            breaking_prs=breaking_prs,
-            source_repo=source_repo,
-            include_pr_links=include_pr_links,
-        )
-        release_sections.append(
-            _shadow_success_section(
-                "breaking_changes",
-                breaking_model,
-                "json",
-                _dump_json(breaking_output),
-            )
-        )
-    except Exception as error:  # noqa: BLE001 - shadow failures must not fail production
-        print(f"OpenAI shadow breaking-change generation failed: {error}")
-        release_sections.append(_shadow_failure_section("breaking_changes", breaking_model, error))
-
-    try:
-        body_output, _warnings = generate_release_notes_body_output(
-            client=shadow_client,
-            prs=body_prs,
-            source_repo=source_repo,
-            include_pr_links=include_pr_links,
-        )
-        release_sections.append(
-            _shadow_success_section(
-                "release_notes_body",
-                release_notes_body_model,
-                "md",
-                body_output.content or "<empty>",
-            )
-        )
-    except Exception as error:  # noqa: BLE001 - shadow failures must not fail production
-        print(f"OpenAI shadow release-note body generation failed: {error}")
-        release_sections.append(
-            _shadow_failure_section("release_notes_body", release_notes_body_model, error)
-        )
-
-    _write_shadow_comment(
-        release_notes_path,
-        _shadow_header(OPENAI_SHADOW_RELEASE_NOTES_MARKER) + "\n".join(release_sections),
-    )
-
-
 def get_release_info(gh: Github, repo_name: str, tag: str) -> tuple[str, str]:
     """Fetch release URL and published_at from GitHub API."""
     repo = gh.get_repo(repo_name)
@@ -1121,15 +885,6 @@ def main() -> None:
     markdown_file = config["markdown_file"]
     body = llm_generate_release_notes_body(body_prs, source_repo, include_pr_links) if body_prs else ""
 
-    write_openai_shadow_comments(
-        grouping_prs=grouping_prs,
-        body_prs=body_prs,
-        breaking_prs=breaking_prs,
-        source_repo=source_repo,
-        published_at=published_at,
-        starting_id=starting_id,
-        include_pr_links=include_pr_links,
-    )
 
     new_entries.sort(key=lambda entry: entry["id"], reverse=True)
     updated_changelog = new_entries + existing_changelog

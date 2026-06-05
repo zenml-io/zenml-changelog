@@ -24,7 +24,6 @@ Do not commit generated investigation/review/plan outputs from `docs/investigati
 - `uv run scripts/update_changelog.py` runs the release automation locally. It expects release payload environment variables plus `ANTHROPIC_API_KEY` for Anthropic generation or `OPENAI_API_KEY` for OpenAI generation. No-changes runs need no LLM provider key.
   - Script default provider is Anthropic; the release workflow defaults production runs to OpenAI unless `CHANGELOG_LLM_PROVIDER` is set differently. Rollback is `CHANGELOG_LLM_PROVIDER=anthropic`.
   - OpenAI routing defaults: `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4`, `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4`, and `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5`. `CHANGELOG_LLM_MODEL` remains a global override; per-call vars override it. `gpt-5.4-mini` is not a production default.
-  - OpenAI shadow comments use the same routed config and label provider/model/output type per section.
 - `./scripts/install-hooks.sh` installs the local pre-commit hook that validates `changelog.json`.
 
 The scripts use PEP 723 inline dependencies, so there is no separate requirements file to install.
