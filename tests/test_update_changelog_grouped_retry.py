@@ -10,7 +10,10 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scripts import changelog_entry_builder as entry_builder
+from scripts import changelog_validators as validators
 from scripts import update_changelog as uc
+from scripts.changelog_llm_outputs import ChangelogLabel, GroupedChangelogEntry, GroupedChangelogOutput
 
 
 def make_pr(
@@ -31,9 +34,9 @@ def make_pr(
 def make_entry(
     title: str,
     pr_numbers: list[int],
-    suggested_labels: list[uc.ChangelogLabel] | None = None,
-) -> uc.GroupedChangelogEntry:
-    return uc.GroupedChangelogEntry(
+    suggested_labels: list[ChangelogLabel] | None = None,
+) -> GroupedChangelogEntry:
+    return GroupedChangelogEntry(
         title=title,
         description=f"Description for {title}",
         suggested_labels=suggested_labels or [],
@@ -41,8 +44,8 @@ def make_entry(
     )
 
 
-def make_output(entries: list[uc.GroupedChangelogEntry]) -> uc.GroupedChangelogOutput:
-    return uc.GroupedChangelogOutput(entries=entries)
+def make_output(entries: list[GroupedChangelogEntry]) -> GroupedChangelogOutput:
+    return GroupedChangelogOutput(entries=entries)
 
 
 def sample_prs() -> list[dict[str, Any]]:
@@ -61,8 +64,8 @@ def test_duplicate_pr_numbers_raise_semantic_error() -> None:
         ]
     )
 
-    with pytest.raises(uc.GroupedChangelogSemanticError) as exc_info:
-        uc.validate_grouped_changelog_output(grouped_output, sample_prs())
+    with pytest.raises(validators.GroupedChangelogSemanticError) as exc_info:
+        validators.validate_grouped_changelog_output(grouped_output, sample_prs())
 
     error = exc_info.value
     assert "PR #101 appears in more than one grouped changelog entry" in str(error)
@@ -78,8 +81,8 @@ def test_unknown_pr_numbers_raise_semantic_error() -> None:
         ]
     )
 
-    with pytest.raises(uc.GroupedChangelogSemanticError) as exc_info:
-        uc.validate_grouped_changelog_output(grouped_output, sample_prs())
+    with pytest.raises(validators.GroupedChangelogSemanticError) as exc_info:
+        validators.validate_grouped_changelog_output(grouped_output, sample_prs())
 
     assert "references unknown PR #9999" in str(exc_info.value)
 
@@ -87,8 +90,8 @@ def test_unknown_pr_numbers_raise_semantic_error() -> None:
 def test_missing_pr_numbers_raise_semantic_error() -> None:
     grouped_output = make_output([make_entry("Better pipelines", [101, 102])])
 
-    with pytest.raises(uc.GroupedChangelogSemanticError) as exc_info:
-        uc.validate_grouped_changelog_output(grouped_output, sample_prs())
+    with pytest.raises(validators.GroupedChangelogSemanticError) as exc_info:
+        validators.validate_grouped_changelog_output(grouped_output, sample_prs())
 
     assert "#103" in str(exc_info.value)
     assert "not assigned to any grouped changelog entry" in str(exc_info.value)
@@ -97,12 +100,12 @@ def test_missing_pr_numbers_raise_semantic_error() -> None:
 def test_valid_grouped_output_preserves_conversion_behavior() -> None:
     grouped_output = make_output(
         [
-            make_entry("Better pipelines", [101, 102], [uc.ChangelogLabel.BUGFIX]),
-            make_entry("Cleaner metadata", [103], [uc.ChangelogLabel.BUGFIX]),
+            make_entry("Better pipelines", [101, 102], [ChangelogLabel.BUGFIX]),
+            make_entry("Cleaner metadata", [103], [ChangelogLabel.BUGFIX]),
         ]
     )
 
-    entries = uc.build_grouped_changelog_entries(
+    entries = entry_builder.build_grouped_changelog_entries(
         grouped_output=grouped_output,
         prs=sample_prs(),
         source_repo="zenml-io/zenml",
@@ -138,7 +141,7 @@ def test_semantic_retry_succeeds_on_second_attempt(monkeypatch: pytest.MonkeyPat
         prs: list[dict[str, Any]],
         source_repo: str,
         retry_feedback: str | None = None,
-    ) -> uc.GroupedChangelogOutput:
+    ) -> GroupedChangelogOutput:
         calls.append(retry_feedback)
         return invalid_output if len(calls) == 1 else valid_output
 
@@ -176,7 +179,7 @@ def test_retry_exhaustion_fails_after_three_attempts(monkeypatch: pytest.MonkeyP
         prs: list[dict[str, Any]],
         source_repo: str,
         retry_feedback: str | None = None,
-    ) -> uc.GroupedChangelogOutput:
+    ) -> GroupedChangelogOutput:
         calls.append(retry_feedback)
         return invalid_output
 
@@ -208,7 +211,7 @@ def test_non_semantic_errors_are_not_swallowed(monkeypatch: pytest.MonkeyPatch) 
         prs: list[dict[str, Any]],
         source_repo: str,
         retry_feedback: str | None = None,
-    ) -> uc.GroupedChangelogOutput:
+    ) -> GroupedChangelogOutput:
         raise RuntimeError("Anthropic client not initialized")
 
     monkeypatch.setattr(
@@ -235,7 +238,7 @@ def test_duplicate_input_pr_numbers_fail_before_llm_without_semantic_retry(
         prs: list[dict[str, Any]],
         source_repo: str,
         retry_feedback: str | None = None,
-    ) -> uc.GroupedChangelogOutput:
+    ) -> GroupedChangelogOutput:
         nonlocal llm_calls
         llm_calls += 1
         return make_output([make_entry("Ambiguous", [101])])
@@ -259,7 +262,7 @@ def test_duplicate_input_pr_numbers_fail_before_llm_without_semantic_retry(
         )
 
     error = exc_info.value
-    assert not isinstance(error, uc.GroupedChangelogSemanticError)
+    assert not isinstance(error, validators.GroupedChangelogSemanticError)
     assert llm_calls == 0
     assert "multiple source PRs share the same PR number" in str(error)
     assert "grouped-output format only returns bare PR numbers" in str(error)
@@ -267,7 +270,7 @@ def test_duplicate_input_pr_numbers_fail_before_llm_without_semantic_retry(
     assert "zenml-io/zenml-dashboard#101" in str(error)
 
     with pytest.raises(RuntimeError, match="multiple source PRs share the same PR number"):
-        uc.build_grouped_changelog_entries(
+        entry_builder.build_grouped_changelog_entries(
             grouped_output=make_output([make_entry("Ambiguous", [101])]),
             prs=ambiguous_prs,
             source_repo="zenml-io/zenml",

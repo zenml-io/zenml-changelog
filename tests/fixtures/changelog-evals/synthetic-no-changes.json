@@ -1,0 +1,24 @@
+{
+  "fixture_id": "synthetic-no-changes",
+  "description": "Synthetic release window with no release-note or breaking-change PRs.",
+  "source_repo": "zenml-io/zenml",
+  "release_tag": "0.91.1",
+  "release_url": "https://github.com/zenml-io/zenml/releases/tag/0.91.1",
+  "published_at": "2026-05-20T12:00:00Z",
+  "image_number": 12,
+  "starting_id": 1030,
+  "major_bump": false,
+  "expected_hard_gate_status": "pass",
+  "expected_failure": null,
+  "release_notes_prs": [],
+  "breaking_prs": [],
+  "offline_candidates": [
+    {
+      "candidate_id": "fake-openai-mini",
+      "provider": "openai",
+      "model": "gpt-5.4-mini",
+      "display_name": "Fake OpenAI mini",
+      "outputs": {}
+    }
+  ]
+}

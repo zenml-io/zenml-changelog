@@ -22,12 +22,23 @@ This repo is the canonical source of ZenML release metadata:
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
   - `README.md` — Field documentation and examples.
-- `scripts/update_changelog.py` — High-level automation flow (LLM summaries, JSON/markdown writes, image rotation, validation).
+- `scripts/update_changelog.py` — High-level automation flow (source collection, LLM generation calls, JSON/markdown writes, image rotation, validation, workflow handoff).
+- `scripts/changelog_config.py` — Shared repo configuration, label mapping, placeholder URLs, and tag prefix helpers.
+- `scripts/changelog_llm_outputs.py` — Strict Pydantic models for structured LLM outputs.
+- `scripts/changelog_llm_providers.py` — Anthropic/OpenAI structured-output clients and provider/model env parsing.
+- `scripts/changelog_prompts.py` — Prompt builders for widget summaries, breaking changes, and release-note bodies.
+- `scripts/changelog_validators.py` — Hard validators for model output and grouped PR assignment.
+- `scripts/changelog_entry_builder.py` — Converts grouped LLM output into schema-compliant `changelog.json` entries.
+- `scripts/changelog_rendering.py` — Deterministic release-note header/body/footer assembly and markdown insertion.
+- `scripts/changelog_schema_validation.py` — In-memory and file-based `changelog.json` schema validation.
 - `scripts/workflow_result.py` — Deterministic workflow-result JSON model and GitHub Actions output writer.
 - `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
 - `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
+- `scripts/build_comparison_app.py` — Builds the offline single-file blind A/B comparison web app from an eval run.
+- `scripts/changelog_fixture_capture.py` — Turns real ZenML releases into eval fixtures (dependency-injected PR collection; powers `evaluate_changelog_llms.py capture-release`).
 - `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
 - `scripts/install-hooks.sh` — Installs git pre-commit hook for local validation.
+- `comparison_app/` — Source for the blind-comparison web app: `template.html` (app shell) and `vendor/marked.min.js` (vendored markdown renderer, inlined at build time).
 - `.github/workflows/`
   - `process-release.yml` — Receives `repository_dispatch` `release-published`, runs the script, validates, opens a PR.
   - `validate-changelog.yml` — PR-time schema validation for `changelog.json`.
@@ -54,12 +65,22 @@ This repo is the canonical source of ZenML release metadata:
   - For each source repo: finds its previous tag, computes release window, and checks `.consumed_sources_state` before fetching PRs.
   - Already-consumed windows are finalized windows: they are skipped before the LLM prompt is built and are not reopened for late-labeled PRs. Already-consumed repo-qualified PR keys are filtered as a second guardrail.
   - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
-  - Generates 2-3 grouped changelog entries via Anthropic structured outputs (validated with Pydantic models).
+  - Generates 2-3 grouped changelog entries via the configured structured-output provider. The script default is Anthropic; the release workflow defaults production generation to OpenAI unless `CHANGELOG_LLM_PROVIDER` is set differently.
   - Prepends entries to `changelog.json`, validates against `announcement-schema.json`.
   - Rotates header image using `.image_state` (cycles 1–49).
   - Generates markdown section (OSS links PRs; Pro omits PR links) and inserts after frontmatter in the appropriate file.
   - Updates `.consumed_sources_state` only after successful changelog and markdown updates, then writes structured source-window metadata for PR bodies to `changelog_workflow_result.json`.
   - Prints summary and exits; workflow keeps `.consumed_sources_state` in the release-notes PR, so a source window is only marked consumed when the markdown that represents it is merged.
+
+## Blind Comparison Web App
+
+`scripts/build_comparison_app.py` reads one `eval-results/openai-migration/<run-id>/summary.json` and emits a single self-contained `blind-comparison.html` for human preference review ("The Changelog Taste Test"). It pairs passing model outputs (release notes, changelog entries, breaking-change bullets) head to head, samples a balanced set (`--target`, fixed `--seed`), and inlines both the data and a vendored markdown renderer so the file runs offline with no server.
+
+- Use `--model "<display name>"` (repeatable) to restrict to real models and exclude synthetic `fake-*` candidates.
+- Blind by design: model names are embedded but never shown on screen; the page randomizes left/right per reviewer and records the true model behind each pick. Reviewers download a results JSON to paste into Discord.
+- The built HTML is a gitignored artifact under `eval-results/`. The builder is pure stdlib; `comparison_app/template.html` holds the UI and `comparison_app/vendor/marked.min.js` is the offline renderer.
+- Tests live in `tests/test_build_comparison_app.py` (pure-logic plus the offline-guarantee assertion that the built HTML has no external `<script src>`/`<link href>`). The UI/animation layer is verified by opening the built file in a browser, not by unit tests.
+- For a realistic test, `evaluate_changelog_llms.py capture-release --last N` captures real OSS releases (bundling `zenml` + `zenml-dashboard`) into `tests/fixtures/changelog-evals/real/` (a subdir, so it never breaks the offline tests that scan the synthetic fixtures); then run a live eval with `--fixtures-dir tests/fixtures/changelog-evals/real` and build the app from that run. Capture logic lives in `scripts/changelog_fixture_capture.py` and is tested with fake GitHub collaborators (no live calls). Needs `GITHUB_TOKEN`/`PRIVATE_REPO_TOKEN` at run time.
 
 ## Manually Adding Changelog Entries
 
@@ -79,9 +100,16 @@ This repo is the canonical source of ZenML release metadata:
 - Automated in the dispatch workflow after generation via `process-release.yml`.
 - Manual: run `uv run scripts/validate_changelog.py` to validate locally.
 
-## Secrets
+## Secrets and Provider Configuration
 
-- `ANTHROPIC_API_KEY` (required) — Used by `scripts/update_changelog.py` for LLM summarization.
+- `ANTHROPIC_API_KEY` — Required when production generation uses Anthropic. Keep this configured for rollback.
+- `OPENAI_API_KEY` — Required when production generation uses OpenAI.
+- `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. The script default is Anthropic; `process-release.yml` defaults release runs to OpenAI. Roll back the workflow by setting `CHANGELOG_LLM_PROVIDER=anthropic`.
+- `CHANGELOG_LLM_MODEL=<model>` — Optional global model override.
+- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-5.4`.
+- `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-5.4`.
+- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-5.5`.
+- Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values. `gpt-5.4-mini` is not a production default.
 - `PRIVATE_REPO_TOKEN` (optional) — Use when the source repo is private (e.g., `zenml-cloud-ui`, `zenml-cloud-api`). If absent, the script falls back to `GITHUB_TOKEN` but will lack private repo access.
 
 ## Running Scripts Locally
@@ -138,5 +166,6 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 - `.consumed_sources_state` must stay committed so source windows/PRs are consumed once. Its current bootstrap is intentionally narrow, and recorded windows are finalized: late-labeled PRs inside them are ignored rather than replaying old release notes. If duplicate release notes appear, inspect this file rather than overloading `.image_state`.
 - For OSS markdown, include PR links; for Pro markdown, keep concise and omit PR links.
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
+- Do not commit intermediary plans, implementation reviews, prompt exports, oracle exports, or temporary investigation outputs unless explicitly requested. Keep working notes under ignored locations such as `design/`, `prompt-exports/`, `eval-results/`, `.agents/`, or `.claude/`.
 - Never commit secrets; use repo/org secrets for workflows.
 - IMPORTANT: **Before opening a PR or making a large commit**, always run `/simplify` to review changed code for reuse opportunities, quality issues, and efficiency improvements. Fix any issues it finds before committing.

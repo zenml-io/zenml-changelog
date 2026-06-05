@@ -8,6 +8,7 @@
 #     "requests",
 #     "PyGithub",
 #     "anthropic",
+#     "openai",
 #     "jsonschema",
 #     "pydantic",
 #     "python-slugify",
