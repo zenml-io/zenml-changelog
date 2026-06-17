@@ -23,7 +23,7 @@ See what's new and improved in version 0.95.0.
 * [PR #4459](https://github.com/zenml-io/zenml/pull/4459): CLI `list` commands now return the newest items first by default instead of the oldest first. If you have scripts or workflows that assumed the previous ordering, update them to explicitly sort or handle the new default order.
 * [PR #4566](https://github.com/zenml-io/zenml/pull/4566): The deprecated singular `tag` field has been removed from `TaggableFilter`s. Update any API or client code to use the supported tag filtering format instead of passing a single `tag` value.
 * [PR #4950](https://github.com/zenml-io/zenml/pull/4950): Pipeline execution may now raise different exception types depending on how step futures are awaited. If you catch exceptions around pipeline execution, review and update your error-handling logic to account for `StepExecutionException` being raised in implicit await scenarios.
-* [PR #4867](https://github.com/zenml-io/zenml/pull/4867): ZenML adds a Modal Sandbox flavor, which may affect users relying on sandbox integrations or assumptions about available sandbox implementations. Review sandbox-related configuration and integrations if you plan to adopt or extend sandbox functionality.
+* [PR #4867](https://github.com/zenml-io/zenml/pull/4867): ZenML now requires `modal>=1.4.0,<2.0.0` when using the Modal integration.
 
 #### New ways to run code and pipelines
 
