@@ -1,5 +1,61 @@
 [
   {
+    "id": 58,
+    "slug": "more-flexible-pipeline-execution",
+    "title": "More flexible pipeline execution",
+    "description": "ZenML now supports **async steps and hooks**, lifecycle hooks, async deployment invocation, and command-based steps that can run arbitrary Python or shell commands without requiring ZenML in the execution environment. This release also expands remote execution with new **sandbox** options and a **Modal orchestrator**, making it easier to run dynamic, isolated, or cloud-backed workloads.",
+    "published_at": "2026-06-17T15:08:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "deprecation",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 57,
+    "slug": "better-compatibility-and-performance",
+    "title": "Better compatibility and performance",
+    "description": "This release improves compatibility with newer tooling and runtimes, including **Python 3.14**, updated observability dependencies, improved MLflow interoperability, and Databricks OAuth M2M support. It also delivers faster and more predictable listing and database behavior through sorting fixes, advanced filters, new indexes, and request handling improvements.",
+    "published_at": "2026-06-17T15:08:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "deprecation",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 56,
+    "slug": "stronger-security-and-reliability",
+    "title": "Stronger security and reliability",
+    "description": "ZenML tightens access control and validation across API keys, secrets, tags, stack deployments, and rate limiting, helping protect multi-user and proxied deployments. The release also fixes several correctness issues in dynamic pipelines, Kubernetes deployment settings, step input handling, and GCP connector endpoint selection.",
+    "published_at": "2026-06-17T15:08:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "deprecation",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 55,
     "slug": "improved-gcp-service-connector-for-private-gke-clusters",
     "title": "Improved GCP Service Connector for Private GKE Clusters",
