@@ -1,20 +1,47 @@
 [
   {
-    "id": 58,
-    "slug": "more-flexible-pipeline-execution",
-    "title": "More flexible pipeline execution",
-    "description": "ZenML now supports **async steps and hooks**, lifecycle hooks, async deployment invocation, and command-based steps that can run arbitrary Python or shell commands without requiring ZenML in the execution environment. This release also expands remote execution with new **sandbox** options and a **Modal orchestrator**, making it easier to run dynamic, isolated, or cloud-backed workloads.",
+    "id": 60,
+    "slug": "async-steps-and-hooks",
+    "title": "Async steps and reworked hooks",
+    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously — submitting a run and returning immediately instead of blocking until it finishes.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
     "labels": [
-      "deprecation",
-      "improvement"
+      "feature",
+      "improvement",
+      "deprecation"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/hooks",
+    "should_highlight": true
+  },
+  {
+    "id": 59,
+    "slug": "sandboxes-and-modal-execution",
+    "title": "Sandboxes and Modal execution",
+    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors — each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
+    "published_at": "2026-06-17T15:08:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature",
+      "deprecation"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/sandboxes",
+    "should_highlight": true
+  },
+  {
+    "id": 58,
+    "slug": "command-steps",
+    "title": "Run arbitrary commands as steps",
+    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` — including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
+    "published_at": "2026-06-17T15:08:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/command_steps",
     "should_highlight": false
   },
   {
@@ -30,10 +57,7 @@
       "deprecation",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/getting-started/installation",
     "should_highlight": false
   },
   {
@@ -49,10 +73,6 @@
       "deprecation",
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
   },
   {
