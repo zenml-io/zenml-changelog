@@ -7,6 +7,81 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.95.0 (2026-06-17)
+
+See what's new and improved in version 0.95.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/13.jpg" align="left" alt="ZenML 0.95.0" width="800">
+
+### Breaking Changes
+
+* [PR #4844](https://github.com/zenml-io/zenml/pull/4844): ZenML now supports Python 3.14, and environments using the `local` or `server` extras must also accommodate the SQLModel upgrade from 0.18.0 to 0.38.0. If you depend on those extras, review and update any pinned SQLModel-related dependencies before upgrading.
+* [PR #4900](https://github.com/zenml-io/zenml/pull/4900): Local MLflow tracking now uses a SQLite backend by default when no `tracking_uri` is configured. New tracking metadata is stored in `<LOCAL_ARTIFACT_STORE>/mlflow.db` and artifacts under the local artifact store, so users relying on the previous default local MLflow layout or behavior should update their local setup and migration expectations.
+* [PR #4790](https://github.com/zenml-io/zenml/pull/4790): ZenML now requires `opentelemetry-sdk==1.40.0` instead of 1.38.0. If your environment pins OpenTelemetry packages, update them to compatible versions before upgrading ZenML.
+* [PR #4875](https://github.com/zenml-io/zenml/pull/4875): Step and pipeline hooks have been reworked into a new lifecycle-based hook system with persisted hook invocation records. If you use hooks or related internal APIs, review your existing integrations and update them to the new hook semantics and lifecycle events.
+* [PR #4919](https://github.com/zenml-io/zenml/pull/4919): ZenML server rate limiting no longer trusts raw `X-Forwarded-For` headers by default. If you run ZenML behind an ingress or reverse proxy, make sure proxy header handling is explicitly configured so login rate limiting continues to use the correct client IPs.
+* [PR #4459](https://github.com/zenml-io/zenml/pull/4459): CLI `list` commands now return the newest items first by default instead of the oldest first. If you have scripts or workflows that assumed the previous ordering, update them to explicitly sort or handle the new default order.
+* [PR #4566](https://github.com/zenml-io/zenml/pull/4566): The deprecated singular `tag` field has been removed from `TaggableFilter`s. Update any API or client code to use the supported tag filtering format instead of passing a single `tag` value.
+* [PR #4950](https://github.com/zenml-io/zenml/pull/4950): Pipeline execution may now raise different exception types depending on how step futures are awaited. If you catch exceptions around pipeline execution, review and update your error-handling logic to account for `StepExecutionException` being raised in implicit await scenarios.
+* [PR #4867](https://github.com/zenml-io/zenml/pull/4867): ZenML now requires `modal>=1.4.0,<2.0.0` when using the Modal integration.
+
+#### New ways to run code and pipelines
+
+This release expands how you can execute work in ZenML, from async Python to arbitrary commands and new remote execution backends.
+
+- Define steps and hooks with `async def`; ZenML now runs async functions on a fresh event loop for both normal and dynamic pipeline usage. [PR #4913](https://github.com/zenml-io/zenml/pull/4913)
+- Run arbitrary commands as pipeline steps with `CommandStep(...)`, including non-Python commands and Python callables that do not require ZenML in the execution environment. [PR #4904](https://github.com/zenml-io/zenml/pull/4904)
+- Invoke deployments asynchronously: a new deployment endpoint can submit a pipeline run and return immediately instead of waiting for completion. [PR #4906](https://github.com/zenml-io/zenml/pull/4906)
+
+#### Sandboxes and Modal execution
+
+ZenML now includes the core sandbox abstraction for isolated execution, plus new backend support for Kubernetes and Modal-based workloads.
+
+- Added the core `Sandbox` stack component abstraction for running untrusted or generated code in isolated sessions, including a built-in `local` flavor for subprocess-based execution. [PR #4866](https://github.com/zenml-io/zenml/pull/4866)
+- Added a `kubernetes` sandbox flavor where each sandbox session runs in a dedicated Kubernetes pod, with streamed command execution and support for re-attaching to running sessions. [PR #4926](https://github.com/zenml-io/zenml/pull/4926)
+- Added a Modal orchestrator flavor so complete ZenML pipelines can run on Modal, using Modal sandboxes for orchestration and step execution. [PR #4915](https://github.com/zenml-io/zenml/pull/4915)
+
+#### Integrations and deployment improvements
+
+Several integrations and deployment paths are more flexible and production-ready.
+
+- Kubernetes deployments now merge `pod_settings.resources` into the deployment template context, making it possible to set pod resource limits required by cluster policies such as OPA Gatekeeper constraints. [PR #4523](https://github.com/zenml-io/zenml/pull/4523)
+- Databricks-managed MLflow deployments now support machine-to-machine OAuth authentication via service principals. [PR #4947](https://github.com/zenml-io/zenml/pull/4947)
+
+#### Performance and scalability
+
+Common list and hydration operations should be faster and more reliable on larger ZenML deployments.
+
+- Improved list endpoint ordering so descending sorts can use matching index scans instead of forcing expensive mixed-direction database sorts. [PR #4890](https://github.com/zenml-io/zenml/pull/4890)
+- Added targeted database indexes for common pagination and hydration query patterns across pipeline runs, snapshots, step configurations, step runs, and artifact versions. [PR #4942](https://github.com/zenml-io/zenml/pull/4942)
+- Adjusted request timeout behavior so only deduplicated/cacheable requests may return a timeout or backpressure response while work continues in the background. [PR #4942](https://github.com/zenml-io/zenml/pull/4942)
+
+#### Security and permissions
+
+This release tightens authorization checks around API keys, stack deployments, secrets, and tag-resource relationships.
+
+- Service-account API key validation now handles omitted internal verification values and client-provided key values consistently, while preserving internal re-authentication behavior. [PR #4920](https://github.com/zenml-io/zenml/pull/4920)
+- `GET /api/v1/stack-deployment/stack` now verifies READ permissions for both the returned stack and its associated service connector before returning deployment metadata. [PR #4917](https://github.com/zenml-io/zenml/pull/4917)
+- Secret reference resolution now prevents users from attaching private secrets owned by others, or internal ZenML-managed secrets, to their own resources. [PR #4923](https://github.com/zenml-io/zenml/pull/4923)
+- Tag-resource endpoints now require UPDATE permissions on the referenced resource before tag relationships can be created or deleted, including batch operations. [PR #4927](https://github.com/zenml-io/zenml/pull/4927)
+- Tag-resource RBAC enforcement now lives in the RBAC store layer for more consistent behavior, and tag reads remain broadly available as server-wide resources. [PR #4938](https://github.com/zenml-io/zenml/pull/4938)
+
+<details><summary>Fixed</summary>
+
+- Fixed several dynamic pipeline edge cases around retries, stopping runs, and isolated step launch states:
+  - Step failures that happen while launching a retry are now detected.
+  - Steps no longer move to `RETRYING` if the run is already `STOPPING` or `STOPPED`.
+  - Runs that fail while `STOPPING` now transition to `STOPPED` instead of `FAILED`.
+  - Isolated steps now use `PROVISIONING` while they are being launched. [PR #4916](https://github.com/zenml-io/zenml/pull/4916)
+- Fixed an `IndexError` when step inputs annotated as bare `list` or `tuple` received multiple input artifacts. ZenML now loads each artifact using its stored data type, matching behavior for `Any` or unannotated inputs. [PR #4929](https://github.com/zenml-io/zenml/pull/4929)
+- Fixed GKE Kubernetes API endpoint selection in the GCP service connector by only using the DNS endpoint when it allows external traffic; otherwise, ZenML falls back to the IP-based endpoint. [PR #4934](https://github.com/zenml-io/zenml/pull/4934)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.95.0)
+
+***
+
 ## 0.94.6 (2026-06-02)
 
 See what's new and improved in version 0.94.6.

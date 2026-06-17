@@ -28,18 +28,315 @@
           "consumed_by_release_tag": "0.13.15",
           "current_tag": "0.13.15",
           "origin": "manual-seed-pr75-investigation",
-          "previous_tag": "0.13.14",
           "pr_keys": [
             "zenml-io/zenml-cloud-ui#1317",
             "zenml-io/zenml-cloud-ui#1318"
           ],
+          "previous_tag": "0.13.14",
           "source_repo": "zenml-io/zenml-cloud-ui"
         }
       ],
       "markdown_file": "gitbook-release-notes/pro-control-plane.md",
       "trigger_repo": "zenml-io/zenml-cloud-api"
+    },
+    "zenml-io/zenml::gitbook-release-notes/server-sdk.md": {
+      "consumed_prs": {
+        "zenml-io/zenml#4459": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4459,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4523": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4523,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4566": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4566,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4790": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4790,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4844": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4844,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4866": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4866,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4867": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4867,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4875": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4875,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4890": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4890,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4900": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4900,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4904": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4904,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4906": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4906,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4913": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4913,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4915": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4915,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4916": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4916,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4917": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4917,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4919": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4919,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4920": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4920,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4923": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4923,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4926": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4926,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4927": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4927,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4929": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4929,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4934": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4934,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4938": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4938,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4942": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4942,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4947": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4947,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4950": {
+          "current_tag": "0.95.0",
+          "first_consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "first_consumed_by_release_tag": "0.95.0",
+          "number": 4950,
+          "origin": "automation",
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        }
+      },
+      "consumed_windows": [
+        {
+          "consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "consumed_by_release_tag": "0.95.0",
+          "current_tag": "0.95.0",
+          "origin": "automation",
+          "pr_keys": [
+            "zenml-io/zenml#4459",
+            "zenml-io/zenml#4523",
+            "zenml-io/zenml#4566",
+            "zenml-io/zenml#4790",
+            "zenml-io/zenml#4844",
+            "zenml-io/zenml#4866",
+            "zenml-io/zenml#4867",
+            "zenml-io/zenml#4875",
+            "zenml-io/zenml#4890",
+            "zenml-io/zenml#4900",
+            "zenml-io/zenml#4904",
+            "zenml-io/zenml#4906",
+            "zenml-io/zenml#4913",
+            "zenml-io/zenml#4915",
+            "zenml-io/zenml#4916",
+            "zenml-io/zenml#4917",
+            "zenml-io/zenml#4919",
+            "zenml-io/zenml#4920",
+            "zenml-io/zenml#4923",
+            "zenml-io/zenml#4926",
+            "zenml-io/zenml#4927",
+            "zenml-io/zenml#4929",
+            "zenml-io/zenml#4934",
+            "zenml-io/zenml#4938",
+            "zenml-io/zenml#4942",
+            "zenml-io/zenml#4947",
+            "zenml-io/zenml#4950"
+          ],
+          "previous_tag": "0.94.6",
+          "source_repo": "zenml-io/zenml"
+        },
+        {
+          "consumed_at": "2026-06-17T15:11:33.764984+00:00",
+          "consumed_by_release_tag": "0.95.0",
+          "current_tag": "0.44.1",
+          "origin": "automation",
+          "pr_keys": [],
+          "previous_tag": "0.44.0",
+          "source_repo": "zenml-io/zenml-dashboard"
+        }
+      ],
+      "markdown_file": "gitbook-release-notes/server-sdk.md",
+      "trigger_repo": "zenml-io/zenml"
     }
   },
-  "updated_at": "2026-06-02T00:00:00+00:00",
+  "updated_at": "2026-06-17T15:11:33.765173+00:00",
   "version": 1
 }
