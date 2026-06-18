@@ -7,6 +7,17 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.18 (2026-06-18)
+
+See what's new and improved in version 0.13.18.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/14.jpg" align="left" alt="ZenML Pro 0.13.18" width="800">
+
+- **Command steps are easier to inspect**: Command-based steps now show the configured `command` in the UI instead of displaying step code that may not be relevant. This makes run and snapshot inspection clearer for teams using command steps, so you can quickly confirm what was executed without digging through implementation details.
+- **Snapshot platform event trigger**: ZenML Pro now supports a Platform Event Trigger for snapshots. You can use snapshot events as an automation source, making it easier to build workflows that react when snapshots are created or updated.
+
+***
+
 ## 0.13.15 (2026-06-01)
 
 See what's new and improved in version 0.13.15.
