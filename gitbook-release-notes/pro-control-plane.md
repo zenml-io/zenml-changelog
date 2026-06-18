@@ -7,6 +7,26 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.17 (2026-06-18)
+
+See what's new and improved in version 0.13.17.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/14.jpg" align="left" alt="ZenML Pro 0.13.17" width="800">
+
+- **Command steps are easier to inspect**: The run and step views now display the configured `command` for command steps instead of showing step code. This makes command-based workflows clearer to review in the UI and helps teams understand exactly what was executed.
+- **Snapshot platform event trigger**: Snapshots can now be used with a new Platform Event Trigger in the UI. ZenML Pro users can configure automations around snapshot-related events directly from the trigger flow.
+- **Structured Cloud API logs**: ZenML Cloud API logs now support configurable structured output through `ZENML_CLOUD_LOGGING_FORMAT`. You can choose readable console logs, single-line JSON logs for aggregation systems, or a custom Python logging format to better fit your observability stack.
+- **OpenTelemetry instrumentation for the Cloud API**: The Cloud API now includes OpenTelemetry instrumentation aligned with the ZenML OSS server. This improves visibility into API behavior and makes it easier to connect ZenML Cloud API activity with existing tracing and monitoring workflows.
+
+<details><summary>Fixed</summary>
+
+- **API key authentication hardening**: Fixed an API-key authentication bypass where a forged service-account API key with a valid key ID and an empty secret could skip secret verification. Empty secrets are now verified explicitly and rejected, closing the bypass path.
+- **aiohttp security update**: Updated `aiohttp` to the 3.14 series across the relevant Cloud API dependency sets. This resolves three medium-severity CVEs reported against the previously locked 3.13.x version, including issues related to cookie handling during redirects and malformed Host headers.
+
+</details>
+
+***
+
 ## 0.13.15 (2026-06-01)
 
 See what's new and improved in version 0.13.15.
