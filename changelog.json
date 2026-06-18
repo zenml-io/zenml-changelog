@@ -1,9 +1,44 @@
 [
   {
+    "id": 62,
+    "slug": "more-reliable-pipeline-execution",
+    "title": "More reliable pipeline execution",
+    "description": "Dynamic pipelines are now more resilient when running steps with step operators, reducing failures in cases where image resolution previously broke down. Logging shutdown has also been stabilized to avoid deadlocks in affected setups, improving reliability during and after runs.",
+    "published_at": "2026-06-18T12:24:26Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 61,
+    "slug": "faster-run-and-step-queries",
+    "title": "Faster run and step queries",
+    "description": "Pipeline run and step run queries have been optimized to improve database performance for common views and operations. Users should see more efficient behavior, especially in environments with larger amounts of run metadata.",
+    "published_at": "2026-06-18T12:24:26Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 60,
     "slug": "async-steps-and-hooks",
     "title": "Async steps and reworked hooks",
-    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously — submitting a run and returning immediately instead of blocking until it finishes.",
+    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously \u2014 submitting a run and returning immediately instead of blocking until it finishes.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -19,7 +54,7 @@
     "id": 59,
     "slug": "sandboxes-and-modal-execution",
     "title": "Sandboxes and Modal execution",
-    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors — each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
+    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors \u2014 each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -34,7 +69,7 @@
     "id": 58,
     "slug": "command-steps",
     "title": "Run arbitrary commands as steps",
-    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` — including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
+    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` \u2014 including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
