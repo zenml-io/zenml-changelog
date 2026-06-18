@@ -7,6 +7,45 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.95.1 (2026-06-18)
+
+See what's new and improved in version 0.95.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/14.jpg" align="left" alt="ZenML 0.95.1" width="800">
+
+#### Dynamic pipelines with step operators
+
+Dynamic pipeline execution is more reliable when steps use step operators.
+
+<details><summary>Fixed</summary>
+
+- Fixed an issue where running a step with a step operator in a dynamic pipeline could fail unless that step was explicitly listed in `pipeline.depends_on`.
+- ZenML now falls back to the orchestrator image in this case, matching the behavior already used for isolated steps without step operators. [PR #4960](https://github.com/zenml-io/zenml/pull/4960)
+
+</details>
+
+#### Faster pipeline and step run queries
+
+Common pipeline run and step run views should now load more efficiently, especially on larger deployments.
+
+- Improved database query performance by adjusting how related data is loaded for common pipeline run and step run queries.
+- This helps avoid expensive query plans in MySQL for paginated run listings, making these queries more scalable. [PR #4965](https://github.com/zenml-io/zenml/pull/4965)
+
+#### Logging stability
+
+Logging shutdown is now safer when using artifact-backed log stores.
+
+<details><summary>Fixed</summary>
+
+- Fixed a deadlock that could happen during logging context shutdown when using `fsspec`-based artifact log stores with debug logs enabled.
+- ZenML now avoids writing back into the log store during shutdown, improving reliability for pipeline and step log collection. [PR #4964](https://github.com/zenml-io/zenml/pull/4964)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.95.1)
+
+***
+
 ## 0.95.0 (2026-06-17)
 
 See what's new and improved in version 0.95.0.
