@@ -283,6 +283,33 @@
           "origin": "automation",
           "previous_tag": "0.94.6",
           "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4960": {
+          "current_tag": "0.95.1",
+          "first_consumed_at": "2026-06-18T12:25:35.338442+00:00",
+          "first_consumed_by_release_tag": "0.95.1",
+          "number": 4960,
+          "origin": "automation",
+          "previous_tag": "0.95.0",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4964": {
+          "current_tag": "0.95.1",
+          "first_consumed_at": "2026-06-18T12:25:35.338442+00:00",
+          "first_consumed_by_release_tag": "0.95.1",
+          "number": 4964,
+          "origin": "automation",
+          "previous_tag": "0.95.0",
+          "source_repo": "zenml-io/zenml"
+        },
+        "zenml-io/zenml#4965": {
+          "current_tag": "0.95.1",
+          "first_consumed_at": "2026-06-18T12:25:35.338442+00:00",
+          "first_consumed_by_release_tag": "0.95.1",
+          "number": 4965,
+          "origin": "automation",
+          "previous_tag": "0.95.0",
+          "source_repo": "zenml-io/zenml"
         }
       },
       "consumed_windows": [
@@ -331,12 +358,25 @@
           "pr_keys": [],
           "previous_tag": "0.44.0",
           "source_repo": "zenml-io/zenml-dashboard"
+        },
+        {
+          "consumed_at": "2026-06-18T12:25:35.338442+00:00",
+          "consumed_by_release_tag": "0.95.1",
+          "current_tag": "0.95.1",
+          "origin": "automation",
+          "pr_keys": [
+            "zenml-io/zenml#4960",
+            "zenml-io/zenml#4964",
+            "zenml-io/zenml#4965"
+          ],
+          "previous_tag": "0.95.0",
+          "source_repo": "zenml-io/zenml"
         }
       ],
       "markdown_file": "gitbook-release-notes/server-sdk.md",
       "trigger_repo": "zenml-io/zenml"
     }
   },
-  "updated_at": "2026-06-17T15:11:33.765173+00:00",
+  "updated_at": "2026-06-18T12:25:35.338533+00:00",
   "version": 1
 }
