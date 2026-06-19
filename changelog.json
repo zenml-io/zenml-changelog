@@ -1,5 +1,33 @@
 [
   {
+    "id": 64,
+    "slug": "clearer-command-step-visibility",
+    "title": "Clearer command step visibility",
+    "description": "Command-based steps are now easier to understand in the UI, with the actual command shown instead of underlying step code. This makes it faster to inspect runs and verify what executed at a glance.",
+    "published_at": "2026-06-18T15:04:53Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/command_steps",
+    "should_highlight": false
+  },
+  {
+    "id": 63,
+    "slug": "new-snapshot-event-automation",
+    "title": "New snapshot event automation",
+    "description": "You can now trigger workflows from **Snapshot** platform events, making it easier to automate follow-up actions when snapshots are created or updated. This expands your options for building event-driven processes in ZenML Pro.",
+    "published_at": "2026-06-18T15:04:53Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/snapshots",
+    "should_highlight": false
+  },
+  {
     "id": 62,
     "slug": "more-reliable-pipeline-execution",
     "title": "More reliable pipeline execution",
