@@ -1,5 +1,69 @@
 [
   {
+    "id": 69,
+    "slug": "new-integrations-trackio-backblaze-baseten-oauth2",
+    "title": "New integrations: Trackio, Backblaze B2, Baseten, and OAuth2",
+    "description": "ZenML adds four new ways to connect your stack: a **Trackio** experiment tracker for logging trials through Trackio's API, a **Backblaze B2** artifact store as another S3-compatible storage option, a **Baseten** step operator for running GPU and multi-node distributed training jobs, and a generic **OAuth2 service connector** for authenticating external services via static token, client credentials, or a client ID with refresh token.",
+    "published_at": "2026-07-02T12:52:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature",
+      "improvement"
+    ]
+  },
+  {
+    "id": 68,
+    "slug": "kubernetes-retries-and-sandbox-cleanup",
+    "title": "More control over Kubernetes and sandbox runs",
+    "description": "Two operational controls for teams running ZenML at scale: Kubernetes-based deployments can now configure retry behavior for Kubernetes API calls, adding resilience against transient failures or throttling, and sandbox sessions can optionally destroy the sandbox automatically when the session exits. The sandbox cleanup option defaults to off, so existing behavior is unchanged unless you opt in.",
+    "published_at": "2026-07-02T12:52:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 67,
+    "slug": "trigger-cycle-protection",
+    "title": "Trigger cycle protection",
+    "description": "ZenML now detects execution loops in Platform Event Trigger chains at the pipeline level. Cyclic trigger dispatches are skipped with a new `SKIPPED_TRIGGER_CYCLE` status, while unrelated downstream dispatches continue normally, and you can inspect the affected cycle through the SDK.",
+    "published_at": "2026-07-02T12:52:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/triggers"
+  },
+  {
+    "id": 66,
+    "slug": "faster-smoother-pipeline-operations",
+    "title": "Faster, smoother pipeline operations",
+    "description": "This release improves day-to-day performance and ergonomics across the platform. Pipeline and run queries are faster, server memory usage is reduced for artifact-store-backed operations, replaying runs is more flexible with step-wide input overrides, expired API transaction cleanup is more resilient, and the dashboard includes small usability improvements like better filtering.",
+    "published_at": "2026-07-02T12:52:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 65,
+    "slug": "safer-defaults-and-platform-fixes",
+    "title": "Safer defaults and platform fixes",
+    "description": "Several fixes strengthen security and reliability, including tighter admin checks for sensitive endpoints and service account management, safer custom flavor loading, and corrected Docker credential handling for image builds and pushes. Azure integration dependencies were also updated, including completion of the **azureml-core** deprecation work.",
+    "published_at": "2026-07-02T12:52:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "deprecation",
+      "improvement"
+    ]
+  },
+  {
     "id": 64,
     "slug": "clearer-command-step-visibility",
     "title": "Clearer command step visibility",
