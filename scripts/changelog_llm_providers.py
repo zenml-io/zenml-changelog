@@ -185,6 +185,16 @@ class OpenAIStructuredLLMClient:
             OpenAIAPIError,
         ) as error:
             raise LLMProviderRetryableError(str(error)) from error
+        except ValidationError as error:
+            if any(detail.get("type") == "json_invalid" for detail in error.errors()):
+                raise LLMProviderNonRetryableError(
+                    f"OpenAI structured output for {call_name} contained invalid JSON before "
+                    f"the response status could be inspected: {error}. If the raw JSON was "
+                    "truncated, increase the max_output_tokens cap or inspect the prompt."
+                ) from error
+            raise LLMProviderRetryableError(str(error)) from error
+        except ValueError as error:
+            raise LLMProviderRetryableError(str(error)) from error
 
         if getattr(response, "status", None) == "incomplete":
             details = getattr(response, "incomplete_details", None)
