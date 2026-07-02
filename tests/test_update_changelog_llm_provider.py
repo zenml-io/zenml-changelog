@@ -44,15 +44,19 @@ class FakeOpenAIResponses:
         status: str = "completed",
         output: list[object] | None = None,
         incomplete_details: object | None = None,
+        parse_error: Exception | None = None,
     ) -> None:
         self.parsed = parsed
         self.status = status
         self.output = output or []
         self.incomplete_details = incomplete_details
+        self.parse_error = parse_error
         self.kwargs: dict[str, Any] | None = None
 
     def parse(self, **kwargs: Any) -> Any:
         self.kwargs = kwargs
+        if self.parse_error is not None:
+            raise self.parse_error
         return SimpleNamespace(
             output_parsed=self.parsed,
             status=self.status,
@@ -69,12 +73,14 @@ class FakeOpenAIClient:
         status: str = "completed",
         output: list[object] | None = None,
         incomplete_details: object | None = None,
+        parse_error: Exception | None = None,
     ) -> None:
         self.responses = FakeOpenAIResponses(
             parsed,
             status=status,
             output=output,
             incomplete_details=incomplete_details,
+            parse_error=parse_error,
         )
 
 
@@ -185,6 +191,63 @@ def test_openai_structured_client_fails_closed_on_incomplete_response() -> None:
             output_model=outputs.BreakingChangesOutput,
             max_output_tokens=100,
             call_name="breaking",
+        )
+
+
+def test_openai_structured_client_explains_invalid_json_before_status_inspection() -> None:
+    with pytest.raises(Exception) as generated_error:
+        outputs.MarkdownSection.model_validate_json('{"content": "unfinished')
+    invalid_json_error = generated_error.value
+    assert invalid_json_error.errors()[0]["type"] == "json_invalid"
+    client = providers.OpenAIStructuredLLMClient(
+        FakeOpenAIClient(None, parse_error=invalid_json_error),
+        model="gpt-test",
+    )
+
+    with pytest.raises(providers.LLMProviderNonRetryableError) as exc_info:
+        client.parse_structured_output(
+            prompt="Summarize",
+            output_model=outputs.MarkdownSection,
+            max_output_tokens=100,
+            call_name=outputs.LLM_CALL_RELEASE_NOTES_BODY,
+        )
+
+    message = str(exc_info.value)
+    assert "contained invalid JSON before the response status could be inspected" in message
+    assert "increase the max_output_tokens cap" in message
+
+
+def test_openai_structured_client_keeps_non_json_validation_errors_retryable() -> None:
+    with pytest.raises(Exception) as generated_error:
+        outputs.MarkdownSection.model_validate({})
+    validation_error = generated_error.value
+    assert validation_error.errors()[0]["type"] != "json_invalid"
+    client = providers.OpenAIStructuredLLMClient(
+        FakeOpenAIClient(None, parse_error=validation_error),
+        model="gpt-test",
+    )
+
+    with pytest.raises(providers.LLMProviderRetryableError, match="content"):
+        client.parse_structured_output(
+            prompt="Summarize",
+            output_model=outputs.MarkdownSection,
+            max_output_tokens=100,
+            call_name=outputs.LLM_CALL_RELEASE_NOTES_BODY,
+        )
+
+
+def test_openai_structured_client_keeps_generic_value_errors_retryable() -> None:
+    client = providers.OpenAIStructuredLLMClient(
+        FakeOpenAIClient(None, parse_error=ValueError("temporary parser failure")),
+        model="gpt-test",
+    )
+
+    with pytest.raises(providers.LLMProviderRetryableError, match="temporary parser failure"):
+        client.parse_structured_output(
+            prompt="Summarize",
+            output_model=outputs.MarkdownSection,
+            max_output_tokens=100,
+            call_name=outputs.LLM_CALL_RELEASE_NOTES_BODY,
         )
 
 

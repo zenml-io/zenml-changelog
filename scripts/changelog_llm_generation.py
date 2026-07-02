@@ -101,7 +101,7 @@ def generate_release_notes_body_output(
     output = client.parse_structured_output(
         prompt=prompt,
         output_model=MarkdownSection,
-        max_output_tokens=1800,
+        max_output_tokens=6000,
         call_name=LLM_CALL_RELEASE_NOTES_BODY,
     )
     warnings = validate_release_notes_body_output(
