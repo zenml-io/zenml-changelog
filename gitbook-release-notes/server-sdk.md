@@ -7,6 +7,18 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.96.1 (2026-07-02)
+
+See what's new and improved in version 0.96.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/16.jpg" align="left" alt="ZenML 0.96.1" width="800">
+
+- **Run pipelines and steps over SSH**: ZenML now includes an SSH orchestrator and SSH step operator for executing workloads on remote machines accessible via SSH ([PR #4953](https://github.com/zenml-io/zenml/pull/4953)). This makes it easier to use existing servers or on-prem infrastructure as execution targets without adopting a full cluster-based backend, while still managing runs through ZenML.
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.1)
+
+***
+
 ## 0.96.0 (2026-07-02)
 
 See what's new and improved in version 0.96.0.
