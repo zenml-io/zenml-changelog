@@ -7,6 +7,52 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.96.0 (2026-07-02)
+
+See what's new and improved in version 0.96.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/15.jpg" align="left" alt="ZenML 0.96.0" width="800">
+
+### Breaking Changes
+
+* The minimum supported `transformers` version has been raised. If you use ZenML with Hugging Face/`transformers`, update your environment and dependency pins to a newer compatible `transformers` release before upgrading ZenML. [PR #4976](https://github.com/zenml-io/zenml/pull/4976)
+* The Azure integration now requires newer Azure dependency versions, and support for the deprecated `azureml-core` library has been fully removed. If you use ZenML on Azure, update your Azure-related dependency pins and migrate any remaining `azureml-core` usage to the currently supported Azure SDK packages before upgrading. [PR #4987](https://github.com/zenml-io/zenml/pull/4987)
+* In open-source ZenML server deployments without RBAC enabled, service account and API key management is now restricted to admins only. Non-admin users will no longer be able to manage service accounts or API keys they previously created, so move any required credentials and automation to admin-managed accounts as part of your upgrade. [PR #5007](https://github.com/zenml-io/zenml/pull/5007)
+
+#### New integrations and execution backends
+
+- **Trackio experiment tracking**: ZenML now includes a Trackio experiment tracker integration, allowing pipelines to log experiment data through Trackio’s public API. This makes it easier to manage trial results and connect ZenML runs with Hugging Face-backed Trackio workflows such as datasets, spaces, and buckets. [PR #4841](https://github.com/zenml-io/zenml/pull/4841)
+- **Backblaze B2 artifact store**: You can now configure Backblaze B2 as a ZenML artifact store. This adds another S3-compatible storage option for teams that want to store pipeline artifacts in Backblaze infrastructure. [PR #4791](https://github.com/zenml-io/zenml/pull/4791)
+- **Baseten step operator**: ZenML now supports a `baseten` step operator flavor for running GPU workloads as Baseten Training jobs. It supports regular single-node steps with ZenML artifacts and logs, as well as multi-node distributed training through command steps that can consume Baseten’s distributed training environment variables. [PR #4973](https://github.com/zenml-io/zenml/pull/4973)
+- **Generic OAuth2 service connector**: A new OAuth2 service connector lets you authenticate external services using a static token, client credentials, or a client ID with refresh token. This provides a reusable connector option for services that expose OAuth2-based authentication. [PR #4992](https://github.com/zenml-io/zenml/pull/4992)
+
+#### Workflow controls and platform operations
+
+- **Replay input overrides by step name**: When replaying a run, you can now use `step_default_input_overrides` to override a step input for every invocation of a step with the same name. Per-invocation `step_input_overrides` still take precedence, giving you both broad and targeted control during replay. [PR #4978](https://github.com/zenml-io/zenml/pull/4978)
+- **Trigger cycle protection**: ZenML now detects execution loops in Platform Event Trigger chains at the pipeline level. Cyclic trigger dispatches are skipped with the new `SKIPPED_TRIGGER_CYCLE` status, while unrelated downstream dispatches can continue normally and the affected cycle can be inspected through the SDK. [PR #4971](https://github.com/zenml-io/zenml/pull/4971)
+- **Optional sandbox cleanup on exit**: Sandbox sessions can now be configured to destroy the sandbox automatically when the session exits. The option defaults to `False`, preserving the behavior from previous releases unless you opt in. [PR #4986](https://github.com/zenml-io/zenml/pull/4986)
+- **Configurable Kubernetes API retries**: Kubernetes-based deployments can now configure retry behavior for Kubernetes API calls. This gives operators more control over resilience in clusters where transient API failures or throttling can occur. [PR #5004](https://github.com/zenml-io/zenml/pull/5004)
+- **Dashboard filtering and connector selection improvements**: The dashboard Timeline View now has additional filtering options, including more status filters. Component creation also gets a more efficient connector selector, making setup flows smoother in larger workspaces. [PR #1084](https://github.com/zenml-io/zenml-dashboard/pull/1084)
+
+#### Performance and scalability
+
+- **Faster pipeline sorting by latest run**: Listing pipelines sorted by latest run is now more efficient on large deployments. ZenML changed the query shape and supporting database indexing so the server no longer has to scan all runs for all pipelines just to compute the latest run timestamp. [PR #4969](https://github.com/zenml-io/zenml/pull/4969)
+- **More efficient run and artifact queries**: Several common server queries now load only the data they need and fetch related metadata more efficiently. This improves performance for DAG, pipeline run, step run, artifact version, and model version views, especially in workspaces with many entities. [PR #4994](https://github.com/zenml-io/zenml/pull/4994)
+- **Catch-up cleanup for expired API transactions**: Expired API transaction cleanup now works through bounded catch-up passes instead of a single fixed delete per interval. This helps servers recover from cleanup backlogs while keeping each database operation bounded, and also allows completed expired idempotency transactions to be safely reclaimed. [PR #4943](https://github.com/zenml-io/zenml/pull/4943)
+
+<details><summary>Fixed</summary>
+
+- **Artifact store caching prevents server OOMs**: The ZenML server now caches artifact store instances used for operations such as reading logs and visualizations. This avoids repeatedly rebuilding heavy storage clients and helps prevent memory growth that could previously lead to OOM kills on busy servers. [PR #4974](https://github.com/zenml-io/zenml/pull/4974)
+- **Docker credentials for image builds and pushes**: ZenML now configures Docker credentials correctly when building and pushing container images. This fixes cases where username/password credentials were not applied to the expected registry URI, which could cause authentication failures in build and push workflows. [PR #5005](https://github.com/zenml-io/zenml/pull/5005)
+- **Secret backup and restore authorization**: Secret backup and restore endpoints now enforce an explicit admin check when RBAC is disabled. This closes an authorization gap where an authenticated non-admin user could access admin-only secret operations in the default non-RBAC setup. [PR #5009](https://github.com/zenml-io/zenml/pull/5009)
+- **Safer custom flavor loading**: Custom flavor sources are now validated before server-side hydration. ZenML ensures the configured source resolves to a `Flavor` subclass before instantiation, preventing arbitrary zero-argument callables from being invoked during flavor loading. [PR #5008](https://github.com/zenml-io/zenml/pull/5008)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.0)
+
+***
+
 ## 0.95.1 (2026-06-18)
 
 See what's new and improved in version 0.95.1.
