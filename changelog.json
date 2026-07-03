@@ -1,5 +1,18 @@
 [
   {
+    "id": 70,
+    "slug": "run-pipelines-over-ssh",
+    "title": "Run pipelines over SSH",
+    "description": "You can now orchestrate pipelines and execute steps on remote infrastructure over SSH. This makes it easier to use existing machines or self-managed environments for pipeline runs without needing a more complex deployment setup.",
+    "published_at": "2026-07-02T20:38:13Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/ssh"
+  },
+  {
     "id": 69,
     "slug": "new-integrations-trackio-backblaze-baseten-oauth2",
     "title": "New integrations: Trackio, Backblaze B2, Baseten, and OAuth2",
