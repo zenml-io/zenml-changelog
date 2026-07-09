@@ -1,6 +1,6 @@
 [
   {
-    "id": 72,
+    "id": 71,
     "slug": "stronger-access-security",
     "title": "Stronger access security",
     "description": "ZenML Pro now better protects account and workspace access by invalidating outdated sessions after password changes or API key rotation. Codespaces also use dedicated authentication, improving isolation and reducing the risk of credential reuse across environments.",
@@ -10,29 +10,7 @@
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 71,
-    "slug": "organization-updates-at-a-glance",
-    "title": "Organization updates at a glance",
-    "description": "Organizations can now surface announcements directly in ZenML Pro, making it easier to share important updates with members in a consistent, built-in way. This helps teams communicate operational notices and other timely information where users already work.",
-    "published_at": "2026-07-09T15:10:29Z",
-    "published": true,
-    "audience": "pro",
-    "labels": [
-      "feature"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 70,
