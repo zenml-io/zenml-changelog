@@ -7,6 +7,23 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.21 (2026-07-09)
+
+See what's new and improved in version 0.13.21.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/17.jpg" align="left" alt="ZenML Pro 0.13.21" width="800">
+
+- **Dedicated Codespace authentication**: Codespaces now use ZenML Pro Codespace tokens instead of workspace-level service account credentials. Each Codespace receives its own scoped ZenML Store API key when it is created, making Codespace access easier to manage and better isolated to the linked workspace.
+- **Organization announcements**: Organizations can now include a structured list of announcements. This gives ZenML Pro teams a consistent place to surface organization-level messages, with an API shape that can support additional announcement metadata in the future.
+
+<details><summary>Fixed</summary>
+
+- **Stale session reuse after credential changes**: Tokens issued before a user password change or API key rotation are now rejected. This ensures that changing a password or rotating an API key reliably invalidates older sessions derived from those credentials, improving account and workspace security.
+
+</details>
+
+***
+
 ## 0.13.18 (2026-06-18)
 
 See what's new and improved in version 0.13.18.
