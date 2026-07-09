@@ -1,5 +1,18 @@
 [
   {
+    "id": 71,
+    "slug": "stronger-access-security",
+    "title": "Stronger access security",
+    "description": "ZenML Pro now better protects account and workspace access by invalidating outdated sessions after password changes or API key rotation. Codespaces also use dedicated authentication, improving isolation and reducing the risk of credential reuse across environments.",
+    "published_at": "2026-07-09T15:10:29Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 70,
     "slug": "run-pipelines-over-ssh",
     "title": "Run pipelines over SSH",
