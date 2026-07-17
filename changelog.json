@@ -1,6 +1,6 @@
 [
   {
-    "id": 74,
+    "id": 75,
     "slug": "dynamic-pipelines-are-more-flexible",
     "title": "Dynamic pipelines are more flexible",
     "description": "Dynamic pipelines gained more control and predictability: you can define start ordering between steps, continue execution more gracefully in some failure scenarios, and better handle implicit dependencies and raw values passed between steps. Replay and deployment parameter handling were also cleaned up so runs use the values you expect without confusing or stale configuration showing up.",
@@ -10,14 +10,35 @@
     "labels": [
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/dynamic_pipelines"
+  },
+  {
+    "id": 74,
+    "slug": "digitalocean-integration",
+    "title": "New integration: DigitalOcean",
+    "description": "ZenML now ships a first-class DigitalOcean integration with support for DigitalOcean Spaces artifact stores and DigitalOcean Container Registry stack components. Spaces support builds on the existing S3-compatible implementation while handling DigitalOcean regions and endpoint generation for you.",
+    "published_at": "2026-07-17T11:21:15Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/artifact-stores/digitalocean"
   },
   {
     "id": 73,
+    "slug": "more-deployment-and-platform-capabilities",
+    "title": "More deployment and platform capabilities",
+    "description": "This release adds server-side artifact data deletion, configurable logging and OpenTelemetry support in the Helm chart, and support for storing arbitrary project metadata. Together, these updates make ZenML easier to operate across environments and give teams more control over observability, data lifecycle management, and project organization.",
+    "published_at": "2026-07-17T11:21:15Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 72,
     "slug": "faster-safer-and-more-reliable-operations",
     "title": "Faster, safer, and more reliable operations",
     "description": "ZenML now reduces unnecessary server calls, improves DAG performance, streams large cross-filesystem copies to avoid memory spikes, and fixes race conditions and orchestrator/container edge cases that could break runs. Security and platform reliability also improved with token invalidation after password or API key changes, corrected API key rotation behavior, updated FastAPI/OpenTelemetry dependencies, and more robust Docker build and registry credential handling.",
@@ -27,29 +48,7 @@
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 72,
-    "slug": "more-deployment-and-platform-capabilities",
-    "title": "More deployment and platform capabilities",
-    "description": "This release adds first-class **DigitalOcean** integration, server-side artifact data deletion, configurable logging and OpenTelemetry support in the Helm chart, and support for storing arbitrary project metadata. Together, these updates make ZenML easier to operate across environments and give teams more control over observability, data lifecycle management, and project organization.",
-    "published_at": "2026-07-17T11:21:15Z",
-    "published": true,
-    "audience": "oss",
-    "labels": [
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 71,
