@@ -7,6 +7,54 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.96.2 (2026-07-17)
+
+See what's new and improved in version 0.96.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/17.jpg" align="left" alt="ZenML 0.96.2" width="800">
+
+#### Dynamic pipelines
+
+- **Explicit start ordering for dynamic steps**: Dynamic pipelines now support `start_after=...` when calling steps, letting you control which concurrently launched steps should wait for others before starting. This makes it easier to model ordering constraints without turning concurrent parts of a dynamic pipeline into fully synchronous execution. Note that `start_after` is now a reserved step keyword, so steps that previously used a parameter with this name will need to be updated. [PR #4995](https://github.com/zenml-io/zenml/pull/4995)
+- **More flexible dynamic step inputs**: You can now configure whether JSON-serializable raw values passed to steps in dynamic pipelines should be treated as parameters instead of artifacts. The new environment-variable threshold defaults to `0` to preserve existing behavior, while explicit APIs such as `with_options(parameters=...)` and `ExternalArtifact(...)` remain available when you want to force either behavior. [PR #5079](https://github.com/zenml-io/zenml/pull/5079)
+- **Improved dynamic execution semantics**: Dynamic pipelines now support `CONTINUE_ON_FAILURE` execution mode, allowing already queued or asynchronous work to continue when an async step fails. ZenML also models implicit dependencies from newly launched steps to the last completed sync step, making mixed sync/async dynamic pipelines execute in a more predictable order. [PR #5052](https://github.com/zenml-io/zenml/pull/5052)
+
+#### Integrations and deployment
+
+- **DigitalOcean integration**: ZenML now includes a first-class `digitalocean` integration with support for DigitalOcean Spaces artifact stores and DigitalOcean Container Registry stack components. Spaces support builds on the existing S3-compatible implementation while handling DigitalOcean regions and endpoint generation for you. [PR #5054](https://github.com/zenml-io/zenml/pull/5054)
+- **Helm chart logging and OpenTelemetry configuration**: The ZenML Helm chart now exposes server logging options and OpenTelemetry settings directly in values. You can configure console or JSON logging, service names, OTEL endpoints, and enable or disable traces, metrics, and logs without custom chart modifications. [PR #5048](https://github.com/zenml-io/zenml/pull/5048)
+
+#### Data and metadata management
+
+- **Server-side artifact data deletion**: ZenML can now delete artifact version data through the server API, not only from a full client with direct stack access. This enables artifact metadata and backing data to be deleted from the UI or from thin clients that do not have the artifact store stack component locally available. [PR #5034](https://github.com/zenml-io/zenml/pull/5034)
+- **Project metadata**: Projects now support arbitrary `project_metadata` on create, update, and hydrated response models. Metadata is stored as portable JSON, preserved when omitted, replaced when explicitly supplied, and can be cleared by sending an empty object. [PR #5086](https://github.com/zenml-io/zenml/pull/5086)
+
+#### Performance and scalability
+
+- **Lower-memory cross-filesystem copies**: `fileio.copy()` now streams cross-filesystem copies in bounded chunks instead of reading the entire file into memory. This significantly reduces peak memory usage for local-to-remote and remote-to-local artifact operations, including `PathMaterializer`, directory copies, integration materializers, and code archive upload/download flows. [PR #5031](https://github.com/zenml-io/zenml/pull/5031)
+- **Fewer server requests during runs**: ZenML now caches commonly reused project, store, stack, pipeline run, and completed step run responses in process where safe. Local and in-process execution paths make substantially fewer server requests, which improves responsiveness for pipelines with many steps. [PR #5036](https://github.com/zenml-io/zenml/pull/5036) [PR #5038](https://github.com/zenml-io/zenml/pull/5038)
+- **Faster DAG endpoint on large runs**: The DAG endpoint now does less unnecessary parsing and object construction when serving large pipeline graphs. In benchmarks on a DAG with thousands of nodes and edges, endpoint latency was reduced by roughly half. [PR #5051](https://github.com/zenml-io/zenml/pull/5051)
+
+#### Security and dependencies
+
+- **FastAPI, Starlette, and OpenTelemetry updates**: ZenML now supports FastAPI `0.138.0`, raises the lower Starlette bound to `0.46.0` to pick up security fixes, and updates OpenTelemetry packages for compatibility. The update also removes an unused `fastapi_utils` dependency and cleans up deprecated FastAPI response and lifespan usage. [PR #5017](https://github.com/zenml-io/zenml/pull/5017) [PR #5060](https://github.com/zenml-io/zenml/pull/5060)
+
+<details><summary>Fixed</summary>
+
+- **Token invalidation after credential changes**: User tokens issued before a password change are now rejected, and tokens derived from API keys are tied to the key generation so rotated keys no longer leave stale sessions usable. The dashboard also correctly rotates API keys when a non-zero retention period is configured. [PR #5025](https://github.com/zenml-io/zenml/pull/5025) [PR #1088](https://github.com/zenml-io/zenml-dashboard/pull/1088)
+- **Docker credentials supplied at runtime**: ZenML now properly handles in-memory Docker credentials when a local Docker credential store already has entries for the same registry. This prevents the Docker Python client from silently preferring stale local credentials over credentials passed through ZenML. [PR #5023](https://github.com/zenml-io/zenml/pull/5023)
+- **Remote image builds with restrictive `.dockerignore` files**: ZenML no longer includes the root `.dockerignore` in generated build context archives for remote builders. This fixes builds on AWS CodeBuild, GCP Cloud Build, Kaniko, and similar builders when allowlist-style ignore patterns would otherwise exclude ZenML-generated files. [PR #5033](https://github.com/zenml-io/zenml/pull/5033)
+- **Cleaner replay configurations**: When replaying a pipeline run, ZenML now removes step parameters from the configuration if they are overridden by an input artifact. The displayed configuration no longer contains outdated values that were not actually used as step inputs. [PR #5040](https://github.com/zenml-io/zenml/pull/5040)
+- **Deployment invocation with dict parameters**: Dict-valued pipeline parameters sent to a deployment `/invoke` endpoint now replace compiled defaults instead of being recursively merged with them. This matches normal pipeline invocation behavior and prevents default keys from leaking into step inputs. [PR #5042](https://github.com/zenml-io/zenml/pull/5042)
+- **Dynamic pipeline DAG race condition**: ZenML now avoids a race where a step run could be visible in the database before its configuration was committed. This prevents intermittent 500 errors from the DAG endpoint while dynamic pipeline steps are being created. [PR #5053](https://github.com/zenml-io/zenml/pull/5053)
+- **SSH orchestrator re-runs**: SSH orchestrator container and Compose service names now avoid collisions across multiple runs of the same snapshot. Re-running from the dashboard, templates, or concurrent triggers no longer fails because an old container with the same name still exists on the host. [PR #5082](https://github.com/zenml-io/zenml/pull/5082)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.2)
+
+***
+
 ## 0.96.1 (2026-07-02)
 
 See what's new and improved in version 0.96.1.
