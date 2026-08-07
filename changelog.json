@@ -1,5 +1,57 @@
 [
   {
+    "id": 78,
+    "slug": "more-reliable-runs-and-artifact-handling",
+    "title": "More reliable runs and artifact handling",
+    "description": "ZenML now behaves more reliably in local and remote setups, with fewer failures around concurrent local SQLite usage, artifact version deletion, scoped lookups, and Kubernetes retry behavior. Exception reporting is also more complete, making pipeline and runtime issues easier to diagnose when something does go wrong.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 77,
+    "slug": "stronger-platform-and-infrastructure-support",
+    "title": "Stronger platform and infrastructure support",
+    "description": "This release expands what you can run and how you can deploy ZenML: command steps can now scale across multiple Kubernetes pods, local Docker sandboxes are available for containerized execution, and MLflow works more smoothly with Databricks and managed runtimes. ZenML Pro Helm deployments also support supplying the enrollment key from an existing Kubernetes Secret for safer configuration.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 76,
+    "slug": "smoother-auth-secrets-and-workspace-ux",
+    "title": "Smoother auth, secrets, and workspace UX",
+    "description": "Working across projects and stacks is more seamless, with the ability to choose your active stack at login and improved handling for service account tokens and adopted API keys. Secret handling is also better end to end, with dashboard improvements for viewing and copying secret values, cloudpickle artifact integrity validation, and timeline updates that make cancelled and not-started steps easier to understand.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 75,
     "slug": "dynamic-pipelines-are-more-flexible",
     "title": "Dynamic pipelines are more flexible",
