@@ -1,55 +1,53 @@
 [
   {
+    "id": 79,
+    "slug": "multi-pod-kubernetes-step-operator",
+    "title": "Run command steps across multiple Kubernetes pods",
+    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod — making it easier to distribute workloads like torchrun-based training across pods.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/step-operators/kubernetes"
+  },
+  {
     "id": 78,
-    "slug": "more-reliable-runs-and-artifact-handling",
-    "title": "More reliable runs and artifact handling",
-    "description": "ZenML now behaves more reliably in local and remote setups, with fewer failures around concurrent local SQLite usage, artifact version deletion, scoped lookups, and Kubernetes retry behavior. Exception reporting is also more complete, making pipeline and runtime issues easier to diagnose when something does go wrong.",
+    "slug": "local-docker-sandbox",
+    "title": "Local Docker sandbox",
+    "description": "ZenML now includes a local Docker sandbox, plus a unified settings model for containerized sandboxes. Local sandbox workflows support file upload and download, so you can test containerized ZenML behavior on your own machine before moving to remote infrastructure.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 77,
+    "slug": "stack-selection-at-login-and-dashboard-ux",
+    "title": "Pick your stack at login, plus dashboard improvements",
+    "description": "zenml login now accepts --stack, letting you connect to a server and set your active stack in one command. In the dashboard, long secret values are truncated for readability with a one-click copy action, and the run timeline now shows steps that never started because a run was cancelled, with a matching Not Started filter.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 76,
+    "slug": "reliability-and-integration-fixes",
+    "title": "Reliability and integration fixes",
+    "description": "This release smooths out many rough edges: fewer database-is-locked errors for local SQLite stores, correct project scoping for artifact deletion and prefix lookups, complete exception tracebacks, and no more unnecessary Kubernetes pod retries for already-finished runs. MLflow tracking behaves better on Databricks and managed runtimes, cloudpickle artifacts are validated with a SHA-256 hash on load, service account tokens and adopted API keys keep working through migrations, and Helm deployments can supply the ZenML Pro enrollment key from an existing Kubernetes Secret.",
     "published_at": "2026-08-07T13:24:25Z",
     "published": true,
     "audience": "oss",
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 77,
-    "slug": "stronger-platform-and-infrastructure-support",
-    "title": "Stronger platform and infrastructure support",
-    "description": "This release expands what you can run and how you can deploy ZenML: command steps can now scale across multiple Kubernetes pods, local Docker sandboxes are available for containerized execution, and MLflow works more smoothly with Databricks and managed runtimes. ZenML Pro Helm deployments also support supplying the enrollment key from an existing Kubernetes Secret for safer configuration.",
-    "published_at": "2026-08-07T13:24:25Z",
-    "published": true,
-    "audience": "oss",
-    "labels": [
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 76,
-    "slug": "smoother-auth-secrets-and-workspace-ux",
-    "title": "Smoother auth, secrets, and workspace UX",
-    "description": "Working across projects and stacks is more seamless, with the ability to choose your active stack at login and improved handling for service account tokens and adopted API keys. Secret handling is also better end to end, with dashboard improvements for viewing and copying secret values, cloudpickle artifact integrity validation, and timeline updates that make cancelled and not-started steps easier to understand.",
-    "published_at": "2026-08-07T13:24:25Z",
-    "published": true,
-    "audience": "oss",
-    "labels": [
-      "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
   },
   {
     "id": 75,
