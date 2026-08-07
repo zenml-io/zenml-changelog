@@ -7,6 +7,45 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.96.3 (2026-08-07)
+
+See what's new and improved in version 0.96.3.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/18.jpg" align="left" alt="ZenML 0.96.3" width="800">
+
+#### Runtime and orchestration
+
+- **Multi-pod Kubernetes step operator jobs**: Command steps can now run across multiple Kubernetes pods with the Kubernetes step operator. Set `pod_count` in `KubernetesStepOperatorSettings` to launch the step as an indexed job, making it easier to distribute command-style workloads across pods. [PR #5104](https://github.com/zenml-io/zenml/pull/5104)
+- **Local Docker sandbox**: ZenML now includes a local Docker sandbox, plus a unified settings model for containerized sandboxes. Local sandbox workflows also support file upload and download, making it easier to test containerized ZenML behavior locally before moving to remote infrastructure. [PR #5102](https://github.com/zenml-io/zenml/pull/5102)
+
+#### Deployment, security, and artifact integrity
+
+- **Enrollment keys from Kubernetes Secrets**: The Helm chart now supports `server.pro.enrollmentKeySecretRef`, so ZenML Pro enrollment keys can be injected from an existing Kubernetes Secret instead of being stored inline in Helm release values. The secret reference is applied consistently to the server, migration, and worker containers. [PR #5123](https://github.com/zenml-io/zenml/pull/5123)
+- **Cloudpickle artifact hash validation**: Cloudpickle-materialized artifacts now store a SHA-256 hash when written and validate that hash before loading. This helps detect corrupted or unexpectedly modified artifact files earlier and fail with a clearer integrity signal. [PR #5103](https://github.com/zenml-io/zenml/pull/5103)
+
+#### CLI and dashboard UX
+
+- **Select a stack during login**: `zenml login` now accepts `--stack`, allowing you to connect to a server and immediately set the active stack in one command. When used together with `--project`, ZenML applies the project first so the stack is resolved in the intended project context. [PR #5125](https://github.com/zenml-io/zenml/pull/5125)
+- **Improved secret value display**: Secret values in the dashboard no longer expand indefinitely in the UI and are truncated for readability. A direct copy action is now available, making it easier to work with long secret values without disrupting the page layout. [PR #1104](https://github.com/zenml-io/zenml-dashboard/pull/1104)
+- **Timeline updates for cancelled runs**: The dashboard timeline now shows steps that were not started because a run was cancelled. The timeline filter also supports filtering for `Not Started`, making cancelled or partially executed runs easier to inspect. [PR #1108](https://github.com/zenml-io/zenml-dashboard/pull/1108)
+
+<details><summary>Fixed</summary>
+
+- **Fewer SQLite lock failures for local stores**: Local SQL stores backed by SQLite now wait up to 60 seconds for write locks instead of using Python’s 5-second default. This reduces `sqlite3.OperationalError: database is locked` failures when concurrent steps, such as mapped dynamic pipeline steps, finish and publish artifacts at the same time. [PR #5096](https://github.com/zenml-io/zenml/pull/5096)
+- **Artifact deletion on deployed servers**: Artifact version deletion now correctly applies project scope when checking whether an artifact is unused. This fixes deletion through the API on remote deployed servers where the default project is disabled. [PR #5100](https://github.com/zenml-io/zenml/pull/5100)
+- **Complete exception tracebacks**: Exception reporting now includes the full traceback lineage instead of only the final exception traceback. This makes chained failures easier to debug because the original cause is preserved alongside the final error. [PR #5098](https://github.com/zenml-io/zenml/pull/5098)
+- **Smarter Kubernetes dynamic pipeline retries**: Kubernetes orchestrator pods are no longer retried when the pipeline run is already in a finished state that cannot be retried. This avoids unnecessary pod restarts that would immediately exit with `Run is already finished.` [PR #5107](https://github.com/zenml-io/zenml/pull/5107)
+- **Correct scoped prefix lookups**: Prefix-based lookups now keep scoped and default filters properly constrained when matching by ID or name prefix. This prevents unrelated entities from being returned, for example when looking up a schedule trigger by a prefix that does not match its name or ID. [PR #5126](https://github.com/zenml-io/zenml/pull/5126)
+- **Generic token provenance and service account auth**: Generic and stack-deployment tokens now preserve the original service account or device provenance used to create them. This fixes authentication failures for pipeline workloads using server-issued JWTs for workspace-local service accounts, especially with external authentication enabled. [PR #5127](https://github.com/zenml-io/zenml/pull/5127)
+- **MLflow tracking with managed runtimes and Databricks**: ZenML’s MLflow experiment tracker now behaves more reliably when managed runtimes inject MLflow environment variables such as `MLFLOW_RUN_ID`. This avoids accidentally resuming an inherited run when ZenML needs to create its own run, improving compatibility with Databricks-backed MLflow setups. [PR #5122](https://github.com/zenml-io/zenml/pull/5122)
+- **API keys after service account adoption**: Existing workspace-level API keys remain valid when a workspace service account is adopted by an organization-level service account with the same name. This allows teams to migrate service accounts gradually without interrupting workloads that still use older API keys. [PR #5138](https://github.com/zenml-io/zenml/pull/5138)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.3)
+
+***
+
 ## 0.96.2 (2026-07-17)
 
 See what's new and improved in version 0.96.2.
