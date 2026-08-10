@@ -1,9 +1,23 @@
 [
   {
+    "id": 80,
+    "slug": "zenml-0-96-3-for-pro-workspaces",
+    "title": "ZenML 0.96.3 available for Pro workspaces",
+    "description": "Managed ZenML Pro workspaces can now be deployed or upgraded to ZenML 0.96.3. Upgrading brings the latest platform improvements to your workspace, including multi-pod command steps on Kubernetes, the local Docker sandbox, and stack selection at login.",
+    "published_at": "2026-08-10T15:46:41Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/workspaces",
+    "should_highlight": false
+  },
+  {
     "id": 79,
     "slug": "multi-pod-kubernetes-step-operator",
     "title": "Run command steps across multiple Kubernetes pods",
-    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod — making it easier to distribute workloads like torchrun-based training across pods.",
+    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod \u2014 making it easier to distribute workloads like torchrun-based training across pods.",
     "published_at": "2026-08-07T13:24:25Z",
     "published": true,
     "audience": "oss",
