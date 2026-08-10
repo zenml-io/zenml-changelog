@@ -15,7 +15,6 @@ See what's new and improved in version 0.13.24.
 
 - **Standalone Kitaru workspaces**: ZenML Pro now supports Kitaru as a first-class managed workspace type alongside existing ZenML workspaces. Teams can create, read, update, deploy, and monitor Kitaru workspaces through product-specific Cloud API models and status fields, enabling dedicated managed Kitaru environments without changing the standard ZenML workspace path.
 - **ZenML workspace version 0.96.3**: Managed ZenML workspaces can now be deployed or upgraded to version 0.96.3. This makes the latest supported ZenML workspace release available through ZenML Pro for teams that want to adopt the newest platform improvements.
-- **Optional Trivy scanning controls**: Container image publishing workflows now include explicit break-glass controls for Trivy scanning across on-prem, staging, and production release paths. This gives operators a controlled way to unblock urgent publishing when scanner availability or an approved exception requires it, while keeping image scanning as the normal default.
 
 <details><summary>Fixed</summary>
 
