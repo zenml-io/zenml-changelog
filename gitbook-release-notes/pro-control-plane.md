@@ -7,6 +7,22 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.24 (2026-08-10)
+
+See what's new and improved in version 0.13.24.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML Pro 0.13.24" width="800">
+
+- **ZenML workspace version 0.96.3**: Managed ZenML workspaces can now be deployed or upgraded to version 0.96.3. This makes the latest supported ZenML workspace release available through ZenML Pro for teams that want to adopt the newest platform improvements.
+
+<details><summary>Fixed</summary>
+
+- **Dependency vulnerability fixes**: Security-related dependency updates resolve the current Dependabot findings, including aiohttp issues affecting HTTP parsing and WebSocket handling. This improves the security posture of ZenML Cloud API deployments and reduces vulnerability noise for Pro and on-prem operators.
+
+</details>
+
+***
+
 ## 0.13.21 (2026-07-09)
 
 See what's new and improved in version 0.13.21.
