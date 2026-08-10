@@ -13,7 +13,6 @@ See what's new and improved in version 0.13.24.
 
 <img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML Pro 0.13.24" width="800">
 
-- **Standalone Kitaru workspaces**: ZenML Pro now supports Kitaru as a first-class managed workspace type alongside existing ZenML workspaces. Teams can create, read, update, deploy, and monitor Kitaru workspaces through product-specific Cloud API models and status fields, enabling dedicated managed Kitaru environments without changing the standard ZenML workspace path.
 - **ZenML workspace version 0.96.3**: Managed ZenML workspaces can now be deployed or upgraded to version 0.96.3. This makes the latest supported ZenML workspace release available through ZenML Pro for teams that want to adopt the newest platform improvements.
 
 <details><summary>Fixed</summary>
