@@ -1,9 +1,61 @@
 [
   {
+    "id": 82,
+    "slug": "managed-workspace-options-expanded",
+    "title": "Managed workspace options expanded",
+    "description": "ZenML Pro now supports an additional standalone managed workspace path for Kitaru, giving teams more flexibility in how they provision and operate workspaces. This expands the set of supported workspace experiences while preserving existing ZenML workspace flows.",
+    "published_at": "2026-08-10T15:46:41Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 81,
+    "slug": "workspace-version-support-updated",
+    "title": "Workspace version support updated",
+    "description": "Workspaces have been updated to support ZenML version **0.96.3**, helping teams stay aligned with the latest compatible workspace environment for this release. This makes it easier to adopt the newest supported platform updates with confidence.",
+    "published_at": "2026-08-10T15:46:41Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 80,
+    "slug": "security-and-publishing-controls-improved",
+    "title": "Security and publishing controls improved",
+    "description": "Security updates in the Cloud API release reduce exposure to known vulnerabilities and improve the reliability of release publishing workflows. Container image scanning is also more flexible, helping operators adapt release processes to different environments when needed.",
+    "published_at": "2026-08-10T15:46:41Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 79,
     "slug": "multi-pod-kubernetes-step-operator",
     "title": "Run command steps across multiple Kubernetes pods",
-    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod — making it easier to distribute workloads like torchrun-based training across pods.",
+    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod \u2014 making it easier to distribute workloads like torchrun-based training across pods.",
     "published_at": "2026-08-07T13:24:25Z",
     "published": true,
     "audience": "oss",
