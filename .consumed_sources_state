@@ -30,6 +30,33 @@
           "previous_tag": "0.13.20",
           "source_repo": "zenml-io/zenml-cloud-api"
         },
+        "zenml-io/zenml-cloud-api#629": {
+          "current_tag": "0.13.24",
+          "first_consumed_at": "2026-08-10T15:47:57.605751+00:00",
+          "first_consumed_by_release_tag": "0.13.24",
+          "number": 629,
+          "origin": "automation",
+          "previous_tag": "0.13.23",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
+        "zenml-io/zenml-cloud-api#633": {
+          "current_tag": "0.13.24",
+          "first_consumed_at": "2026-08-10T15:47:57.605751+00:00",
+          "first_consumed_by_release_tag": "0.13.24",
+          "number": 633,
+          "origin": "automation",
+          "previous_tag": "0.13.23",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
+        "zenml-io/zenml-cloud-api#635": {
+          "current_tag": "0.13.24",
+          "first_consumed_at": "2026-08-10T15:47:57.605751+00:00",
+          "first_consumed_by_release_tag": "0.13.24",
+          "number": 635,
+          "origin": "automation",
+          "previous_tag": "0.13.23",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
         "zenml-io/zenml-cloud-ui#1317": {
           "current_tag": "0.13.15",
           "first_consumed_at": "2026-06-01T09:44:51.704139+00:00",
@@ -112,6 +139,19 @@
             "zenml-io/zenml-cloud-api#615"
           ],
           "previous_tag": "0.13.20",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
+        {
+          "consumed_at": "2026-08-10T15:47:57.605751+00:00",
+          "consumed_by_release_tag": "0.13.24",
+          "current_tag": "0.13.24",
+          "origin": "automation",
+          "pr_keys": [
+            "zenml-io/zenml-cloud-api#629",
+            "zenml-io/zenml-cloud-api#633",
+            "zenml-io/zenml-cloud-api#635"
+          ],
+          "previous_tag": "0.13.23",
           "source_repo": "zenml-io/zenml-cloud-api"
         }
       ],
@@ -1086,6 +1126,6 @@
       "trigger_repo": "zenml-io/zenml"
     }
   },
-  "updated_at": "2026-08-07T13:27:44.763475+00:00",
+  "updated_at": "2026-08-10T15:47:57.605829+00:00",
   "version": 1
 }

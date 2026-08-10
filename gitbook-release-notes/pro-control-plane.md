@@ -7,6 +7,24 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.13.24 (2026-08-10)
+
+See what's new and improved in version 0.13.24.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML Pro 0.13.24" width="800">
+
+- **Standalone Kitaru workspaces**: ZenML Pro now supports Kitaru as a first-class managed workspace type alongside existing ZenML workspaces. Teams can create, read, update, deploy, and monitor Kitaru workspaces through product-specific Cloud API models and status fields, enabling dedicated managed Kitaru environments without changing the standard ZenML workspace path.
+- **ZenML workspace version 0.96.3**: Managed ZenML workspaces can now be deployed or upgraded to version 0.96.3. This makes the latest supported ZenML workspace release available through ZenML Pro for teams that want to adopt the newest platform improvements.
+- **Optional Trivy scanning controls**: Container image publishing workflows now include explicit break-glass controls for Trivy scanning across on-prem, staging, and production release paths. This gives operators a controlled way to unblock urgent publishing when scanner availability or an approved exception requires it, while keeping image scanning as the normal default.
+
+<details><summary>Fixed</summary>
+
+- **Dependency vulnerability fixes**: Security-related dependency updates resolve the current Dependabot findings, including aiohttp issues affecting HTTP parsing and WebSocket handling. This improves the security posture of ZenML Cloud API deployments and reduces vulnerability noise for Pro and on-prem operators.
+
+</details>
+
+***
+
 ## 0.13.21 (2026-07-09)
 
 See what's new and improved in version 0.13.21.
