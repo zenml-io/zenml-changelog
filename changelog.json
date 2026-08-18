@@ -1,5 +1,18 @@
 [
   {
+    "id": 81,
+    "slug": "filter-workspaces-by-type-in-the-api",
+    "title": "Filter workspaces by type in the API",
+    "description": "Workspace list endpoints and the Python client now accept a `workspace_type` filter, so you can request only ZenML or only Kitaru workspaces. Useful when building admin tooling or automation against organizations that run both.",
+    "published_at": "2026-08-18T10:22:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "should_highlight": false
+  },
+  {
     "id": 80,
     "slug": "zenml-0-96-3-for-pro-workspaces",
     "title": "ZenML 0.96.3 available for Pro workspaces",
