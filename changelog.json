@@ -1,19 +1,15 @@
 [
   {
     "id": 81,
-    "slug": "more-flexible-workspace-discovery",
-    "title": "More flexible workspace discovery",
-    "description": "You can now filter workspace listings by workspace type, making it easier to find the right workspaces in larger organizations. This improves navigation and automation workflows for teams managing both ZenML and Kitaru workspaces.",
+    "slug": "filter-workspaces-by-type-in-the-api",
+    "title": "Filter workspaces by type in the API",
+    "description": "Workspace list endpoints and the Python client now accept a `workspace_type` filter, so you can request only ZenML or only Kitaru workspaces. Useful when building admin tooling or automation against organizations that run both.",
     "published_at": "2026-08-18T10:22:52Z",
     "published": true,
     "audience": "pro",
     "labels": [
       "improvement"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
     "should_highlight": false
   },
   {
