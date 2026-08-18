@@ -1,5 +1,22 @@
 [
   {
+    "id": 81,
+    "slug": "more-flexible-workspace-discovery",
+    "title": "More flexible workspace discovery",
+    "description": "You can now filter workspace listings by workspace type, making it easier to find the right workspaces in larger organizations. This improves navigation and automation workflows for teams managing both ZenML and Kitaru workspaces.",
+    "published_at": "2026-08-18T10:22:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 80,
     "slug": "zenml-0-96-3-for-pro-workspaces",
     "title": "ZenML 0.96.3 available for Pro workspaces",
