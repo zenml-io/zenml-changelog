@@ -7,6 +7,16 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.14.4 (2026-08-20)
+
+See what's new and improved in version 0.14.4.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/21.jpg" align="left" alt="ZenML Pro 0.14.4" width="800">
+
+- **Version-aligned 0.14.4 release**: ZenML Pro’s Python package and Helm chart are now both versioned as 0.14.4, with package metadata refreshed and verified for this release. This keeps the installable package and deployment artifacts in sync so you can upgrade confidently and confirm that your environment reports the expected version.
+
+***
+
 ## 0.14.2 (2026-08-18)
 
 See what's new and improved in version 0.14.2.
