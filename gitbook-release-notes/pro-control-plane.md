@@ -7,6 +7,16 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.14.2 (2026-08-18)
+
+See what's new and improved in version 0.14.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/20.jpg" align="left" alt="ZenML Pro 0.14.2" width="800">
+
+- **Filter workspaces by type**: Workspace list APIs and the Python client now support filtering by `workspace_type`, making it easier to separate ZenML and Kitaru workspaces in global and organization-level views. You can now request only the workspace category you need, for example when building admin dashboards, automation, or organization-specific workspace listings.
+
+***
+
 ## 0.13.24 (2026-08-10)
 
 See what's new and improved in version 0.13.24.
