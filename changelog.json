@@ -1,5 +1,41 @@
 [
   {
+    "id": 83,
+    "slug": "safer-cloud-authentication",
+    "title": "Safer Cloud authentication",
+    "description": "ZenML Pro now removes support for generic Cloud API tokens, reducing exposure to insecure authentication flows and tightening platform security. Existing workspace-server API token behavior remains unchanged.",
+    "published_at": "2026-08-27T13:00:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "deprecation",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 82,
+    "slug": "more-flexible-release-management",
+    "title": "More flexible release management",
+    "description": "Supported and default ZenML Pro release versions can now be managed dynamically through the platform instead of requiring a Cloud API deployment. This makes it easier for administrators to update available versions and defaults more quickly.",
+    "published_at": "2026-08-27T13:00:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 81,
     "slug": "filter-workspaces-by-type-in-the-api",
     "title": "Filter workspaces by type in the API",
