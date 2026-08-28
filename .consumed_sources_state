@@ -66,6 +66,15 @@
           "previous_tag": "0.14.1",
           "source_repo": "zenml-io/zenml-cloud-api"
         },
+        "zenml-io/zenml-cloud-api#662": {
+          "current_tag": "0.14.5",
+          "first_consumed_at": "2026-08-27T13:01:51.256085+00:00",
+          "first_consumed_by_release_tag": "0.14.5",
+          "number": 662,
+          "origin": "automation",
+          "previous_tag": "0.14.4",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
         "zenml-io/zenml-cloud-api#665": {
           "current_tag": "0.14.4",
           "first_consumed_at": "2026-08-20T15:39:03.461999+00:00",
@@ -73,6 +82,15 @@
           "number": 665,
           "origin": "automation",
           "previous_tag": "0.14.3",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
+        "zenml-io/zenml-cloud-api#669": {
+          "current_tag": "0.14.5",
+          "first_consumed_at": "2026-08-27T13:01:51.256085+00:00",
+          "first_consumed_by_release_tag": "0.14.5",
+          "number": 669,
+          "origin": "automation",
+          "previous_tag": "0.14.4",
           "source_repo": "zenml-io/zenml-cloud-api"
         },
         "zenml-io/zenml-cloud-ui#1317": {
@@ -192,6 +210,18 @@
             "zenml-io/zenml-cloud-api#665"
           ],
           "previous_tag": "0.14.3",
+          "source_repo": "zenml-io/zenml-cloud-api"
+        },
+        {
+          "consumed_at": "2026-08-27T13:01:51.256085+00:00",
+          "consumed_by_release_tag": "0.14.5",
+          "current_tag": "0.14.5",
+          "origin": "automation",
+          "pr_keys": [
+            "zenml-io/zenml-cloud-api#662",
+            "zenml-io/zenml-cloud-api#669"
+          ],
+          "previous_tag": "0.14.4",
           "source_repo": "zenml-io/zenml-cloud-api"
         }
       ],
@@ -1166,6 +1196,6 @@
       "trigger_repo": "zenml-io/zenml"
     }
   },
-  "updated_at": "2026-08-20T15:39:03.462070+00:00",
+  "updated_at": "2026-08-27T13:01:51.256165+00:00",
   "version": 1
 }

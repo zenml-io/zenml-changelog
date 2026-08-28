@@ -7,6 +7,17 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.14.5 (2026-08-27)
+
+See what's new and improved in version 0.14.5.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML Pro 0.14.5" width="800">
+
+- **Release versions managed through the API**: Supported and default ZenML and Kitaru release versions are now stored in the database instead of static Cloud API configuration, so they can be updated without deploying a new Cloud API version. Users can list supported releases with `GET /releases?release_service=<zenml|kitaru>`, including the current default, while superusers can add and manage release strings through the new release management endpoints.
+- **Generic Cloud API tokens removed**: Generic ZenML Cloud API token support has been removed, including `GET /auth/api_token` and the `GENERIC_TOKEN` grant type. This reduces the risk of standalone bearer tokens that only encode user identity; integrations that relied on generic Cloud tokens should migrate to supported authentication flows. The separate workspace-server endpoint `GET /api/v1/api_token` is not affected.
+
+***
+
 ## 0.14.2 (2026-08-18)
 
 See what's new and improved in version 0.14.2.
