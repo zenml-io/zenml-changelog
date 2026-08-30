@@ -73,9 +73,9 @@ LABEL_MAPPING: Dict[str, str] = {
     "enhancement": "improvement",
     "improvement": "improvement",
     "deprecation": "deprecation",
-    "breaking": "deprecation",
-    "breaking-change": "deprecation",
-    "breaking changes": "deprecation",
+    "breaking": "breaking change",
+    "breaking-change": "breaking change",
+    "breaking changes": "breaking change",
 }
 
 BREAKING_CHANGE_LABELS: List[str] = [

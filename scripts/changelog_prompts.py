@@ -83,7 +83,7 @@ def build_grouped_changelog_entries_prompt(
         "- Avoid over-specific titles that name one narrow implementation detail when the group covers a broader user benefit.\n"
         "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
         "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
-        "feature, improvement, bugfix, deprecation. Return [] if no label applies.\n"
+        "breaking change, feature, improvement, bugfix, deprecation. Return [] if no label applies.\n"
         "Avoid low-level implementation details and emphasize user-facing value."
     )
 
