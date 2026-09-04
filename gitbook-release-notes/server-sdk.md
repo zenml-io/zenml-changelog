@@ -7,6 +7,33 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.96.4 (2026-09-04)
+
+See what's new and improved in version 0.96.4.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML 0.96.4" width="800">
+
+#### Webhook-driven automation
+
+- **Webhook triggers for pipeline snapshots**: ZenML now supports first-class webhook-driven automation for secure, project-scoped integrations with GitHub or custom systems [PR #5169](https://github.com/zenml-io/zenml/pull/5169). You can attach webhook triggers to pipeline snapshots and launch them when matching external events arrive, including typed GitHub filters for merged pull requests, completed workflow runs, pushes, and published releases.
+- **ClickUp webhook provider**: ZenML now includes a built-in ClickUp webhook provider for triggering automation from ClickUp task and list events [PR #5216](https://github.com/zenml-io/zenml/pull/5216). The provider authenticates deliveries with ClickUp’s raw hex HMAC signature and supports string-based filters, so teams can connect ClickUp activity directly to ZenML workflows.
+- **Slack webhook provider**: ZenML Pro now supports inbound Slack Events API callbacks as a first-class webhook provider [PR #5221](https://github.com/zenml-io/zenml/pull/5221). Slack apps can authenticate events such as mentions, messages, reactions, and other automation-focused activity to trigger pipeline snapshots or related workflows; this is separate from the existing Slack alerter that sends notifications to Slack.
+
+- **AWS RDS IAM authentication for MySQL stores**: The MySQL ZenML store now supports AWS RDS IAM database authentication while preserving the existing password-based behavior [PR #5113](https://github.com/zenml-io/zenml/pull/5113). ZenML generates fresh IAM tokens for database connections and enforces TLS hostname and certificate verification in IAM mode, giving AWS users a passwordless database authentication option aligned with RDS security best practices.
+- **Faster pipeline startup with reused build checksums**: ZenML now precalculates and reuses Docker build checksums while resolving pipeline builds [PR #5154](https://github.com/zenml-io/zenml/pull/5154). This avoids repeated build-configuration work during startup, especially for large pipelines with many steps, and also helps when `skip_build=True` because ZenML no longer repeats unnecessary build preparation checks.
+- **Safer workload-scoped tokens**: Workload-scoped API tokens can no longer be exchanged for persistent, unscoped API tokens [PR #5152](https://github.com/zenml-io/zenml/pull/5152). This keeps credentials bound to the pipeline run, schedule, or deployment that created them, so workload permissions expire with the workload authorization instead of being escalated into longer-lived generic API access.
+- **Production/stable package metadata**: Future ZenML releases are now marked as `Development Status :: 5 - Production/Stable` on PyPI instead of beta [PR #5186](https://github.com/zenml-io/zenml/pull/5186). This aligns the published package metadata with ZenML’s current maturity and makes the package classification clearer for users and automated tooling.
+
+<details><summary>Fixed</summary>
+
+- **Failed dynamic pipelines now report failure correctly**: Dynamic pipelines running with `ExecutionMode.STOP_ON_FAILURE` no longer complete successfully when an isolated step fails [PR #5182](https://github.com/zenml-io/zenml/pull/5182). ZenML now propagates the failed step state correctly so the overall pipeline run status matches the actual execution outcome.
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.4)
+
+***
+
 ## 0.96.3 (2026-08-07)
 
 See what's new and improved in version 0.96.3.
