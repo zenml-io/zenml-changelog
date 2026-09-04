@@ -1,5 +1,56 @@
 [
   {
+    "id": 87,
+    "slug": "webhook-driven-pipeline-automation",
+    "title": "Webhook-driven pipeline automation",
+    "description": "ZenML now supports first-class **webhook triggers**, so an external event can launch a pipeline snapshot. Attach a trigger to a snapshot and filter on typed GitHub events — merged pull requests, completed workflow runs, pushes, and published releases — or use the new built-in **Slack** and **ClickUp** providers to start runs from team activity. Custom webhook providers are supported for everything else, and every integration is project-scoped and signature-authenticated.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/webhooks",
+    "should_highlight": true
+  },
+  {
+    "id": 86,
+    "slug": "faster-and-more-reliable-pipeline-execution",
+    "title": "Faster and more reliable pipeline execution",
+    "description": "Pipeline runs are now more dependable and start faster. Dynamic pipelines running with `ExecutionMode.STOP_ON_FAILURE` no longer report success when an isolated step fails — the failed step state now propagates to the overall run status. ZenML also precalculates and reuses Docker build checksums while resolving builds instead of recomputing them, cutting startup overhead for pipelines with many steps.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
+    "id": 85,
+    "slug": "aws-rds-iam-database-authentication",
+    "title": "AWS RDS IAM authentication for MySQL stores",
+    "description": "The MySQL ZenML store can now authenticate to AWS RDS with **IAM database authentication** instead of a static password. ZenML generates a fresh IAM token for each database connection and enforces TLS hostname and certificate verification in IAM mode, giving self-hosted AWS deployments a passwordless option that matches RDS security best practices. Existing password-based setups keep working unchanged.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 84,
+    "slug": "workload-scoped-token-hardening",
+    "title": "Workload tokens can no longer be escalated",
+    "description": "Workload-scoped API tokens can no longer be exchanged for persistent, unscoped API tokens. Credentials issued to a pipeline run, schedule, or deployment now stay bound to that workload and expire with it, instead of being traded up for longer-lived generic API access.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
     "id": 83,
     "slug": "safer-cloud-authentication",
     "title": "Generic Cloud API tokens removed",
