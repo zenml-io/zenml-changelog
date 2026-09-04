@@ -1,55 +1,54 @@
 [
   {
-    "id": 86,
+    "id": 87,
     "slug": "webhook-driven-pipeline-automation",
     "title": "Webhook-driven pipeline automation",
-    "description": "ZenML now supports first-class **webhook triggers** so you can launch pipeline snapshots from external events. Alongside GitHub and custom webhooks, built-in **Slack** and **ClickUp** providers make it easier to connect team workflows and event-driven automation to your MLOps setup.",
+    "description": "ZenML now supports first-class **webhook triggers**, so an external event can launch a pipeline snapshot. Attach a trigger to a snapshot and filter on typed GitHub events — merged pull requests, completed workflow runs, pushes, and published releases — or use the new built-in **Slack** and **ClickUp** providers to start runs from team activity. Custom webhook providers are supported for everything else, and every integration is project-scoped and signature-authenticated.",
     "published_at": "2026-09-04T13:32:22Z",
     "published": true,
-    "audience": "oss",
+    "audience": "pro",
     "labels": [
-      "improvement"
+      "feature"
     ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/webhooks",
+    "should_highlight": true
   },
   {
-    "id": 85,
+    "id": 86,
     "slug": "faster-and-more-reliable-pipeline-execution",
     "title": "Faster and more reliable pipeline execution",
-    "description": "Pipeline runs are now more dependable and responsive. ZenML correctly reports failures for dynamic pipelines using stop-on-failure behavior, and it reduces pipeline startup overhead by reusing build checksums instead of recalculating them repeatedly.",
-    "published_at": "2026-09-04T13:32:22Z",
-    "published": true,
-    "audience": "oss",
-    "labels": [
-      "bugfix"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
-  },
-  {
-    "id": 84,
-    "slug": "stronger-security-and-platform-readiness",
-    "title": "Stronger security and platform readiness",
-    "description": "ZenML improves secure infrastructure support with **AWS RDS IAM authentication** for the MySQL store and tighter protections around workload-scoped tokens. The package is also now marked as **production/stable** on PyPI, better reflecting ZenML's maturity for adopters.",
+    "description": "Pipeline runs are now more dependable and start faster. Dynamic pipelines running with `ExecutionMode.STOP_ON_FAILURE` no longer report success when an isolated step fails — the failed step state now propagates to the overall run status. ZenML also precalculates and reuses Docker build checksums while resolving builds instead of recomputing them, cutting startup overhead for pipelines with many steps.",
     "published_at": "2026-09-04T13:32:22Z",
     "published": true,
     "audience": "oss",
     "labels": [
       "bugfix",
       "improvement"
-    ],
-    "feature_image_url": "",
-    "video_url": "",
-    "learn_more_url": "https://example.com/REPLACE-ME",
-    "docs_url": "https://docs.zenml.io/REPLACE-ME",
-    "should_highlight": false
+    ]
+  },
+  {
+    "id": 85,
+    "slug": "aws-rds-iam-database-authentication",
+    "title": "AWS RDS IAM authentication for MySQL stores",
+    "description": "The MySQL ZenML store can now authenticate to AWS RDS with **IAM database authentication** instead of a static password. ZenML generates a fresh IAM token for each database connection and enforces TLS hostname and certificate verification in IAM mode, giving self-hosted AWS deployments a passwordless option that matches RDS security best practices. Existing password-based setups keep working unchanged.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 84,
+    "slug": "workload-scoped-token-hardening",
+    "title": "Workload tokens can no longer be escalated",
+    "description": "Workload-scoped API tokens can no longer be exchanged for persistent, unscoped API tokens. Credentials issued to a pipeline run, schedule, or deployment now stay bound to that workload and expire with it, instead of being traded up for longer-lived generic API access.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
   },
   {
     "id": 83,
@@ -108,7 +107,7 @@
     "id": 79,
     "slug": "multi-pod-kubernetes-step-operator",
     "title": "Run command steps across multiple Kubernetes pods",
-    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod \u2014 making it easier to distribute workloads like torchrun-based training across pods.",
+    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod — making it easier to distribute workloads like torchrun-based training across pods.",
     "published_at": "2026-08-07T13:24:25Z",
     "published": true,
     "audience": "oss",
@@ -354,7 +353,7 @@
     "id": 60,
     "slug": "async-steps-and-hooks",
     "title": "Async steps and reworked hooks",
-    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously \u2014 submitting a run and returning immediately instead of blocking until it finishes.",
+    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously — submitting a run and returning immediately instead of blocking until it finishes.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -370,7 +369,7 @@
     "id": 59,
     "slug": "sandboxes-and-modal-execution",
     "title": "Sandboxes and Modal execution",
-    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors \u2014 each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
+    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors — each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -385,7 +384,7 @@
     "id": 58,
     "slug": "command-steps",
     "title": "Run arbitrary commands as steps",
-    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` \u2014 including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
+    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` — including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -494,7 +493,7 @@
     "id": 50,
     "slug": "pipeline-run-statistics-endpoint",
     "title": "Pipeline Run Statistics Endpoint",
-    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata\u2014ideal for building dashboards and analytics.",
+    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata—ideal for building dashboards and analytics.",
     "published_at": "2026-05-29T10:10:53Z",
     "published": true,
     "audience": "oss",
@@ -559,7 +558,7 @@
     "id": 45,
     "slug": "improved-service-connector-sharing",
     "title": "Improved service connector sharing",
-    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata\u2014matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
+    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata—matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
     "published_at": "2026-05-13T07:56:45Z",
     "published": true,
     "audience": "pro",
