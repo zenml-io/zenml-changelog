@@ -168,4 +168,4 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
 - Do not commit intermediary plans, implementation reviews, prompt exports, oracle exports, or temporary investigation outputs unless explicitly requested. Keep working notes under ignored locations such as `design/`, `prompt-exports/`, `eval-results/`, `.agents/`, or `.claude/`.
 - Never commit secrets; use repo/org secrets for workflows.
-- IMPORTANT: **Before opening a PR or making a large commit**, always run `/simplify` to review changed code for reuse opportunities, quality issues, and efficiency improvements. Fix any issues it finds before committing.
+- Before committing substantial code changes or opening their PR, review the diff for unnecessary complexity, quality issues, and efficiency improvements. Use `/simplify` when available or perform an equivalent manual review, and fix relevant findings. Content-only and instruction-only PRs need a focused diff and consistency review, not a code-simplification command.
