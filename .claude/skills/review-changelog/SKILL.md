@@ -33,49 +33,38 @@ This skill helps complete new changelog entries after our automated release work
 
 ## Workflow
 
-### Step 0: Find and Triage the PR Queue
+### Step 0: Establish the Requested Scope
 
-Before touching any entries, find which PRs are waiting for review and process them **one at a time, oldest first**.
+Review the PR or entries the user named. Do not expand a single-PR request into processing the whole queue. Explicit user instructions take precedence over this skill's guidelines; reuse decisions and authorization already given in the current task.
 
-1. **List the open PRs assigned to you for review.** The widget PRs (the ones that touch `changelog.json`) have the title prefix `Changelog widget:` and request `strickvl` as a reviewer. The companion `Release notes:` GitBook PRs are reviewed by others and are usually already merged — ignore them.
+Only discover the queue when the user requests queue review. Widget PRs touch `changelog.json`, have the title prefix `Changelog widget:`, and commonly request `strickvl` as a reviewer:
 
-   ```bash
-   gh pr list --repo zenml-io/zenml-changelog --state open --limit 50 \
-     --json number,title,headRefName,createdAt,reviewRequests \
-     --jq 'sort_by(.createdAt)'
-   ```
+```bash
+gh pr list --repo zenml-io/zenml-changelog --state open --limit 50 \
+  --json number,title,headRefName,createdAt,reviewRequests \
+  --jq 'sort_by(.createdAt)'
+```
 
-   Filter to PRs whose title starts with `Changelog widget:` and whose `reviewRequests` include `strickvl`.
-
-2. **Order the queue oldest → newest** (by `createdAt`). Show the user the ordered list as a table and confirm before starting.
-
-3. **Process each PR in order using the per-PR loop below.** Do not start the next PR until the current one is merged — later PRs branched off an older `main` and will conflict in `changelog.json` (the `id` numbering and newest-first ordering collide). Merging in order keeps conflicts predictable.
+Filter to the requested reviewer and scope, then report the oldest-first order and proceed. Read companion `Release notes:` PRs as evidence where needed; do not edit or merge them unless requested.
 
 ### Per-PR Loop
 
-For each PR in the ordered queue:
-
-1. **Check out the PR branch:**
+1. Verify the repository and working tree before checking out the requested PR. Preserve unrelated user changes; use an isolated checkout if switching would disturb them.
    ```bash
    gh pr checkout <number> --repo zenml-io/zenml-changelog
-   git pull --rebase origin main   # rebase onto latest main; resolve changelog.json conflicts if any
+   git fetch origin main
    ```
-   If there are conflicts in `changelog.json`, resolve them: keep all entries, renumber `id`s so they stay unique and sequential, and preserve newest-first ordering. The `fix-merge-conflicts` skill can help.
+   Inspect whether the branch is behind `origin/main`. For review-only work, inspect the diff without rebasing or editing files. Rebase only when needed for authorized fixes or shipping. For changelog conflicts, preserve unrelated entries, keep IDs unique and sequential, and preserve newest-first ordering.
 
-2. **Run Steps 1–3 below** to identify, review, and complete the new entries.
+2. Run Steps 1–3 below to investigate sources, prepare entry edits, and resolve material editorial questions. A review-only request produces findings and proposed edits; a request to complete or fix entries authorizes local edits.
 
-3. **Validate locally:** `uv run scripts/validate_changelog.py`.
+3. Validate edited JSON with `uv run scripts/validate_changelog.py` and prepare the preview and final diff described in Step 4.
 
-4. **Commit and push** the completed entries to the PR branch.
+4. Commit, push, upload assets, or merge only when authorized by the user's task. This skill does not grant that authorization. Complete authorized preparation before asking about a remaining publishing decision, and do not ask again for authorization already given.
 
-5. **Wait for CI to pass**, then merge:
-   ```bash
-   gh pr checks <number> --repo zenml-io/zenml-changelog --watch
-   gh pr merge <number> --repo zenml-io/zenml-changelog --squash
-   ```
-   `main` requires **1 approving review**, so a plain `--squash` is blocked with `the base branch policy prohibits the merge`. Ask the user how to clear the gate (approve as them, admin override, or they approve manually); admin override is `gh pr merge <number> --repo zenml-io/zenml-changelog --squash --admin`. Because you rebased the branch, push with `git push --force-with-lease` before merging.
+5. When shipping is requested, commit only the relevant files and push the PR branch. If an authorized rebase requires rewriting the remote branch, use `git push --force-with-lease`. Check current CI and review requirements before an authorized merge. If a required review is missing, report the gate and leave the PR ready for review; do not approve on the user's behalf or bypass branch protection.
 
-6. **Move to the next PR.** After merging, the next PR's branch is now behind `main` — rebasing it (step 1) is where you resolve the conflicts that the just-merged PR introduced.
+6. For queue review, continue to the next PR after completing the requested review work; merging is not a prerequisite. For an authorized queue merge, refresh `origin/main` after each merge and reassess conflicts in the next PR.
 
 ### Step 1: Identify New Entries
 
@@ -83,7 +72,7 @@ After checking out the PR branch, find the new entries:
 
 ```bash
 git branch --show-current
-git diff main -- changelog.json
+git diff origin/main...HEAD -- changelog.json
 ```
 
 Parse the diff to identify entries that were added (look for lines starting with `+`). New entries typically have:
@@ -92,37 +81,17 @@ Parse the diff to identify entries that were added (look for lines starting with
 
 ### Step 2: Review Each Entry
 
-For each new entry, use the `AskUserQuestion` tool to gather information. **IMPORTANT**: Always check recent entries (last ~5) in `changelog.json` for overlapping content before proceeding.
+Investigate the source PRs and check recent entries (last ~5) for overlapping content before asking editorial questions. Draft the proposed title, description, audience, labels, and verified links using the evidence and decisions already available.
 
-#### 2.0 Should Include (Ask First)
+#### 2.0 Inclusion and Editorial Decisions
 
-Before asking about details, first ask whether this entry should be included at all:
+For each entry, recommend keeping, removing, merging, or splitting it. Explain any overlap and the user-facing significance. Preserve the user's judgment about significance, grouping, and highlighting: ask when those choices remain unresolved and materially affect the result, rather than asking for every field by default.
 
-- **Yes, include this** - Proceed with remaining questions
-- **No, duplicate of recent entry** - Remove this entry entirely (content already covered in a recent changelog entry)
-- **No, not significant enough** - Remove this entry entirely (too minor for the changelog)
-- **Merge with another entry** - Combine with another new entry in this PR
+Batch unresolved decisions across entries into a concise question using the available question interface or plain chat. Present concrete proposed entries and recommended choices first. While awaiting an answer, continue source research, link verification, and other independent work.
 
-When asking this question, **provide context** by:
-1. Showing the entry title and a brief summary
-2. Listing any recent entries (last ~5) that might overlap
-3. Noting any obvious duplications
+#### 2.0.1 Update Entry Content
 
-If the user chooses to remove or merge, skip all remaining questions for this entry and handle the deletion/merge accordingly.
-
-#### 2.0.1 Update Entry Content (if keeping)
-
-If the user chooses to include the entry but mentions it needs updating (e.g., wrong focus, inaccurate description, or should be based on a specific PR), ask:
-
-- **Keep current title/description** - The generated content is accurate
-- **Update based on specific PR** - User provides a PR URL with better context (fetch and read it)
-- **Manual update** - User will provide new title/description text
-
-When updating based on a PR:
-1. Fetch the PR description using `gh pr view <number> --repo <repo> --json title,body`
-2. Extract the key user-facing changes
-3. Rewrite the entry title and description to accurately reflect the PR's changes
-4. Show the proposed update to the user for approval before applying
+Read the source PR description with `gh pr view <number> --repo <repo> --json title,body` and inspect further evidence where needed. Draft accurate user-facing copy. Apply routine factual corrections when local edits are authorized; present substantive editorial choices for the user's decision unless the user has already decided or delegated them. Do not require a second approval just to apply an approved choice.
 
 #### 2.0.2 Split over-grouped entries (common)
 
@@ -130,7 +99,7 @@ The automation's LLM groups several PRs into 2–3 "buckets" per release to keep
 
 **Heuristic for where to split:** count the distinct **source PRs** behind a bucket (from the GitBook markdown). Several unrelated PRs → split into one entry each. A cluster of genuinely small fixes (keyboard-interrupt handling, an import-failure fix) → keep them together as one "reliability roundup". A standalone example or a one-line fix bullet that the markdown lists under another release's "Fixed" section → usually drop it or fold it in, rather than give it a headline card.
 
-When splitting, ask the user how granular they want each bucket (per the 0.94.x examples in this repo's history). After splitting, **renumber** so ids stay unique and sequential, newest on top.
+Propose concrete split titles and ask about granularity only when it remains unresolved; use any preference already supplied. After splitting, **renumber** so ids stay unique and sequential, newest on top.
 
 #### 2.1 Audience
 - **oss** - Only open-source users see this
@@ -145,7 +114,7 @@ Verify the labels are correct. Options:
 - `deprecation` - Deprecated features
 
 #### 2.3 Feature Image
-Ask if there's a feature image/screenshot. Options:
+Preserve suitable existing images and use supplied assets. If the image decision remains material and unresolved, include it in the batched editorial question. Options:
 - **No image** - This field will be removed from the entry
 - **Already uploaded** - User provides existing S3 URL
 - **Local file** - User has a local image that needs processing (see [Processing Local Images](#processing-local-images))
@@ -153,12 +122,12 @@ Ask if there's a feature image/screenshot. Options:
 Images are hosted at: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/`
 
 #### 2.4 Video URL
-Ask if there's a video demonstration. If yes, get the YouTube embed URL.
+Use an existing or supplied video demonstration and verify its embed URL. Ask only if a missing video materially affects the requested result.
 - Format: `https://www.youtube-nocookie.com/embed/VIDEO_ID`
 - If no video, this field will be removed from the entry
 
 #### 2.5 Learn More URL
-Ask if there's a blog post or article. If yes, get the URL.
+Use a relevant verified blog post or article from the source evidence or user input. Ask only if the destination remains a material choice.
 - Usually a zenml.io/blog post
 - If no blog post, this field will be removed from the entry
 
@@ -190,13 +159,13 @@ Don't just ask the user to find a docs page — **investigate the source PRs fir
 4. **Suggest the verified URL** to the user as the recommended option (they can override). If no source PR added docs, present "No docs link" as the recommendation.
 
 #### 2.7 Should Highlight
-Ask if this announcement should be highlighted (pops up for users).
+Preserve existing highlighting unless the task requires a change. Recommend a value and include any unresolved highlighting decision in the batched question (highlighting pops up for users).
 - Default: false
 - Set to true for major features
 
 ### Step 3: Update changelog.json
 
-Use the Edit tool to update each entry:
+When local edits are authorized, update each entry:
 1. Update `audience` if different from default
 2. Update or verify `labels`
 3. Either set valid URLs or remove placeholder fields entirely
@@ -218,67 +187,19 @@ Use the Edit tool to update each entry:
 }
 ```
 
-### Step 4: Prompt Preview
+### Step 4: Preview and Report
 
-After updating all entries, tell the user:
+Present the final diff or proposed entries, validation result, and unresolved editorial decisions. Use the preview URL from Context when browser access is available and previewing is within the task's scope. Otherwise, give the user the preview URL and explain how to paste the JSON; state that visual verification remains outstanding.
 
-> **Next Steps:**
-> 1. Copy the updated `changelog.json` content
-> 2. Go to https://zenml-announcements-preview.vercel.app/
-> 3. Paste the JSON to preview how your entries will appear
-> 4. If everything looks good, commit and push the changes
+For review-only work, finish with findings and proposed edits. For authorized local fixes, leave a validated diff. For authorized shipping, continue the per-PR loop through the requested commit, push, or merge and report its outcome. Do not hand authorized shipping work back to the user as generic "next steps."
 
-## Example AskUserQuestion Flow
+## Example Batched Editorial Question
 
-For entry "Enhanced Stack Management with Update Functionality":
+After reading sources and drafting the changes:
 
-```
-Questions to ask (can batch related questions):
+> I recommend merging the stack-update entry with the existing stack-management announcement because both describe the same shipped change. The separate scheduling entry has a verified docs link; I recommend keeping it without highlighting. Should I use those two editorial choices?
 
-0. Should we include this entry?
-   Context: "Enhanced Stack Management with Update Functionality" - Allows updating stacks from the UI.
-   Recent entries that might overlap:
-   - ID 10: "Enhanced Pipeline Scheduling and Stack Management" - Already mentions stack update page
-
-   Options:
-   - Yes, include this (Recommended if it adds significant new detail)
-   - No, duplicate of recent entry (content already in ID 10)
-   - No, not significant enough
-   - Merge with another entry in this PR
-
-[If user chooses "Yes, include this", continue with remaining questions...]
-
-1. Audience: Is this feature available to...
-   - OSS users only
-   - Pro users only
-   - All users (Recommended)
-
-2. Labels: The current labels are ["feature"]. Is this correct?
-   - Yes, keep as feature
-   - Change to improvement
-   - Change to bugfix
-   - Other (specify)
-
-3. Do you have a feature image URL for this entry?
-   - No image
-   - Yes (will prompt for URL)
-
-4. Do you have a video URL?
-   - No video
-   - Yes (will prompt for URL)
-
-5. Do you have a blog post URL (learn more)?
-   - No blog post
-   - Yes (will prompt for URL)
-
-6. Do you have a docs URL?
-   - No documentation link
-   - Yes (will prompt for URL)
-
-7. Should this entry be highlighted (pop up for users)?
-   - No (default)
-   - Yes, highlight this
-```
+Ask this only if the choices remain unresolved. Do not repeat audience, labels, or asset questions already answered by evidence or prior user instructions.
 
 ## Processing Local Images
 
@@ -286,7 +207,7 @@ When a user has a local image file that needs to be used as a feature image:
 
 ### Step 1: Get the Local File Path
 
-Ask the user for the full path to their local image file (PNG, JPG, etc.).
+Use the supplied local path. Ask for the path only if the user requested an image and its file is missing.
 
 ### Step 2: Convert to AVIF
 
@@ -303,7 +224,7 @@ Use the `avif-image-compressor` skill to convert and compress the image:
 
 ### Step 3: Upload to S3
 
-Upload **both** the AVIF and the original PNG to the `public-flavor-logos` S3 bucket:
+When uploading is authorized, upload **both** the AVIF and the original PNG to the `public-flavor-logos` S3 bucket:
 
 ```bash
 # Upload the AVIF version (used by the dashboard widget)
@@ -313,9 +234,8 @@ aws s3 cp /tmp/output-name.avif s3://public-flavor-logos/whats_new/output-name.a
 aws s3 cp /path/to/original-image.png s3://public-flavor-logos/whats_new/output-name.png --profile default
 ```
 
-- Try the `default` AWS profile first
-- If that fails, try the `zenml` profile
-- All PR reviewers on this repo should have permissions to upload
+- Use the `default` AWS profile as required by the repository guidance.
+- If it fails, report the error; do not switch accounts or profiles without authorization.
 
 ### Step 4: Get the Final URL
 
