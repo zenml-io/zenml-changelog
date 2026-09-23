@@ -7,6 +7,33 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.97.0 (2026-09-23)
+
+See what's new and improved in version 0.97.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/20.jpg" align="left" alt="ZenML 0.97.0" width="800">
+
+### Breaking Changes
+
+* Resource pools have been reworked to use ZenML Pro Resource Manager v2, and the old OSS resource-pool control-plane objects and related API/CLI/RBAC behavior have been removed. If you used legacy resource pool management in OSS or automation built on those endpoints/commands, you will need to migrate to the new resource request model and update any scripts or integrations accordingly. [PR #4977](https://github.com/zenml-io/zenml/pull/4977)
+* ZenML now requires Click `>=8.3.3,<=8.5.0`. If your environment, plugin, or custom CLI extension pins an older Click version or depends on older Click behavior, update those dependencies to a compatible version before upgrading ZenML. [PR #5145](https://github.com/zenml-io/zenml/pull/5145)
+* Dictionary outputs with non-string keys are no longer materialized through the JSON path. If you relied on reading such artifacts back as JSON-compatible data with keys converted to strings, update your code to preserve original key types or change outputs to use string keys for JSON interoperability. [PR #5124](https://github.com/zenml-io/zenml/pull/5124)
+* Log retrieval now uses a paginated/filterable entries API instead of assuming a single full log blob, especially for external log stores. If you consume ZenML log APIs directly or built tooling around the previous response shape, update it to use the new log entries endpoint and pagination/filter parameters. [PR #5158](https://github.com/zenml-io/zenml/pull/5158)
+
+- **Reduced database growth from unused pipeline snapshots**: ZenML now cleans up anonymous pipeline snapshots that are no longer referenced by runs, deployments, schedules, or templates. Snapshot creation is also atomic, so failed or interrupted creation attempts no longer leave partial snapshot records behind, and replacing named snapshots no longer keeps unused superseded snapshots around. This helps long-running ZenML deployments keep database size under control with less manual maintenance. [PR #5166](https://github.com/zenml-io/zenml/pull/5166)
+
+<details><summary>Fixed</summary>
+
+- **Dynamic pipeline DAG loading**: Dynamic pipeline run DAGs now load correctly even when step records are returned out of dependency order. This fixes cases where the UI or API could fail to render a dynamic run graph despite the underlying run data being valid. [PR #5263](https://github.com/zenml-io/zenml/pull/5263)
+- **Larger cached API transactions**: API transaction results are now validated against the compressed storage format instead of the uncompressed Base64 JSON representation. This allows large but highly compressible responses to be cached correctly, reducing unnecessary retries when an original request completes after the client timeout. [PR #5262](https://github.com/zenml-io/zenml/pull/5262)
+- **Capped exponential backoff overflow**: Retry loops using capped exponential backoff no longer keep calculating ever-growing delay values after the maximum delay has been reached. This prevents `OverflowError` failures in very long-running retry scenarios while preserving the configured maximum delay behavior. [PR #5265](https://github.com/zenml-io/zenml/pull/5265)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.97.0)
+
+***
+
 ## 0.96.4 (2026-09-04)
 
 See what's new and improved in version 0.96.4.
