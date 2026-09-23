@@ -1,5 +1,62 @@
 [
   {
+    "id": 91,
+    "slug": "resource-pools-v2-resource-manager",
+    "title": "Resource pools now run on the ZenML Pro Resource Manager",
+    "description": "Resource pools have been rebuilt on the new ZenML Pro **Resource Manager**, which now decides scheduling, allocation, and eviction. Eligible dynamic steps request resources through it and wait for an allocation before they start, and Kubernetes is the first backend to apply the allocated CPU, memory, and GPU capacity as pod requests and limits. Running steps keep their allocation alive through step heartbeats and are cancelled gracefully if their resources are reclaimed. **Breaking:** the previous resource pool implementation has been removed together with its data — existing pools, policies, and resource requests are not migrated and need to be set up again.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement",
+      "deprecation"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/resource-pools",
+    "should_highlight": true
+  },
+  {
+    "id": 90,
+    "slug": "prune-unused-pipeline-snapshots",
+    "title": "Prune unused pipeline snapshots",
+    "description": "Unnamed pipeline snapshots left behind by deleted runs, deployments, and schedules can now be cleaned up. Run `zenml pipeline snapshot prune --older-than-days 90` (also available as `zenml prune snapshots`) to delete snapshots that nothing references anymore, or add `--dry-run` to see how many would go first. Replacing a named snapshot with `replace=True` now deletes the old one when it is unused, and snapshot creation is atomic, so a failed attempt no longer leaves a partial snapshot behind.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/user-guides/best-practices/keep-your-dashboard-server-clean",
+    "should_highlight": false
+  },
+  {
+    "id": 89,
+    "slug": "paginated-logs-for-external-log-stores",
+    "title": "Paginated, filterable logs for external log stores",
+    "description": "Reading logs from external log stores no longer means one huge query or hitting the backend's rate limits. A new `GET /api/v1/logs/{logs_id}/entries` endpoint returns logs in pages with cursors and supports `search`, `level`, `since`, and `until` filters, and the Datadog log store has been rewritten on top of it. If you maintain a custom log store, update it to the new `BaseLogStore.fetch()` signature and import `LogEntry` from `zenml.models`. For Datadog, the existing run and step log endpoints now return the newest 1,000 entries instead of up to 50,000.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement",
+      "deprecation"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/log-stores",
+    "should_highlight": false
+  },
+  {
+    "id": 88,
+    "slug": "pipeline-reliability-fixes-0-97",
+    "title": "Pipeline reliability fixes",
+    "description": "Dynamic pipeline graphs now render correctly even when step records come back out of dependency order, and long-running retry loops no longer crash with an `OverflowError` after reaching the maximum backoff delay. Dictionaries with non-string keys are no longer stored as JSON, so a step returning `{1: 1}` now hands `{1: 1}` to the next step instead of `{\"1\": 1}`. Large API responses are also cached correctly now, which avoids unnecessary retries after a client timeout.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix"
+    ],
+    "should_highlight": false
+  },
+  {
     "id": 87,
     "slug": "webhook-driven-pipeline-automation",
     "title": "Webhook-driven pipeline automation",
