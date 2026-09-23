@@ -143,7 +143,9 @@ def test_main_happy_path_writes_structured_result(
         release_notes_prs=[release_pr],
         breaking_prs=[breaking_pr],
     )
-    (tmp_path / "changelog.json").write_text("[]\n", encoding="utf-8")
+    changelog_path = tmp_path / "changelog.json"
+    existing_changelog = '[\n  {\n    "id": 1,\n    "title": "Older entry \u2014 untouched"\n  }\n]\n'
+    changelog_path.write_text(existing_changelog, encoding="utf-8")
     monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: collection)
     monkeypatch.setattr(
         uc,
@@ -193,6 +195,9 @@ def test_main_happy_path_writes_structured_result(
     assert "included zenml-io/zenml 0.84.0 -> 0.85.0" in result.source_windows
     assert "release_notes=1" in result.source_windows
     assert "breaking=1" in result.source_windows
+    written = changelog_path.read_text(encoding="utf-8")
+    assert written.endswith(existing_changelog[1:])
+    assert "\\u2014" not in written
 
 
 def test_main_validates_release_note_body_before_writing_artifacts(

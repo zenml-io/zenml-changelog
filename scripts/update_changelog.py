@@ -890,7 +890,7 @@ def main() -> None:
     updated_changelog = new_entries + existing_changelog
     schema_path = Path(__file__).resolve().parents[1] / "changelog_schema" / "announcement-schema.json"
     validate_changelog_data(updated_changelog, schema_path)
-    changelog_path.write_text(json.dumps(updated_changelog, indent=2) + "\n")
+    changelog_path.write_text(json.dumps(updated_changelog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     validate_changelog(changelog_path, schema_path)
 
     image_number = get_next_image_number(
