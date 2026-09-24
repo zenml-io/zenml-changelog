@@ -55,7 +55,7 @@
 				"type": "array",
 				"items": {
 					"type": "string",
-					"enum": ["bugfix", "deprecation", "improvement", "feature"]
+					"enum": ["breaking change", "bugfix", "deprecation", "feature", "improvement"]
 				},
 				"default": []
 			}

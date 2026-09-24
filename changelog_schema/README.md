@@ -130,10 +130,11 @@ Each changelog item is a JSON object with the following fields. The announcement
 - **Required:** No
 - **Default:** `[]` (empty array)
 - **Allowed Values:** Only the following labels are recognized:
-  - `"feature"` - For new features
-  - `"improvement"` - For enhancements to existing functionality
+  - `"breaking change"` - For changes that break backward compatibility
   - `"bugfix"` - For bug fixes
   - `"deprecation"` - For deprecated features or warnings
+  - `"feature"` - For new features
+  - `"improvement"` - For enhancements to existing functionality
 - **Note:** Any labels not in the allowed list will be filtered out automatically
 - **Example:** `["feature"]`, `["bugfix", "improvement"]`
 
