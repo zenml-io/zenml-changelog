@@ -7,6 +7,43 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.98.0 (2026-10-14)
+
+See what's new and improved in version 0.98.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/21.jpg" align="left" alt="ZenML 0.98.0" width="800">
+
+### Breaking Changes
+
+* The `langchain` integration now supports `langchain>=0.3.5,<1.0` instead of the previously pinned `0.3.0`. If you rely on a fixed LangChain version, update your environment constraints accordingly, and note that LangChain 1.x is still not supported by ZenML and may require you to stay on a compatible pre-1.0 release. [PR #5341](https://github.com/zenml-io/zenml/pull/5341)
+
+#### Triggers and automation
+
+- **Dynamic webhook event filters**: Webhook triggers can now match a provider’s raw event type and fields directly from the authenticated JSON body. This gives you an escape hatch for events or payload fields that ZenML’s typed event catalog does not expose yet, such as matching newly opened GitHub pull requests targeting a specific branch. [PR #5247](https://github.com/zenml-io/zenml/pull/5247)
+- **Forward-compatible `run.trigger` resolution**: Snapshots updated with this release can resolve trigger types that are introduced in future ZenML versions. This reduces the need to refresh snapshots just to use newly added trigger types such as platform or webhook triggers. [PR #5281](https://github.com/zenml-io/zenml/pull/5281)
+- **Safer snapshot deletion for triggered pipelines**: ZenML now checks whether snapshots are attached to triggers before deletion and warns users about unintended removals. This helps prevent accidentally breaking automations that still depend on a snapshot. [PR #5284](https://github.com/zenml-io/zenml/pull/5284)
+
+#### Kubernetes, Run:ai, and workload ownership
+
+- **Synchronized OIDC Linux identities for Kubernetes workloads**: ZenML Pro deployments using an enterprise identity provider can now carry synchronized `linux_uid` and `linux_gid` claims into workloads created by the Kubernetes orchestrator and Kubernetes step operator. This keeps the process UID and primary GID aligned with organization-managed Linux accounts, which is especially useful for shared filesystems and cluster security policies. [PR #5301](https://github.com/zenml-io/zenml/pull/5301)
+- **Workspace account annotations on Kubernetes and Run:ai workloads**: Kubernetes Jobs, Pod templates, scheduled and dynamic executions, and Run:ai training workloads now include a resolvable `zenml.io/workspace-user-id` annotation. This gives platform and audit tooling the actual workspace account UUID while preserving custom annotations and leaving `ZENML_USER_ID` unchanged. [PR #5326](https://github.com/zenml-io/zenml/pull/5326)
+- **Owners for managed Kubernetes sandboxes**: Kubernetes-managed Sandbox sessions can now be assigned owners. This makes sandbox sessions that are closely related to a step easier to track and helps avoid leaving orphaned sessions behind. [PR #5336](https://github.com/zenml-io/zenml/pull/5336)
+
+- **Workspace service account activation controls**: Activation and deactivation are restored for deprecated workspace service accounts and legacy API keys, including keys retained after adoption. This supports migration cleanup and credential rollback while preserving the existing deprecation restrictions and deletion checks. [PR #5340](https://github.com/zenml-io/zenml/pull/5340)
+- **Transformers v5 support in the Hugging Face integration**: The Hugging Face integration now supports Transformers v5 while retaining compatibility with v4. ZenML only registers the TensorFlow model materializer when running on Transformers v4, and the Accelerate integration now uses cross-version CPU configuration so users can upgrade their Hugging Face stack more smoothly. [PR #5321](https://github.com/zenml-io/zenml/pull/5321)
+- **TypeSafe Jev hooks integration**: A new `typesafe` integration adds `jev_failure_triage_hook` and `jev_run_summary_hook` for storing Jev’s typed, probability-scored answers as ZenML run metadata. Users can attach structured failure triage and run summaries to their runs without building custom metadata plumbing. [PR #5312](https://github.com/zenml-io/zenml/pull/5312)
+
+<details><summary>Fixed</summary>
+
+- **Artifact cache loading for pandas and NumPy artifacts**: `ArtifactVersionResponse.load()` no longer evaluates cached artifact data in a boolean context, which could raise errors like “The truth value of a DataFrame is ambiguous” when loading cached DataFrames or arrays. Loading the same artifact multiple times inside dynamic pipelines now works correctly for DataFrames, NumPy arrays, and other falsy values. [PR #5272](https://github.com/zenml-io/zenml/pull/5272)
+- **Concurrent deployed pipeline invocations with remote orchestrators**: ZenML no longer lets per-invocation step runner cleanup clear the deployment service’s process-wide run context. Concurrent `/invoke` calls against deployments that use remote orchestrators such as Kubernetes should no longer race and fail with `RuntimeError: Run context not initialized`. [PR #5159](https://github.com/zenml-io/zenml/pull/5159)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.98.0)
+
+***
+
 ## 0.97.0 (2026-09-23)
 
 See what's new and improved in version 0.97.0.
