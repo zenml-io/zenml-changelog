@@ -1,5 +1,56 @@
 [
   {
+    "id": 94,
+    "slug": "more-flexible-triggers-and-safer-snapshots",
+    "title": "More flexible triggers and safer snapshots",
+    "description": "Triggers are now more adaptable and forward-compatible, including support for dynamic target events and smoother adoption of new trigger types without forcing snapshot updates. Snapshot deletion is also safer, with checks that help prevent accidentally removing snapshots that are still tied to triggers.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 93,
+    "slug": "more-reliable-runs-and-workload-execution",
+    "title": "More reliable runs and workload execution",
+    "description": "Pipeline and workload execution is more robust across local and remote environments. This release fixes artifact reload issues in dynamic pipelines, resolves run-context teardown races during concurrent deployment invocations, and improves Kubernetes-based execution with synchronized identities, workspace account annotations, and better sandbox ownership handling.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 92,
+    "slug": "expanded-integrations-and-account-controls",
+    "title": "Expanded integrations and account controls",
+    "description": "ZenML now supports newer integration workflows, including Hugging Face Transformers v5 compatibility and TypeSafe Jev hooks for storing structured run and failure insights as metadata. Workspace-level service account activation and deactivation have also been restored to make migration cleanup and credential management easier.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 91,
     "slug": "resource-pools-v2-resource-manager",
     "title": "Resource pools now run on the ZenML Pro Resource Manager",
