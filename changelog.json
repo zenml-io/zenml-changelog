@@ -1,5 +1,73 @@
 [
   {
+    "id": 96,
+    "slug": "match-any-webhook-event-and-safer-snapshot-deletion",
+    "title": "Match any webhook event, and safer snapshot deletion",
+    "description": "Webhook triggers can now match a provider's raw event type and any field in the authenticated JSON payload, so you can react to events that ZenML's typed event catalog doesn't cover yet, such as only newly opened GitHub pull requests that target a specific branch. Snapshots updated with this release also resolve trigger types added in future ZenML versions, so you no longer need to refresh them just to use a new trigger type. ZenML now also warns you before you delete a snapshot that a trigger still depends on.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/webhooks/custom",
+    "should_highlight": false
+  },
+  {
+    "id": 95,
+    "slug": "typesafe-jev-hooks",
+    "title": "Store Jev failure triage and run summaries as run metadata",
+    "description": "A new `typesafe` integration adds two hooks backed by TypeSafe's Jev model. Attach `jev_failure_triage_hook` as an `on_failure` hook to classify each failure (for example infrastructure, data, code, dependency, or credentials) with a probability, and `jev_run_summary_hook` to record structured run summaries. The answers are stored as ZenML run metadata, so you get searchable failure triage on your runs without writing custom metadata code.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/hooks",
+    "should_highlight": true
+  },
+  {
+    "id": 94,
+    "slug": "kubernetes-workloads-carry-organization-identity",
+    "title": "Kubernetes workloads carry your organization's identity",
+    "description": "Kubernetes Jobs, pod templates, scheduled and dynamic executions, and Run:ai training workloads now carry a `zenml.io/workspace-user-id` annotation with the workspace account that launched them, which makes audit and platform tooling easier to wire up. ZenML Pro deployments with an enterprise identity provider can also pass synchronized `linux_uid` and `linux_gid` claims into Kubernetes orchestrator and step operator workloads, so processes run as the matching organization Linux account on shared filesystems. Kubernetes-managed sandbox sessions can now be given owners, so they are cleaned up with the step they belong to instead of being left orphaned.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/kubernetes",
+    "should_highlight": false
+  },
+  {
+    "id": 93,
+    "slug": "transformers-v5-and-wider-langchain-support",
+    "title": "Transformers v5 and wider LangChain support",
+    "description": "The Hugging Face integration now supports Transformers v5 while staying compatible with v4, and the Accelerate integration uses a CPU configuration that works across both versions. The `langchain` integration now accepts `langchain>=0.3.5,<1.0` instead of pinning `0.3.0`. LangChain 1.x is not supported yet, so if you pin an exact LangChain version, update your constraints to fall inside the new range.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 92,
+    "slug": "pipeline-reliability-fixes-0-98",
+    "title": "Pipeline reliability fixes",
+    "description": "Loading the same cached pandas DataFrame or NumPy array more than once inside a dynamic pipeline no longer fails with \"The truth value of a DataFrame is ambiguous\". Concurrent `/invoke` calls against deployments that use remote orchestrators such as Kubernetes no longer race and fail with `RuntimeError: Run context not initialized`.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ],
+    "should_highlight": false
+  },
+  {
     "id": 91,
     "slug": "resource-pools-v2-resource-manager",
     "title": "Resource pools now run on the ZenML Pro Resource Manager",
