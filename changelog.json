@@ -1,5 +1,23 @@
 [
   {
+    "id": 97,
+    "slug": "identity-aware-workspace-access",
+    "title": "Identity-aware workspace access",
+    "description": "ZenML Pro administrators can now sync selected OIDC claims from their enterprise identity provider into ZenML user accounts. This makes it easier to propagate identity attributes such as POSIX user and group information so workloads can run with the authenticated user's expected access model.",
+    "published_at": "2026-10-27T14:54:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 96,
     "slug": "match-any-webhook-event-and-safer-snapshot-deletion",
     "title": "Match any webhook event, and safer snapshot deletion",
