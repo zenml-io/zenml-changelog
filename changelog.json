@@ -1,5 +1,19 @@
 [
   {
+    "id": 97,
+    "slug": "sync-identity-provider-claims-self-hosted-pro",
+    "title": "Sync identity-provider claims into ZenML users (self-hosted Pro)",
+    "description": "Self-hosted ZenML Pro administrators can now copy selected claims from their enterprise identity provider onto ZenML user accounts, using new Helm values (`zenml.auth.sso.uidClaim`, `gidClaim` and `extraClaims`). Map a Linux UID and GID claim, and pipelines launched with the Kubernetes orchestrator or step operator on ZenML 0.98.0 or later run as that same Linux user and group, so file permissions on shared storage line up with your organization's accounts. Users pick up their claims on their next SSO login.",
+    "published_at": "2026-10-27T14:54:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/kubernetes#running-with-an-externally-synchronized-linux-identity",
+    "should_highlight": false
+  },
+  {
     "id": 96,
     "slug": "match-any-webhook-event-and-safer-snapshot-deletion",
     "title": "Match any webhook event, and safer snapshot deletion",
