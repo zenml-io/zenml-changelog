@@ -7,6 +7,16 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.16.2 (2026-10-27)
+
+See what's new and improved in version 0.16.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML Pro 0.16.2" width="800">
+
+- **Synchronize OIDC claims into ZenML users**: On-premises ZenML Pro administrators can now configure selected OIDC claims from their enterprise identity provider to be synchronized onto ZenML user accounts. This enables identity-aware workspace setups, including propagating LDAP-backed Linux UID/GID values so Kubernetes pipeline workloads can run with the same POSIX identity as the authenticated user. The configuration also supports an extensible set of additional claims, making it easier to support future identity-driven workspace capabilities without custom database changes.
+
+***
+
 ## 0.14.5 (2026-08-27)
 
 See what's new and improved in version 0.14.5.
