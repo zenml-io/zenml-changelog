@@ -1,5 +1,47 @@
 [
   {
+    "id": 100,
+    "slug": "rename-projects-cli-sdk",
+    "title": "Rename projects from the CLI and SDK",
+    "description": "You can now rename a project from the CLI with `zenml project update <name-or-uuid>`, using `--name`, `--display-name`, and `--description`. The technical name and the display name can be changed separately, and the project keeps its UUID, so its runs, pipelines, and other resources stay attached. Updating a project from the SDK now also leaves fields you don't pass unchanged, and lets you explicitly clear the description.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/projects",
+    "should_highlight": false
+  },
+  {
+    "id": 99,
+    "slug": "helm-chart-pod-security-restricted",
+    "title": "Helm chart pods meet Pod Security `restricted` by default",
+    "description": "Every pod the ZenML Helm chart creates now satisfies the Kubernetes Pod Security `restricted` profile out of the box: the server, the database migration job, workers, CA certificate init containers, and the `helm test` pod. You no longer need extra overrides to deploy into locked-down namespaces. When you upgrade, use `--reset-then-reuse-values` (Helm 3.14+) instead of `--reuse-values`. With `--reuse-values`, Helm keeps the defaults from the chart version you first installed, and in a `restricted` namespace the upgrade fails because the database migration pod is rejected.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/deploying-zenml/deploying-zenml/deploy-with-helm",
+    "should_highlight": false
+  },
+  {
+    "id": 98,
+    "slug": "reliability-fixes-0-98-1",
+    "title": "More reliable installs, GCS runs, and replays",
+    "description": "Installing a ZenML integration no longer upgrades shared packages into versions that break ZenML's own imports, GCP runner images no longer pull in a conflicting OpenTelemetry version, and the MLflow integration now installs on Python 3.13 and slim images without needing a C++ compiler. Steps using a GCS artifact store no longer hang during final uploads or cleanup, and two new optional settings, `request_timeout` and `read_cache_type`, help if you still see stalls. ZenML also keeps step outputs when a step fails after its artifacts were recorded, replayed runs now pass along parameters the original run took from defaults, and CLI `--label` values can now contain `=`, such as URLs with query strings.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/artifact-stores/gcp",
+    "should_highlight": false
+  },
+  {
     "id": 97,
     "slug": "sync-identity-provider-claims-self-hosted-pro",
     "title": "Sync identity-provider claims into ZenML users (self-hosted Pro)",
