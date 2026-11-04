@@ -20,7 +20,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from github import Auth, Github
+from github import Auth, Github, UnknownObjectException
+from github.Commit import Commit
+from github.PullRequest import PullRequest
+from github.Repository import Repository
 from pydantic import BaseModel, Field
 
 try:
@@ -208,6 +211,7 @@ try:
     from scripts.source_windows import (
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
         MultiSourceCollectionResult,
+        SourceReleaseWindow,
         collect_multi_source_prs as _collect_multi_source_prs,
         format_source_window_body,
     )
@@ -236,6 +240,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
     from source_windows import (  # type: ignore[no-redef]
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
         MultiSourceCollectionResult,
+        SourceReleaseWindow,
         collect_multi_source_prs as _collect_multi_source_prs,
         format_source_window_body,
     )
@@ -437,6 +442,13 @@ def find_previous_tag(gh: Github, repo_name: str, current_tag: str) -> Optional[
     return strip_prefix(repo_name, previous_prefixed)
 
 
+# Backports are squash-merged with the original PR's title, so their own title
+# ends with the original PR reference, e.g. "Fix X (#5405)" merged as #5407.
+BACKPORT_TITLE_PR_REF = re.compile(r"\(#(\d+)\)\s*$")
+
+FIRST_RELEASE_SINCE_DATE = datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+
 def _release_date(repo, prefixed_tag: str) -> datetime:
     """Return release timestamp for a tag that already includes any repo-specific prefix."""
     release = repo.get_release(prefixed_tag)
@@ -447,27 +459,22 @@ def _release_date(repo, prefixed_tag: str) -> datetime:
         published = published.replace(tzinfo=timezone.utc)
     return published
 
-def get_release_window(
-    gh: Github,
-    repo_name: str,
-    since_tag: Optional[str],
-    until_tag: str,
-) -> Tuple[datetime, datetime]:
-    """Compute the date range between two release tags.
 
-    Returns (since_date, until_date) where since_date defaults to 2020-01-01 if no previous tag.
-    """
-    repo = gh.get_repo(repo_name)
-    prefixed_until_tag = with_prefix(repo_name, until_tag)
-    until_date = _release_date(repo, prefixed_until_tag)
+def _pr_to_dict(pr: PullRequest, repo_name: str) -> Dict[str, Any]:
+    merged_at = pr.merged_at
+    if merged_at is not None and merged_at.tzinfo is None:
+        merged_at = merged_at.replace(tzinfo=timezone.utc)
+    return {
+        "number": pr.number,
+        "title": pr.title,
+        "url": pr.html_url,
+        "author": pr.user.login if pr.user else "unknown",
+        "body": pr.body or "",
+        "labels": [label_item.name for label_item in pr.labels],
+        "merged_at": merged_at,
+        "repo": repo_name,
+    }
 
-    if since_tag is None:
-        since_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
-    else:
-        prefixed_since_tag = with_prefix(repo_name, since_tag)
-        since_date = _release_date(repo, prefixed_since_tag)
-
-    return since_date, until_date
 
 def search_merged_prs(
     gh: Github,
@@ -496,26 +503,111 @@ def search_merged_prs(
         pr = repo.get_pull(issue.number)
         if not pr.merged_at:
             continue
-
-        merged_at = pr.merged_at
-        if merged_at.tzinfo is None:
-            merged_at = merged_at.replace(tzinfo=timezone.utc)
-
-        prs.append(
-            {
-                "number": pr.number,
-                "title": pr.title,
-                "url": pr.html_url,
-                "author": pr.user.login if pr.user else "unknown",
-                "body": pr.body or "",
-                "labels": [label_item.name for label_item in pr.labels],
-                "merged_at": merged_at,
-                "repo": repo_name,
-            }
-        )
+        prs.append(_pr_to_dict(pr, repo_name))
 
     prs.sort(key=lambda pr_item: pr_item["merged_at"])
     return prs
+
+
+def _merged_prs_for_commit(commit: Commit) -> List[PullRequest]:
+    """Return the merged PRs that introduced a commit.
+
+    GitHub also lists open PRs whose branches contain the commit, and later merge
+    PRs that carried it (e.g. a staging -> main release PR), so the PR whose merge
+    commit is this exact commit wins when there is one.
+    """
+    merged = [pr for pr in commit.get_pulls() if pr.merged_at]
+    exact = [pr for pr in merged if pr.merge_commit_sha == commit.sha]
+    return exact or merged
+
+
+def _resolve_backport(repo: Repository, pr: PullRequest, base_branch: str) -> PullRequest:
+    """Map a backport PR (merged into e.g. ``release/*``) to its original base-branch PR.
+
+    Keying on the original lists the change once when both commits are in the
+    range, and records the number the consumed-PR ledger needs to filter the
+    original out of a later release whose range contains its base-branch commit.
+    """
+    if pr.base.ref == base_branch:
+        return pr
+    match = BACKPORT_TITLE_PR_REF.search(pr.title or "")
+    if match is None or int(match.group(1)) == pr.number:
+        return pr
+    try:
+        original = repo.get_pull(int(match.group(1)))
+    except UnknownObjectException:
+        return pr
+    if original.merged_at and original.base.ref == base_branch:
+        return original
+    return pr
+
+
+def list_commit_range_prs(
+    gh: Github,
+    repo_name: str,
+    base_branch: str,
+    previous_tag: str,
+    current_tag: str,
+) -> List[Dict[str, Any]]:
+    """List merged PRs whose commits are in ``previous_tag...current_tag``, oldest first.
+
+    Backports are reported as their original PR, with the labels of both.
+    """
+    repo = gh.get_repo(repo_name)
+    comparison = repo.compare(
+        with_prefix(repo_name, previous_tag),
+        with_prefix(repo_name, current_tag),
+    )
+    prs_by_number: Dict[int, Dict[str, Any]] = {}
+    for commit in comparison.commits:
+        for pr in _merged_prs_for_commit(commit):
+            original = _resolve_backport(repo, pr, base_branch)
+            pr_dict = prs_by_number.setdefault(original.number, _pr_to_dict(original, repo_name))
+            for label_item in pr.labels:
+                if label_item.name not in pr_dict["labels"]:
+                    pr_dict["labels"].append(label_item.name)
+    return sorted(prs_by_number.values(), key=lambda pr_item: pr_item["merged_at"])
+
+
+def list_window_prs(
+    gh: Github,
+    window: SourceReleaseWindow,
+    labels: List[str],
+) -> List[Dict[str, Any]]:
+    """List merged PRs in a source window that carry any of ``labels``.
+
+    The window is the commit range between its two tags, not the time between
+    their GitHub releases: tags sit on release branches cut before publishing,
+    so a PR merged between the cut and the publish date ships in the next release.
+    """
+    if window.previous_tag is not None:
+        prs = list_commit_range_prs(
+            gh,
+            window.source_repo,
+            window.base_branch,
+            window.previous_tag,
+            window.current_tag,
+        )
+        return [pr for pr in prs if any(label in pr["labels"] for label in labels)]
+
+    # Without a previous tag there is no range to compare, so take every PR merged
+    # into the base branch up to the current release.
+    repo = gh.get_repo(window.source_repo)
+    until_date = _release_date(repo, with_prefix(window.source_repo, window.current_tag))
+    prs = []
+    for label in labels:
+        prs.extend(
+            search_merged_prs(
+                gh,
+                window.source_repo,
+                window.base_branch,
+                FIRST_RELEASE_SINCE_DATE,
+                until_date,
+                label,
+            )
+        )
+    return dedupe_prs_by_number(prs)
+
 
 def dedupe_prs_by_number(prs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove duplicate PRs by number, keeping first occurrence, then sort by merged_at."""
@@ -583,8 +675,7 @@ def collect_multi_source_prs(
         breaking_change_labels=BREAKING_CHANGE_LABELS,
         find_latest_release_tag=find_latest_release_tag,
         find_previous_tag=find_previous_tag,
-        get_release_window=get_release_window,
-        search_merged_prs=search_merged_prs,
+        list_window_prs=list_window_prs,
         dedupe_prs_by_number=dedupe_prs_by_number,
     )
 

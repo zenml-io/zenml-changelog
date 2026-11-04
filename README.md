@@ -56,7 +56,7 @@ flowchart TD
 - Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-cloud-api`) emits `repository_dispatch` (`release-published`).
 - Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on ownership: a widget PR for dashboard files and a release-notes PR for markdown plus the consumed-source ledger.
 - Workflow handoff: `scripts/update_changelog.py` writes deterministic machine metadata to `changelog_workflow_result.json` (or the `CHANGELOG_WORKFLOW_RESULT` path). The workflow then runs `scripts/workflow_result.py write-github-outputs` to publish the stable GitHub Actions outputs: `has_changes`, `markdown_file`, `breaking_changes`, `needs_attention`, and `source_windows`. Stdout is only for human-readable logs, not workflow parsing.
-- Script tasks: resolve each source repo's release window, skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
+- Script tasks: resolve each source repo's release window (the commit range between its previous and current tag, with backport PRs mapped to their original PR), skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
 
 ### PR Routing
@@ -215,7 +215,7 @@ uv run scripts/build_comparison_app.py \
   --model "Claude baseline" --model "OpenAI routed" --model "OpenAI 5.4" --model "OpenAI 5.5"
 ```
 
-`capture-release` reuses the automation's own PR-collection (previous-tag → date window → merged `release-notes`/breaking PRs), bundling `zenml` + `zenml-dashboard`, and writes `real-zenml-*.json` fixtures. The built HTML lives under the gitignored `eval-results/` tree and is a build artifact, not committed. Do not commit generated real fixtures from `tests/fixtures/changelog-evals/real/` unless explicitly requested.
+`capture-release` reuses the automation's own PR-collection (previous-tag → tag commit range → merged `release-notes`/breaking PRs), bundling `zenml` + `zenml-dashboard`, and writes `real-zenml-*.json` fixtures. The built HTML lives under the gitignored `eval-results/` tree and is a build artifact, not committed. Do not commit generated real fixtures from `tests/fixtures/changelog-evals/real/` unless explicitly requested.
 
 ## OSS GitHub Release Sync Contract
 

@@ -62,7 +62,8 @@ This repo is the canonical source of ZenML release metadata:
     - **Release notes PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file and `.consumed_sources_state`. Reviewers: `schustmi,bcdurak`. Labels: `core-squad,internal`.
 - Script: `scripts/update_changelog.py`
   - Uses `REPO_CONFIG` with nested `sources[]` arrays to define bundled repos per trigger.
-  - For each source repo: finds its previous tag, computes release window, and checks `.consumed_sources_state` before fetching PRs.
+  - For each source repo: finds its previous tag, and checks `.consumed_sources_state` before fetching PRs.
+  - A source window is the commit range `<previous_tag>...<current_tag>` (GitHub compare API), not the time between GitHub release publish dates: release tags sit on `release/*` branches cut before publishing, so a PR merged after the cut ships in the next release. Each commit maps to the PR that merged it; backport PRs into a non-default branch whose title ends in `(#N)` map to original PR `#N`, so a change is listed and recorded in the ledger once. Without a previous tag, it falls back to searching merged PRs on the source's default branch up to the release date.
   - Already-consumed windows are finalized windows: they are skipped before the LLM prompt is built and are not reopened for late-labeled PRs. Already-consumed repo-qualified PR keys are filtered as a second guardrail.
   - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
   - Generates 2-3 grouped changelog entries via the configured structured-output provider. The script default is Anthropic; the release workflow defaults production generation to OpenAI unless `CHANGELOG_LLM_PROVIDER` is set differently.

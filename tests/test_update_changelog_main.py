@@ -46,8 +46,6 @@ def make_collection(
         base_branch="develop",
         previous_tag="0.84.0",
         current_tag="0.85.0",
-        since_date=uc.datetime(2026, 6, 1, tzinfo=uc.timezone.utc),
-        until_date=uc.datetime(2026, 6, 2, tzinfo=uc.timezone.utc),
         is_primary=True,
     )
     return uc.MultiSourceCollectionResult(
