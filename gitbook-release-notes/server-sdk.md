@@ -7,6 +7,33 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.98.1 (2026-11-04)
+
+See what's new and improved in version 0.98.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML 0.98.1" width="800">
+
+- **Rename projects from the CLI and SDK**: You can now rename projects with `zenml project update <name-or-uuid>` using `--name`, `--display-name`, and `--description` ([PR #5367](https://github.com/zenml-io/zenml/pull/5367)). Technical names and display names can be changed independently while preserving the project UUID and associated resources, and SDK updates now correctly preserve omitted fields or explicitly clear descriptive fields.
+- **Helm chart pods now satisfy restricted Pod Security defaults**: The default ZenML Helm chart pod security settings now work in namespaces enforcing Kubernetes Pod Security `restricted` ([PR #5397](https://github.com/zenml-io/zenml/pull/5397)). This also applies the chart security values consistently to CA certificate init containers and Helm test pods, reducing the extra overrides needed for locked-down clusters.
+
+<details>
+<summary>Fixed</summary>
+
+- **More reliable integration installs**: Installing ZenML integrations is now less likely to break ZenML’s already-installed dependency set ([PR #5399](https://github.com/zenml-io/zenml/pull/5399)). This prevents cases where adding an integration upgrades shared packages into incompatible versions and causes import failures before pipelines can run.
+- **GCP runner OpenTelemetry compatibility**: GCP runner images now avoid installing an incompatible OpenTelemetry API version alongside ZenML’s pinned SDK ([PR #5366](https://github.com/zenml-io/zenml/pull/5366)). This fixes import failures that could happen before any pipeline steps started.
+- **MLflow integration installs on Python 3.13 and slim images**: The MLflow integration no longer depends on the unused `python-rapidjson` package ([PR #5360](https://github.com/zenml-io/zenml/pull/5360)). This avoids source compilation failures in environments without build tools such as `g++`, especially on Python 3.13 or slim container images.
+- **GCS-backed runs no longer hang during final uploads or cleanup**: ZenML aligned GCS-related dependencies and added optional storage controls to avoid pipeline steps getting stuck after their work and outputs have already completed ([PR #5373](https://github.com/zenml-io/zenml/pull/5373)). This addresses hangs from indefinite GCS responses and affected `gcsfs` cleanup behavior, helping orchestrators observe completed containers instead of waiting forever.
+- **Step outputs are preserved after execution or finalization failures**: ZenML no longer deletes step output directories from the launcher exception handler when a step fails after artifacts or server-side completion have already been recorded ([PR #5362](https://github.com/zenml-io/zenml/pull/5362)). Persisted metadata will no longer point to missing files in these partial-failure scenarios, while the original error is still propagated.
+- **Replay runs include defaulted pipeline parameters**: Replaying a run now forwards pipeline parameters that were satisfied by defaults in the original run ([PR #5361](https://github.com/zenml-io/zenml/pull/5361)). This keeps replayed runs consistent with the source run even when users did not explicitly pass every parameter.
+- **CLI labels can contain equals signs**: CLI label parsing now splits `--label` values only on the first `=`, so values such as URLs and query strings are accepted ([PR #5383](https://github.com/zenml-io/zenml/pull/5383)). This fixes label handling across service connector and stack component commands where values like `https://example.com/?a=b` were previously rejected or misinterpreted.
+- **Hosted Classic dashboard CORS origins are allowed automatically**: Pro workspace servers now automatically include the hosted Classic dashboard origin in addition to their configured dashboard origin ([PR #5396](https://github.com/zenml-io/zenml/pull/5396)). Production and staging Classic dashboard URLs are matched exactly over HTTPS, while custom enterprise dashboards and existing custom CORS origins keep their current behavior.
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.98.1)
+
+***
+
 ## 0.98.0 (2026-10-14)
 
 See what's new and improved in version 0.98.0.
