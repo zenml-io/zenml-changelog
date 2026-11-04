@@ -110,41 +110,23 @@ def patch_release_window_resolution(
             return ui_previous_tag
         raise AssertionError(f"Unexpected previous-tag lookup for {repo_name}")
 
-    def fake_get_release_window(
+    def fake_list_window_prs(
         gh: object,
-        repo_name: str,
-        since_tag: str | None,
-        until_tag: str,
-    ) -> tuple[datetime, datetime]:
-        return (
-            datetime(2026, 5, 1, tzinfo=timezone.utc),
-            datetime(2026, 6, 1, tzinfo=timezone.utc),
-        )
-
-    def fake_search_merged_prs(
-        gh: object,
-        repo_name: str,
-        base_branch: str,
-        since_date: datetime,
-        until_date: datetime,
-        label: str | None = None,
+        window: uc.SourceReleaseWindow,
+        labels: list[str],
     ) -> list[dict[str, Any]]:
-        searches.append((repo_name, label))
-        if repo_name == "zenml-io/zenml-cloud-api":
-            return []
-        if repo_name == "zenml-io/zenml-cloud-ui" and label == "release-notes":
+        searches.extend((window.source_repo, label) for label in labels)
+        if window.source_repo == "zenml-io/zenml-cloud-ui":
             return [
                 make_pr(1317, "zenml-io/zenml-cloud-ui", ["release-notes"]),
                 make_pr(1318, "zenml-io/zenml-cloud-ui", ["release-notes"]),
+                make_pr(1319, "zenml-io/zenml-cloud-ui", ["breaking-change"]),
             ]
-        if repo_name == "zenml-io/zenml-cloud-ui" and label == "breaking-change":
-            return [make_pr(1319, "zenml-io/zenml-cloud-ui", ["breaking-change"])]
         return []
 
     monkeypatch.setattr(uc, "find_latest_release_tag", fake_find_latest_release_tag)
     monkeypatch.setattr(uc, "find_previous_tag", fake_find_previous_tag)
-    monkeypatch.setattr(uc, "get_release_window", fake_get_release_window)
-    monkeypatch.setattr(uc, "search_merged_prs", fake_search_merged_prs)
+    monkeypatch.setattr(uc, "list_window_prs", fake_list_window_prs)
     return searches
 
 

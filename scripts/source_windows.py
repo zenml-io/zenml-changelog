@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 from github import Github
@@ -33,11 +32,6 @@ SkipReason = Literal["no_releases_found", "already_consumed_window"]
 
 FindLatestReleaseTag = Callable[[Github, str], Optional[str]]
 FindPreviousTag = Callable[[Github, str, str], Optional[str]]
-GetReleaseWindow = Callable[[Github, str, Optional[str], str], Tuple[datetime, datetime]]
-SearchMergedPRs = Callable[
-    [Github, str, str, datetime, datetime, Optional[str]],
-    List[Dict[str, Any]],
-]
 DedupePRs = Callable[[List[Dict[str, Any]]], List[Dict[str, Any]]]
 
 
@@ -46,9 +40,14 @@ class SourceReleaseWindow(BaseModel):
     base_branch: str
     previous_tag: Optional[str] = None
     current_tag: str
-    since_date: datetime
-    until_date: datetime
     is_primary: bool = False
+
+
+# Returns the merged PRs that shipped in a window and carry at least one of the
+# given labels.
+ListWindowPRs = Callable[[Github, SourceReleaseWindow, List[str]], List[Dict[str, Any]]]
+
+RELEASE_NOTES_LABEL = "release-notes"
 
 
 class SkippedSourceWindow(BaseModel):
@@ -95,7 +94,6 @@ def resolve_source_window(
     trigger_release_tag: str,
     find_latest_release_tag: FindLatestReleaseTag,
     find_previous_tag: FindPreviousTag,
-    get_release_window: GetReleaseWindow,
 ) -> Tuple[Optional[SourceReleaseWindow], Optional[SkippedSourceWindow]]:
     source_repo = source["repo"]
     is_primary = source_repo == primary_source
@@ -111,19 +109,11 @@ def resolve_source_window(
             )
 
     previous_tag = find_previous_tag(gh, source_repo, current_tag)
-    since_date, until_date = get_release_window(
-        gh,
-        source_repo,
-        previous_tag,
-        current_tag,
-    )
     return SourceReleaseWindow(
         source_repo=source_repo,
         base_branch=source.get("default_branch", "main"),
         previous_tag=previous_tag,
         current_tag=current_tag,
-        since_date=since_date,
-        until_date=until_date,
         is_primary=is_primary,
     ), None
 
@@ -133,44 +123,25 @@ def collect_window_prs(
     window: SourceReleaseWindow,
     target_state: Optional[ConsumedTargetState],
     breaking_change_labels: List[str],
-    search_merged_prs: SearchMergedPRs,
+    list_window_prs: ListWindowPRs,
     dedupe_prs_by_number: DedupePRs,
 ) -> SourceWindowCollection:
-    release_note_prs = search_merged_prs(
+    window_prs = list_window_prs(
         gh,
-        window.source_repo,
-        window.base_branch,
-        window.since_date,
-        window.until_date,
-        "release-notes",
+        window,
+        [RELEASE_NOTES_LABEL, *breaking_change_labels],
     )
-    release_note_prs, release_note_filtered = _filter_consumed_prs(
-        release_note_prs,
-        target_state,
-    )
-
-    breaking_prs_for_window: List[Dict[str, Any]] = []
-    breaking_filtered: List[str] = []
-    for breaking_label in breaking_change_labels:
-        source_breaking_prs = search_merged_prs(
-            gh,
-            window.source_repo,
-            window.base_branch,
-            window.since_date,
-            window.until_date,
-            breaking_label,
-        )
-        filtered_source_breaking_prs, filtered_keys = _filter_consumed_prs(
-            source_breaking_prs,
-            target_state,
-        )
-        breaking_prs_for_window.extend(filtered_source_breaking_prs)
-        breaking_filtered.extend(filtered_keys)
+    release_note_prs = [pr for pr in window_prs if RELEASE_NOTES_LABEL in pr["labels"]]
+    breaking_prs = [
+        pr for pr in window_prs if any(label in pr["labels"] for label in breaking_change_labels)
+    ]
+    release_note_prs, release_note_filtered = _filter_consumed_prs(release_note_prs, target_state)
+    breaking_prs, breaking_filtered = _filter_consumed_prs(breaking_prs, target_state)
 
     return SourceWindowCollection(
         window=window,
         release_notes_prs=dedupe_prs_by_number(release_note_prs),
-        breaking_prs=dedupe_prs_by_number(breaking_prs_for_window),
+        breaking_prs=dedupe_prs_by_number(breaking_prs),
         filtered_pr_keys=sorted(set(release_note_filtered + breaking_filtered)),
     )
 
@@ -184,8 +155,7 @@ def collect_multi_source_prs(
     breaking_change_labels: List[str],
     find_latest_release_tag: FindLatestReleaseTag,
     find_previous_tag: FindPreviousTag,
-    get_release_window: GetReleaseWindow,
-    search_merged_prs: SearchMergedPRs,
+    list_window_prs: ListWindowPRs,
     dedupe_prs_by_number: DedupePRs,
 ) -> MultiSourceCollectionResult:
     """Collect release-note and breaking-change PRs through one source-window path.
@@ -193,6 +163,8 @@ def collect_multi_source_prs(
     Primary sources use the triggering release tag. Bundled sources keep the useful
     existing behavior of using their latest release, but each resolved source window
     is checked against the dedicated consumed-source ledger before PR search.
+    A window is the commit range between its previous and current tag, so a PR
+    belongs to the release whose tag contains its commit.
 
     A matched consumed window is finalized: it is skipped completely. This means
     PRs that gain a release-note/breaking label after the window was recorded are
@@ -226,7 +198,6 @@ def collect_multi_source_prs(
             trigger_release_tag=trigger_release_tag,
             find_latest_release_tag=find_latest_release_tag,
             find_previous_tag=find_previous_tag,
-            get_release_window=get_release_window,
         )
         if skipped_window is not None:
             result.skipped_windows.append(skipped_window)
@@ -257,7 +228,7 @@ def collect_multi_source_prs(
             window=window,
             target_state=target_state,
             breaking_change_labels=breaking_change_labels,
-            search_merged_prs=search_merged_prs,
+            list_window_prs=list_window_prs,
             dedupe_prs_by_number=dedupe_prs_by_number,
         )
         result.included_windows.append(source_collection)

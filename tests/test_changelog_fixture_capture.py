@@ -15,8 +15,6 @@ from scripts import update_changelog as uc
 
 DT_SINCE = datetime(2026, 1, 1, tzinfo=timezone.utc)
 DT_UNTIL = datetime(2026, 2, 1, tzinfo=timezone.utc)
-DASHBOARD_SINCE = datetime(2026, 1, 10, tzinfo=timezone.utc)
-DASHBOARD_UNTIL = datetime(2026, 1, 20, tzinfo=timezone.utc)
 
 
 def pr(number: int, repo: str, *, label: str = "release-notes", title: str | None = None) -> dict:
@@ -137,25 +135,13 @@ def test_capture_release_fixture_end_to_end() -> None:
             return "0.13.14"
         return "0.94.5"
 
-    def fake_window(gh, repo, previous, current):
-        if repo == "zenml-io/zenml-dashboard":
-            assert previous == "0.13.14"
-            assert current == "0.13.15"
-            return DASHBOARD_SINCE, DASHBOARD_UNTIL
-        assert previous == "0.94.5"
-        assert current == "0.94.6"
-        return DT_SINCE, DT_UNTIL
-
-    def fake_search(gh, repo, branch, since, until, label):
-        if label != "release-notes":
-            return []
-        if repo == "zenml-io/zenml-dashboard":
-            assert since == DASHBOARD_SINCE
-            assert until == DASHBOARD_UNTIL
-            return [pr(7, repo)]
-        assert since == DT_SINCE
-        assert until == DT_UNTIL
-        return [pr(101, repo)]
+    def fake_list_window_prs(gh, window, labels):
+        assert "release-notes" in labels
+        if window.source_repo == "zenml-io/zenml-dashboard":
+            assert (window.previous_tag, window.current_tag) == ("0.13.14", "0.13.15")
+            return [pr(7, window.source_repo)]
+        assert (window.previous_tag, window.current_tag) == ("0.94.5", "0.94.6")
+        return [pr(101, window.source_repo)]
 
     def fake_metadata(gh, repo, tag):
         return f"https://github.com/{repo}/releases/tag/{tag}", "2026-02-01T00:00:00Z"
@@ -168,8 +154,7 @@ def test_capture_release_fixture_end_to_end() -> None:
         breaking_change_labels=cfg.BREAKING_CHANGE_LABELS,
         find_latest_release_tag=fake_latest,
         find_previous_tag=fake_previous,
-        get_release_window=fake_window,
-        search_merged_prs=fake_search,
+        list_window_prs=fake_list_window_prs,
         dedupe_prs_by_number=uc.dedupe_prs_by_number,
         get_release_metadata=fake_metadata,
     )
