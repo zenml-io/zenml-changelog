@@ -1,5 +1,57 @@
 [
   {
+    "id": 100,
+    "slug": "more-reliable-runs-and-environments",
+    "title": "More reliable runs and environments",
+    "description": "ZenML is now more resilient in day-to-day execution and installation workflows. This release fixes failures caused by dependency conflicts in integrations and runner images, preserves step outputs when runs fail late, and improves replay behavior so defaulted pipeline parameters are forwarded correctly.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 99,
+    "slug": "smoother-cli-and-project-management",
+    "title": "Smoother CLI and project management",
+    "description": "Managing ZenML projects and metadata is now more flexible. You can rename projects from the CLI and SDK, CLI labels now accept values containing `=`, and hosted Classic dashboard origins are allowed automatically where applicable.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 98,
+    "slug": "better-kubernetes-and-cloud-compatibility",
+    "title": "Better Kubernetes and cloud compatibility",
+    "description": "Deployments now work more smoothly in stricter Kubernetes and cloud storage setups. The Helm chart defaults are aligned with Pod Security `restricted` requirements, and GCS-related dependency and storage behavior has been improved to reduce hangs and compatibility issues.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 97,
     "slug": "sync-identity-provider-claims-self-hosted-pro",
     "title": "Sync identity-provider claims into ZenML users (self-hosted Pro)",
