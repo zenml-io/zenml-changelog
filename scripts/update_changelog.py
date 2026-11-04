@@ -522,13 +522,13 @@ def _merged_prs_for_commit(commit: Commit) -> List[PullRequest]:
 
 
 def _resolve_backport(repo: Repository, pr: PullRequest, base_branch: str) -> PullRequest:
-    """Map a backport PR (merged into e.g. ``release/*``) to its original base-branch PR.
+    """Map a PR labeled ``backport`` to its original base-branch PR.
 
     Keying on the original lists the change once when both commits are in the
     range, and records the number the consumed-PR ledger needs to filter the
     original out of a later release whose range contains its base-branch commit.
     """
-    if pr.base.ref == base_branch:
+    if pr.base.ref == base_branch or not any(label.name == "backport" for label in pr.labels):
         return pr
     match = BACKPORT_TITLE_PR_REF.search(pr.title or "")
     if match is None or int(match.group(1)) == pr.number:

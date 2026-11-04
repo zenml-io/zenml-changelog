@@ -15,6 +15,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts import update_changelog as uc
+from scripts.source_windows import collect_window_prs
 
 ZENML = "zenml-io/zenml"
 DASHBOARD = "zenml-io/zenml-dashboard"
@@ -157,7 +158,7 @@ def test_backport_is_listed_as_its_original_pr_when_only_the_backport_is_in_rang
 
 def test_backport_and_original_in_the_same_range_are_listed_once() -> None:
     original = FakePR(5405, ["release-notes"])
-    backport = FakePR(5407, base_ref="release/0.98.1", title="PR 5405 (#5405)")
+    backport = FakePR(5407, ["backport"], base_ref="release/0.98.1", title="PR 5405 (#5405)")
     repo = FakeRepo(
         ZENML,
         prs=[original, backport],
@@ -171,7 +172,9 @@ def test_backport_and_original_in_the_same_range_are_listed_once() -> None:
 
 def test_backport_label_counts_for_the_original_pr() -> None:
     original = FakePR(5405)
-    backport = FakePR(5407, ["release-notes"], base_ref="release/0.98.1", title="PR 5405 (#5405)")
+    backport = FakePR(
+        5407, ["backport", "release-notes"], base_ref="release/0.98.1", title="PR 5405 (#5405)"
+    )
     repo = FakeRepo(ZENML, prs=[original, backport], commits=[squash_commit(backport)])
 
     prs = uc.list_window_prs(FakeGithub(repo), window(), LABELS)
@@ -190,7 +193,9 @@ def test_backport_label_counts_for_the_original_pr() -> None:
 def test_release_branch_pr_without_a_merged_base_branch_original_is_kept(
     referenced_pr: FakePR | None,
 ) -> None:
-    release_only = FakePR(5407, ["release-notes"], base_ref="release/0.98.1", title="Hotfix (#4000)")
+    release_only = FakePR(
+        5407, ["backport", "release-notes"], base_ref="release/0.98.1", title="Hotfix (#4000)"
+    )
     prs_in_repo = [release_only] + ([referenced_pr] if referenced_pr else [])
     repo = FakeRepo(ZENML, prs=prs_in_repo, commits=[squash_commit(release_only)])
 
@@ -200,12 +205,58 @@ def test_release_branch_pr_without_a_merged_base_branch_original_is_kept(
 
 
 def test_base_branch_pr_with_a_trailing_pr_reference_is_not_remapped() -> None:
-    follow_up = FakePR(5410, ["release-notes"], title="Follow up on the step cache fix (#5300)")
+    follow_up = FakePR(
+        5410, ["backport", "release-notes"], title="Follow up on the step cache fix (#5300)"
+    )
     repo = FakeRepo(ZENML, prs=[follow_up, FakePR(5300)], commits=[squash_commit(follow_up)])
 
     prs = uc.list_window_prs(FakeGithub(repo), window(), LABELS)
 
     assert numbers(prs) == [5410]
+
+
+@pytest.mark.parametrize("original_consumed", [False, True])
+def test_release_branch_follow_up_keeps_its_own_identity(
+    original_consumed: bool,
+) -> None:
+    original = FakePR(5405, ["release-notes"])
+    follow_up = FakePR(
+        5407,
+        ["release-notes", "breaking-change"],
+        base_ref="release/0.98.1",
+        title="Fix another case after the original change (#5405)",
+    )
+    repo = FakeRepo(ZENML, prs=[original, follow_up], commits=[squash_commit(follow_up)])
+    target_state = uc.ConsumedTargetState(
+        trigger_repo=ZENML,
+        markdown_file=uc.REPO_CONFIG[ZENML]["markdown_file"],
+    )
+    if original_consumed:
+        target_state.consumed_prs[f"{ZENML}#5405"] = uc.ConsumedPR(
+            source_repo=ZENML,
+            number=5405,
+            first_consumed_by_release_tag="0.98.0",
+            first_consumed_at="2026-10-14T08:51:30+00:00",
+            previous_tag="0.97.0",
+            current_tag="0.98.0",
+        )
+
+    collection = collect_window_prs(
+        gh=FakeGithub(repo),
+        window=window(),
+        target_state=target_state,
+        breaking_change_labels=uc.BREAKING_CHANGE_LABELS,
+        list_window_prs=uc.list_window_prs,
+        dedupe_prs_by_number=uc.dedupe_prs_by_number,
+    )
+
+    assert numbers(collection.release_notes_prs) == [5407]
+    assert numbers(collection.breaking_prs) == [5407]
+    assert collection.filtered_pr_keys == []
+    selected = collection.release_notes_prs[0]
+    assert selected["title"] == follow_up.title
+    assert selected["body"] == follow_up.body
+    assert selected["url"] == follow_up.html_url
 
 
 def test_commit_maps_to_the_pr_that_merged_it_not_open_or_later_prs() -> None:
