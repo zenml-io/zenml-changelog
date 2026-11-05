@@ -28,6 +28,17 @@ from pydantic import BaseModel, Field
 
 try:
     from scripts import changelog_llm_providers as _llm_providers
+    from scripts.changelog_compatibility import (
+        COMPATIBILITY_PAGE,
+        NO_KNOWN_IMPACT,
+        CompatibilityUpdate,
+        ReleaseCompatibility,
+        add_release,
+        format_breaking_points,
+        format_compatibility_summary,
+        parse_breaking_points,
+        upgrade_impact_section,
+    )
     from scripts.changelog_config import (
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -46,6 +57,7 @@ try:
     from scripts.changelog_env import env_value, require_env_values
     from scripts.changelog_llm_generation import (
         generate_breaking_changes_output,
+        generate_compatibility_output,
         generate_grouped_changelog_output,
         generate_release_notes_body_output,
     )
@@ -59,6 +71,8 @@ try:
         BreakingChangesOutput,
         ChangelogCopy,
         ChangelogLabel,
+        CompatibilityAssessment,
+        CompatibilityStatus,
         GroupedChangelogEntry,
         GroupedChangelogOutput,
         MarkdownSection,
@@ -112,6 +126,17 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_changelog.py`
     import changelog_llm_providers as _llm_providers  # type: ignore[no-redef]
+    from changelog_compatibility import (  # type: ignore[no-redef]
+        COMPATIBILITY_PAGE,
+        NO_KNOWN_IMPACT,
+        CompatibilityUpdate,
+        ReleaseCompatibility,
+        add_release,
+        format_breaking_points,
+        format_compatibility_summary,
+        parse_breaking_points,
+        upgrade_impact_section,
+    )
     from changelog_config import (  # type: ignore[no-redef]
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -130,6 +155,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
     from changelog_env import env_value, require_env_values  # type: ignore[no-redef]
     from changelog_llm_generation import (  # type: ignore[no-redef]
         generate_breaking_changes_output,
+        generate_compatibility_output,
         generate_grouped_changelog_output,
         generate_release_notes_body_output,
     )
@@ -143,6 +169,8 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
         BreakingChangesOutput,
         ChangelogCopy,
         ChangelogLabel,
+        CompatibilityAssessment,
+        CompatibilityStatus,
         GroupedChangelogEntry,
         GroupedChangelogOutput,
         MarkdownSection,
@@ -733,6 +761,23 @@ def llm_generate_breaking_changes_bullets(
 
 
 @llm_retryable()
+def llm_generate_compatibility_assessment(
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+    breaking_points: str,
+) -> CompatibilityAssessment:
+    """Assess what a release with breaking PRs means for clients older than it."""
+    return generate_compatibility_output(
+        client=require_llm_client(),
+        release_tag=release_tag,
+        breaking_prs=breaking_prs,
+        release_notes_prs=release_notes_prs,
+        breaking_points=breaking_points,
+    )
+
+
+@llm_retryable()
 def llm_generate_release_notes_body(
     prs: List[Dict[str, Any]],
     source_repo: str,
@@ -795,6 +840,50 @@ def collect_needs_attention(
                 }
             )
     return needs_attention
+
+
+def collect_missing_upgrade_impact(
+    breaking_prs: List[Dict[str, Any]],
+    source_repo: str,
+) -> List[NeedsAttentionItem]:
+    """Flag breaking PRs from the trigger repo whose description has no "Upgrade impact" section."""
+    return [
+        {
+            "number": str(pr["number"]),
+            "title": f"No 'Upgrade impact' section: {pr['title']}"[:80],
+            "url": pr["url"],
+        }
+        for pr in breaking_prs
+        if pr.get("repo", source_repo) == source_repo and not upgrade_impact_section(pr.get("body", ""))
+    ]
+
+
+def prepare_compatibility_update(
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+) -> CompatibilityUpdate:
+    """Build the updated Compatibility page for an OSS release without writing it.
+
+    Releases without breaking PRs are recorded as compatible without a model call.
+    """
+    page = COMPATIBILITY_PAGE.read_text(encoding="utf-8")
+    if breaking_prs:
+        assessment = llm_generate_compatibility_assessment(
+            release_tag=release_tag,
+            breaking_prs=breaking_prs,
+            release_notes_prs=release_notes_prs,
+            breaking_points=format_breaking_points(parse_breaking_points(page)),
+        )
+        release = ReleaseCompatibility(version=release_tag, **assessment.model_dump())
+    else:
+        release = ReleaseCompatibility(
+            version=release_tag,
+            status=CompatibilityStatus.COMPATIBLE,
+            server_impact=NO_KNOWN_IMPACT,
+            client_upgrade_notes="",
+        )
+    return add_release(page, release)
 
 
 def generate_valid_grouped_changelog_entries(
@@ -945,6 +1034,14 @@ def main() -> None:
         include_pr_links=include_pr_links,
     )
 
+    compatibility_update: Optional[CompatibilityUpdate] = None
+    if config["type"] == "oss":
+        compatibility_update = prepare_compatibility_update(
+            release_tag=env["RELEASE_TAG"],
+            breaking_prs=breaking_prs,
+            release_notes_prs=release_notes_prs,
+        )
+
     changelog_path = Path("changelog.json")
     existing_changelog = json.loads(changelog_path.read_text())
     max_existing_id = max((entry.get("id", 0) for entry in existing_changelog), default=0)
@@ -952,6 +1049,8 @@ def main() -> None:
 
     # Identify PRs with insufficient descriptions that should be reviewed manually
     needs_attention = collect_needs_attention(grouping_prs)
+    if compatibility_update is not None:
+        needs_attention.extend(collect_missing_upgrade_impact(breaking_prs, source_repo))
     if not release_notes_prs and breaking_prs:
         needs_attention.append(
             {
@@ -1001,6 +1100,8 @@ def main() -> None:
     )
 
     update_markdown_file(Path(markdown_file), md_section)
+    if compatibility_update is not None:
+        COMPATIBILITY_PAGE.write_text(compatibility_update.page, encoding="utf-8")
 
     consumed_state = mark_consumed_after_success(
         state=consumed_state,
@@ -1028,6 +1129,7 @@ def main() -> None:
             ),
             needs_attention=format_needs_attention_output(needs_attention),
             source_windows=source_windows_body,
+            compatibility=format_compatibility_summary(compatibility_update) if compatibility_update else "",
         ),
         workflow_result_path,
     )

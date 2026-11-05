@@ -83,6 +83,7 @@ def test_workflow_result_json_round_trip_is_deterministic(tmp_path: Path) -> Non
     assert path.read_text(encoding="utf-8") == (
         "{\n"
         '  "breaking_changes": "- Removed old behavior",\n'
+        '  "compatibility": "",\n'
         '  "has_changes": true,\n'
         '  "markdown_file": "gitbook-release-notes/server-sdk.md",\n'
         '  "needs_attention": "Needs review",\n'
@@ -174,6 +175,7 @@ def test_github_output_writer_writes_all_stable_output_names(tmp_path: Path) -> 
     result = make_result(
         breaking_changes="- Breaking one\n- Breaking two",
         needs_attention=f"{wr.NEEDS_ATTENTION_HEADER}\n- PR #123: Needs review (https://example.test/pr/123)",
+        compatibility="- **Status:** ✅ Compatible",
     )
 
     wr.write_changelog_github_outputs(result, path)
@@ -195,6 +197,9 @@ def test_github_output_writer_writes_all_stable_output_names(tmp_path: Path) -> 
         "source_windows<<ZENML_CHANGELOG_OUTPUT_SOURCE_WINDOWS\n"
         "included zenml-io/zenml 0.84.0 -> 0.85.0 release_notes=2 breaking=1 filtered=0\n"
         "ZENML_CHANGELOG_OUTPUT_SOURCE_WINDOWS\n"
+        "compatibility<<ZENML_CHANGELOG_OUTPUT_COMPATIBILITY\n"
+        "- **Status:** ✅ Compatible\n"
+        "ZENML_CHANGELOG_OUTPUT_COMPATIBILITY\n"
     )
 
 
@@ -213,6 +218,7 @@ def test_github_output_writer_handles_empty_multiline_values(tmp_path: Path) -> 
     output = path.read_text(encoding="utf-8")
     assert "has_changes=false\n" in output
     assert "breaking_changes<<ZENML_CHANGELOG_OUTPUT_BREAKING_CHANGES\nZENML_CHANGELOG_OUTPUT_BREAKING_CHANGES\n" in output
+    assert output.endswith("compatibility<<ZENML_CHANGELOG_OUTPUT_COMPATIBILITY\nZENML_CHANGELOG_OUTPUT_COMPATIBILITY\n")
 
 
 def test_github_output_writer_avoids_delimiter_line_collision(tmp_path: Path) -> None:
@@ -228,7 +234,7 @@ def test_github_output_writer_avoids_delimiter_line_collision(tmp_path: Path) ->
 
     output = path.read_text(encoding="utf-8")
     assert "source_windows<<ZENML_CHANGELOG_OUTPUT_SOURCE_WINDOWS_1\n" in output
-    assert output.endswith("ZENML_CHANGELOG_OUTPUT_SOURCE_WINDOWS_1\n")
+    assert "\nZENML_CHANGELOG_OUTPUT_SOURCE_WINDOWS_1\n" in output
 
 
 def test_write_github_outputs_mode_reads_result_and_requires_output_env(
