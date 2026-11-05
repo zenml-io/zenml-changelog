@@ -34,7 +34,8 @@ NO_KNOWN_IMPACT = "None known."
 EMPTY_CELL = "–"
 
 MATRIX_INTRO = (
-    "Rows are the client version, columns are the server version, grouped by minor "
+    "Rows are the client version: the `zenml` package your team runs, including the one in "
+    "your snapshot images. Columns are the server version. Versions are grouped by minor "
     "release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the "
     "listed breaking points. – the client is newer than the server, which is not supported."
 )
@@ -188,11 +189,26 @@ def _split_into_eras(series: Sequence[Series], hard_breaks: Sequence[Series]) ->
     return [eras[index] for index in sorted(eras)]
 
 
+def _compact_ids(ids: Sequence[str]) -> str:
+    """Collapse runs of consecutive IDs ("E2", "E3", "E4", "E6") into "E2–E4, E6".
+
+    Cells would otherwise grow with every new exception and stretch the matrix.
+    """
+    numbered = sorted((int(re.sub(r"\D", "", point_id) or 0), point_id) for point_id in ids)
+    runs: List[List[Tuple[int, str]]] = []
+    for item in numbered:
+        if runs and item[0] == runs[-1][-1][0] + 1:
+            runs[-1].append(item)
+        else:
+            runs.append([item])
+    return ", ".join(run[0][1] if len(run) == 1 else f"{run[0][1]}–{run[-1][1]}" for run in runs)
+
+
 def _matrix_cell(client: Series, server: Series, exceptions: Sequence[BreakingPoint]) -> str:
     if client > server:
         return EMPTY_CELL
     applying = [point.id for point in exceptions if client < point.series <= server]
-    return "⚠️ " + " ".join(applying) if applying else "✅"
+    return f"⚠️ {_compact_ids(applying)}" if applying else "✅"
 
 
 def _render_era_table(era: Sequence[Series], exceptions: Sequence[BreakingPoint]) -> str:
@@ -212,10 +228,7 @@ def render_matrix(series: Sequence[Series], breaking_points: Sequence[BreakingPo
     if not series:
         return MATRIX_INTRO + "\n"
     hard_breaks = sorted({point.series for point in breaking_points if point.kind is BreakingPointKind.HARD_BREAK})
-    exceptions = sorted(
-        (point for point in breaking_points if point.kind is BreakingPointKind.EXCEPTION),
-        key=lambda point: (point.series, int(re.sub(r"\D", "", point.id) or 0)),
-    )
+    exceptions = [point for point in breaking_points if point.kind is BreakingPointKind.EXCEPTION]
     *older_eras, current_era = _split_into_eras(series, hard_breaks)
 
     parts = [MATRIX_INTRO]

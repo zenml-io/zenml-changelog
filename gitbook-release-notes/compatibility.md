@@ -1,24 +1,21 @@
 ---
-description: >-
-  Which ZenML client versions keep working when you upgrade your ZenML server
-  or ZenML Pro workspace, and what changed in each release.
+description: Which ZenML client versions work with which server versions.
 icon: code-compare
+layout:
+  width: wide
+  title:
+    visible: true
+  description:
+    visible: true
+  tableOfContents:
+    visible: true
+  outline:
+    visible: false
+  pagination:
+    visible: false
 ---
 
 # Compatibility
-
-Use this page before you upgrade a ZenML server or a ZenML Pro workspace. It shows which client versions keep working against which server versions, and what each release changed for existing clients.
-
-{% hint style="info" %}
-This page covers the ZenML server and SDK. It does not cover ZenML Pro control plane versions yet.
-{% endhint %}
-
-## How to read this page
-
-* **Client** is the `zenml` Python package your team runs, including the version installed in your pipeline snapshot images. **Server** is your ZenML server or ZenML Pro workspace.
-* Find your client version in the rows of the matrix and the server version you want in its columns.
-* Before you upgrade, read every row under **Release by release** between the version you run today and the one you want.
-* The matrix works per minor release. When a breaking point lands in a patch release, its description says so.
 
 ## Upgrade rules
 
@@ -26,11 +23,10 @@ This page covers the ZenML server and SDK. It does not cover ZenML Pro control p
 * Upgrade the server first, then the clients. A client newer than its server is not supported.
 * Downgrading a server is not supported. Back up the database before you upgrade a self-hosted server.
 * Pipeline snapshots run with the ZenML version installed in their image, so they behave like a client of that version. Rebuild them when the matrix shows an exception that affects you, and always when you cross a hard break.
-* ZenML Pro: upgrade the control plane before the workspaces.
 
 ## Client and server matrix
 
-Rows are the client version, columns are the server version, grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the listed breaking points. – the client is newer than the server, which is not supported.
+Rows are the client version: the `zenml` package your team runs, including the one in your snapshot images. Columns are the server version. Versions are grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the listed breaking points. – the client is newer than the server, which is not supported.
 
 Each hard break starts a new era. A client and a server from different eras do not work together: upgrade both at the same time.
 
@@ -38,11 +34,11 @@ Each hard break starts a new era. A client and a server from different eras do n
 
 | Client ↓ / Server → | 0.90 | 0.91 | 0.92 | 0.93 | 0.94 | 0.95 | 0.96 | 0.97 | 0.98 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **0.90** | ✅ | ✅ | ⚠️ E2 | ⚠️ E2 E3 E4 | ⚠️ E2 E3 E4 E5 E6 E7 | ⚠️ E2 E3 E4 E5 E6 E7 E8 | ⚠️ E2 E3 E4 E5 E6 E7 E8 | ⚠️ E2 E3 E4 E5 E6 E7 E8 E9 | ⚠️ E2 E3 E4 E5 E6 E7 E8 E9 |
-| **0.91** | – | ✅ | ⚠️ E2 | ⚠️ E2 E3 E4 | ⚠️ E2 E3 E4 E5 E6 E7 | ⚠️ E2 E3 E4 E5 E6 E7 E8 | ⚠️ E2 E3 E4 E5 E6 E7 E8 | ⚠️ E2 E3 E4 E5 E6 E7 E8 E9 | ⚠️ E2 E3 E4 E5 E6 E7 E8 E9 |
-| **0.92** | – | – | ✅ | ⚠️ E3 E4 | ⚠️ E3 E4 E5 E6 E7 | ⚠️ E3 E4 E5 E6 E7 E8 | ⚠️ E3 E4 E5 E6 E7 E8 | ⚠️ E3 E4 E5 E6 E7 E8 E9 | ⚠️ E3 E4 E5 E6 E7 E8 E9 |
-| **0.93** | – | – | – | ✅ | ⚠️ E5 E6 E7 | ⚠️ E5 E6 E7 E8 | ⚠️ E5 E6 E7 E8 | ⚠️ E5 E6 E7 E8 E9 | ⚠️ E5 E6 E7 E8 E9 |
-| **0.94** | – | – | – | – | ✅ | ⚠️ E8 | ⚠️ E8 | ⚠️ E8 E9 | ⚠️ E8 E9 |
+| **0.90** | ✅ | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 |
+| **0.91** | – | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 |
+| **0.92** | – | – | ✅ | ⚠️ E3–E4 | ⚠️ E3–E7 | ⚠️ E3–E8 | ⚠️ E3–E8 | ⚠️ E3–E9 | ⚠️ E3–E9 |
+| **0.93** | – | – | – | ✅ | ⚠️ E5–E7 | ⚠️ E5–E8 | ⚠️ E5–E8 | ⚠️ E5–E9 | ⚠️ E5–E9 |
+| **0.94** | – | – | – | – | ✅ | ⚠️ E8 | ⚠️ E8 | ⚠️ E8–E9 | ⚠️ E8–E9 |
 | **0.95** | – | – | – | – | – | ✅ | ✅ | ⚠️ E9 | ⚠️ E9 |
 | **0.96** | – | – | – | – | – | – | ✅ | ⚠️ E9 | ⚠️ E9 |
 | **0.97** | – | – | – | – | – | – | – | ✅ | ✅ |
@@ -90,7 +86,7 @@ Each row is a release from which older clients lose something. A **hard break** 
 
 ## Release by release
 
-**Server impact** is what happens to existing clients when the server is upgraded to that release. **Client upgrade notes** are what a team must change when it upgrades its own client.
+Before you upgrade, read every row between the version you run and the one you want. **Server impact** is what happens to existing clients when the server is upgraded to that release. **Client upgrade notes** are what a team must change when it upgrades its own client.
 
 | Release | Status | Server impact on existing clients | Client upgrade notes |
 | --- | --- | --- | --- |

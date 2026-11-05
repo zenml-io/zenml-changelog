@@ -117,7 +117,7 @@ def test_release_with_exceptions_adds_the_next_exception() -> None:
         "Listing runs per pipeline fails.",
     ]
     assert compat._table_rows(update.page, compat.RELEASES_HEADING)[0][1] == "⚠️ Exceptions (E2)"
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1 E2 |" in update.page
+    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1–E2 |" in update.page
 
 
 def test_hard_break_starts_a_new_era() -> None:
@@ -165,3 +165,8 @@ def test_upgrade_impact_section_is_read_until_the_next_heading() -> None:
 
     assert compat.upgrade_impact_section(body) == "Re-create snapshots."
     assert compat.upgrade_impact_section("No such section.") == ""
+
+
+def test_matrix_cells_collapse_consecutive_exception_ids() -> None:
+    assert compat._compact_ids(["E4", "E2", "E3", "E6", "E9", "E8"]) == "E2–E4, E6, E8–E9"
+    assert compat._compact_ids(["E5"]) == "E5"
