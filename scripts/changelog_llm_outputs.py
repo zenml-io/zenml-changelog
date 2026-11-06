@@ -7,6 +7,7 @@ from typing import List
 from pydantic import BaseModel, ConfigDict, Field
 
 class ChangelogLabel(str, Enum):
+    BREAKING_CHANGE = "breaking change"
     BUGFIX = "bugfix"
     DEPRECATION = "deprecation"
     IMPROVEMENT = "improvement"
