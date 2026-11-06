@@ -1,5 +1,21 @@
 [
   {
+    "id": 101,
+    "slug": "bots-and-refreshed-zenml-pro",
+    "title": "Bots are here, with a refreshed ZenML Pro",
+    "description": "Bots are now available alongside a refreshed ZenML Pro interface. Create and chat with Bots to investigate failed pipeline runs or explore agent behavior in Kitaru, and review the results they produce. You can also schedule recurring tasks. To use the previous interface, visit [classic.cloud.zenml.io](https://classic.cloud.zenml.io).",
+    "feature_image_url": "https://assets.zenml.io/content/blog/introducing-bots-zenml-pro/500fc2c5/bot-automation-setup.avif",
+    "published_at": "2026-11-06T13:09:40Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/bots/bots",
+    "should_highlight": false
+  },
+  {
     "id": 100,
     "slug": "rename-projects-cli-sdk",
     "title": "Rename projects from the CLI and SDK",
