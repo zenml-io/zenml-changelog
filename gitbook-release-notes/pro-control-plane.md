@@ -7,6 +7,17 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## Bots and a refreshed UI (2026-11-06)
+
+Bots are live in ZenML Pro, alongside a refreshed dashboard.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/23.jpg" align="left" alt="Bots and a refreshed UI" width="800">
+
+- **Bots**: An always-on team of AI engineers in ZenML Pro. Ask a bot to investigate a failed run or an agent's behavior, test a fix, and open a pull request, from the dashboard, Slack or GitHub. You can also put recurring reviews on a schedule. [Read the announcement](https://www.zenml.io/blog/introducing-bots-zenml-pro) or see the [Bots documentation](https://docs.zenml.io/pro/bots/bots).
+- **Refreshed UI**: The dashboard has a new look, with the same runs, models and artifacts. The classic dashboard is still available at [classic.cloud.zenml.io](https://classic.cloud.zenml.io).
+
+***
+
 ## 0.16.2 (2026-10-27)
 
 See what's new and improved in version 0.16.2.
