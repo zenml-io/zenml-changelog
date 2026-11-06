@@ -67,6 +67,7 @@ PRICE_PER_MILLION_USD: dict[str, tuple[float, float]] = {
     "gpt-5.4-mini": (0.75, 4.50),
     "gpt-5.4": (2.50, 15.00),
     "gpt-5.5": (5.00, 30.00),
+    "gpt-6-luna": (0.10, 0.50),
 }
 
 TOutput = TypeVar("TOutput", bound=BaseModel)

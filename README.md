@@ -109,9 +109,10 @@ Provider and model selection:
 - Rollback: set `CHANGELOG_LLM_PROVIDER=anthropic`. Keep `ANTHROPIC_API_KEY` configured for that rollback path.
 - `CHANGELOG_LLM_MODEL=<model>` is a global model override.
 - OpenAI production routing, when no override is set:
-  - `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4` for dashboard grouped changelog entries.
-  - `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4` for breaking-change bullets.
-  - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5` for release-note body prose.
+  - `CHANGELOG_LLM_MODEL_GROUPED=gpt-6-luna` for dashboard grouped changelog entries.
+  - `CHANGELOG_LLM_MODEL_BREAKING=gpt-6-luna` for breaking-change bullets.
+  - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-6-luna` for release-note body prose.
+- To return to the previous OpenAI routing without a code change, set the repo variables `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4`, `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4`, and `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5`.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values.
 - `gpt-5.4-mini` is not a production default.
 

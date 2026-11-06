@@ -80,6 +80,8 @@ def build_grouped_changelog_entries_prompt(
         "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
         "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
         "- Titles should be short, generic, benefit-oriented dashboard-card titles.\n"
+        "- Write titles in sentence case: capitalize only the first word and proper nouns "
+        "(e.g. `Faster pipeline run queries`, not `Faster Pipeline Run Queries`).\n"
         "- Avoid over-specific titles that name one narrow implementation detail when the group covers a broader user benefit.\n"
         "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
         "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
@@ -137,10 +139,12 @@ def build_release_notes_body_prompt(
         _inline_pr_summary(pr, body_chars=500, include_number_prefix=True) for pr in prs
     )
     include_links_instruction = (
-        "Include a markdown link to every input PR using the exact format [PR #<number>](<url>)."
+        "Include a markdown link to every input PR using the exact format [PR #<number>](<url>). "
+        "Every bullet ends with the link(s) for the PR(s) it covers, including dashboard PRs."
         if include_pr_links
         else "Do not include PR links, raw URLs, or PR numbers; keep the prose concise."
     )
+    example_link = " [PR #1234](https://github.com/zenml-io/zenml/pull/1234)" if include_pr_links else ""
     return (
         "You are writing the release notes body for ZenML.\n\n"
         f"Repository: {source_repo}\n"
@@ -164,7 +168,7 @@ def build_release_notes_body_prompt(
         "useful, not just a one-line summary. "
         "Example: `- **Faster run queries**: Common pipeline and step run views now load more efficiently on "
         "large deployments. ZenML adjusted how related data is fetched, avoiding expensive query plans that "
-        "previously slowed down paginated run listings.`\n"
+        f"previously slowed down paginated run listings.{example_link}`\n"
         "- Only add a `#### Subsection` header when two or more PRs share a clear theme, and group those PRs "
         "as bullets under it. When PRs do not share a theme, list them as flat top-level bullets with no "
         "subsection header and no framing sentence.\n"

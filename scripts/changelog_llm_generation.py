@@ -57,7 +57,7 @@ def generate_grouped_changelog_output(
     return client.parse_structured_output(
         prompt=prompt,
         output_model=GroupedChangelogOutput,
-        max_output_tokens=1200,
+        max_output_tokens=4000,
         call_name=LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
     )
 
@@ -76,7 +76,7 @@ def generate_breaking_changes_output(
     output = client.parse_structured_output(
         prompt=prompt,
         output_model=BreakingChangesOutput,
-        max_output_tokens=900,
+        max_output_tokens=4000,
         call_name=LLM_CALL_BREAKING_CHANGES,
     )
     warnings = validate_breaking_changes_output(
@@ -101,7 +101,7 @@ def generate_release_notes_body_output(
     output = client.parse_structured_output(
         prompt=prompt,
         output_model=MarkdownSection,
-        max_output_tokens=6000,
+        max_output_tokens=12000,
         call_name=LLM_CALL_RELEASE_NOTES_BODY,
     )
     warnings = validate_release_notes_body_output(

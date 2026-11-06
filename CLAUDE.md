@@ -107,9 +107,9 @@ This repo is the canonical source of ZenML release metadata:
 - `OPENAI_API_KEY` — Required when production generation uses OpenAI.
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. The script default is Anthropic; `process-release.yml` defaults release runs to OpenAI. Roll back the workflow by setting `CHANGELOG_LLM_PROVIDER=anthropic`.
 - `CHANGELOG_LLM_MODEL=<model>` — Optional global model override.
-- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-5.4`.
-- `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-5.4`.
-- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-5.5`.
+- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-6-luna`.
+- `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-6-luna`.
+- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-6-luna`.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values. `gpt-5.4-mini` is not a production default.
 - `PRIVATE_REPO_TOKEN` (optional) — Use when the source repo is private (e.g., `zenml-cloud-ui`, `zenml-cloud-api`). If absent, the script falls back to `GITHUB_TOKEN` but will lack private repo access.
 

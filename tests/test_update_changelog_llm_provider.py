@@ -273,7 +273,7 @@ def test_openai_structured_client_fails_closed_on_refusal() -> None:
 
 
 def test_default_openai_model_is_not_mini() -> None:
-    assert providers.DEFAULT_OPENAI_MODEL == "gpt-5.4"
+    assert providers.DEFAULT_OPENAI_MODEL == "gpt-6-luna"
     assert providers.DEFAULT_OPENAI_MODEL != "gpt-5.4-mini"
 
 
@@ -283,9 +283,9 @@ def test_default_openai_route_map_uses_production_models(monkeypatch: pytest.Mon
     monkeypatch.delenv(providers.LLM_MODEL_RELEASE_NOTES_ENV, raising=False)
 
     assert providers.openai_models_by_call_from_env() == {
-        outputs.LLM_CALL_GROUPED_CHANGELOG_ENTRIES: "gpt-5.4",
-        outputs.LLM_CALL_BREAKING_CHANGES: "gpt-5.4",
-        outputs.LLM_CALL_RELEASE_NOTES_BODY: "gpt-5.5",
+        outputs.LLM_CALL_GROUPED_CHANGELOG_ENTRIES: "gpt-6-luna",
+        outputs.LLM_CALL_BREAKING_CHANGES: "gpt-6-luna",
+        outputs.LLM_CALL_RELEASE_NOTES_BODY: "gpt-6-luna",
     }
 
 
