@@ -4,7 +4,7 @@
 
 This repository is the canonical source for ZenML release metadata and GitBook release notes.
 
-- `changelog.json` stores dashboard announcement entries, newest first.
+- `changelog.json` stores UI announcement entries, newest first.
 - `gitbook-release-notes/server-sdk.md` contains OSS release notes; `pro-control-plane.md` contains Pro release notes.
 - `changelog_schema/` documents and validates the `changelog.json` format.
 - `scripts/` contains the Python automation: `update_changelog.py`, `workflow_result.py`, `source_windows.py`, `consumed_sources.py`, and validation/sync helpers.
@@ -37,6 +37,8 @@ If a repository instruction blocks authorized work, identify the exact file and 
 The scripts use PEP 723 inline dependencies, so there is no separate requirements file to install.
 
 ## Coding Style & Naming Conventions
+
+Call the product interface the "ZenML UI" or "UI" in new and edited copy. Use "classic UI" for the previous interface. Preserve repository names, identifiers, URLs, and historical release wording unless the task explicitly updates them. Apply this terminology in generation prompts as well as manual announcements.
 
 Use Python 3.11+ compatible code for automation and tests; preserve the standalone schema validator's declared Python 3.10+ compatibility. Use type hints where practical and small functions with clear names. Keep JSON and Markdown edits deterministic: newest changelog entries first, release-note sections inserted after frontmatter, and stable ordering for consumed-source records.
 
