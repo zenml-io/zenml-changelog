@@ -1,5 +1,22 @@
 [
   {
+    "id": 101,
+    "slug": "bots-and-refreshed-ui",
+    "title": "Bots are live, with a refreshed UI",
+    "description": "ZenML Pro now has Bots, an always-on team of AI engineers. Ask one to investigate a failed run or an agent's behavior, test a fix, and open a pull request, from the dashboard, Slack, or GitHub. You can also put recurring reviews on a schedule. The dashboard has a new look too, with the same runs, models, and artifacts. Prefer the old one? It's still at [classic.cloud.zenml.io](https://classic.cloud.zenml.io).",
+    "feature_image_url": "https://assets.zenml.io/content/blog/introducing-bots-zenml-pro/500fc2c5/bot-automation-setup.avif",
+    "published_at": "2026-11-06T13:09:40Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "learn_more_url": "https://www.zenml.io/blog/introducing-bots-zenml-pro",
+    "docs_url": "https://docs.zenml.io/pro/bots/bots",
+    "should_highlight": true
+  },
+  {
     "id": 100,
     "slug": "rename-projects-cli-sdk",
     "title": "Rename projects from the CLI and SDK",
