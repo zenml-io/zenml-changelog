@@ -5,14 +5,14 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## Repository Purpose
 
 This repo is the canonical source of ZenML release metadata:
-- `changelog.json` feeds the ZenML dashboard "What’s New" widget.
+- `changelog.json` feeds the ZenML UI "What’s New" widget.
 - `gitbook-release-notes/server-sdk.md` and `gitbook-release-notes/pro-control-plane.md` power GitBook docs for OSS and Pro.
 - `.github/workflows/` orchestrates automated changelog generation from upstream releases.
 - `changelog_schema/` defines and documents the JSON schema for announcements.
 
 ## Directory Structure
 
-- `changelog.json` — Array of announcements consumed by the dashboard.
+- `changelog.json` — Array of announcements consumed by the UI.
 - `.image_state` — Persists rotating image index (1–49) for release note headers only.
 - `.consumed_sources_state` — Dedicated ledger of consumed source release windows and PR keys, used to prevent bundled repo PRs from being summarized again on later trigger releases.
 - `gitbook-release-notes/`
@@ -107,7 +107,7 @@ This repo is the canonical source of ZenML release metadata:
 - `OPENAI_API_KEY` — Required when production generation uses OpenAI.
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. The script default is Anthropic; `process-release.yml` defaults release runs to OpenAI. Roll back the workflow by setting `CHANGELOG_LLM_PROVIDER=anthropic`.
 - `CHANGELOG_LLM_MODEL=<model>` — Optional global model override.
-- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-6-luna`.
+- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for UI grouped changelog entries. Default: `gpt-6-luna`.
 - `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-6-luna`.
 - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-6-luna`.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values. `gpt-5.4-mini` is not a production default.
@@ -147,9 +147,11 @@ The bucket enforces upload-only permissions (no delete/overwrite). If the file a
 
 The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
 
-**Important:** Always upload both AVIF and PNG versions of feature images. The AVIF version is used by the dashboard widget (smaller file size), but the PNG version is needed for email newsletters since many email clients (Outlook, Brevo preview) don't support AVIF.
+**Important:** Always upload both AVIF and PNG versions of feature images. The AVIF version is used by the UI widget (smaller file size), but the PNG version is needed for email newsletters since many email clients (Outlook, Brevo preview) don't support AVIF.
 
 ## Naming Conventions
+
+For product-interface terminology in copy and generation prompts, follow the rule in [AGENTS.md](AGENTS.md#coding-style--naming-conventions).
 
 **Branch names**, **PR titles**, and **commit messages** should all use plain descriptive text without conventional commit prefixes (no `fix:`, `feat:`, `docs:`, etc.).
 

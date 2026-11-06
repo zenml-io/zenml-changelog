@@ -148,7 +148,7 @@ jobs:
             - **Repository:** ${{ env.SOURCE_REPO }}
             - **Tag:** ${{ env.RELEASE_TAG }}
 
-            This PR intentionally contains only dashboard widget state: `changelog.json` and `.image_state`. The release-notes PR for the same run owns the markdown file and `.consumed_sources_state` ledger.
+            This PR intentionally contains only UI widget state: `changelog.json` and `.image_state`. The release-notes PR for the same run owns the markdown file and `.consumed_sources_state` ledger.
 
             ### Source windows
 
