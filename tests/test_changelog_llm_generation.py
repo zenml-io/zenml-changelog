@@ -40,6 +40,6 @@ def test_release_notes_body_generation_uses_raised_output_cap() -> None:
         include_pr_links=False,
     )
 
-    assert client.calls[0]["max_output_tokens"] == 6000
+    assert client.calls[0]["max_output_tokens"] == 12000
     assert client.calls[0]["call_name"] == outputs.LLM_CALL_RELEASE_NOTES_BODY
     assert client.calls[0]["output_model"] == outputs.MarkdownSection
