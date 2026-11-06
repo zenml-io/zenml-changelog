@@ -99,6 +99,7 @@ def test_adding_a_listed_release_changes_nothing() -> None:
     update = compat.add_release(PAGE, release("0.92.0", CompatibilityStatus.BREAKING, "Ignored."))
 
     assert update.page == PAGE
+    assert update.release is None
     assert update.new_breaking_point is None
 
 
@@ -170,3 +171,25 @@ def test_upgrade_impact_section_is_read_until_the_next_heading() -> None:
 def test_matrix_cells_collapse_consecutive_exception_ids() -> None:
     assert compat._compact_ids(["E4", "E2", "E3", "E6", "E9", "E8"]) == "E2–E4, E6, E8–E9"
     assert compat._compact_ids(["E5"]) == "E5"
+
+
+def test_upgrade_impact_section_ignores_the_template_placeholder() -> None:
+    template = "## Upgrade impact\n<!--- Required when this PR changes ... -->\n\n## Pre-requisites"
+    filled = "## Upgrade impact\n<!--- Required when ... -->\nOlder clients can't list runs.\n\n## Pre-requisites"
+
+    assert compat.upgrade_impact_section(template) == ""
+    assert compat.upgrade_impact_section(filled) == "Older clients can't list runs."
+
+
+def test_duplicate_breaking_point_ids_are_rejected() -> None:
+    page = PAGE.replace("| H1 | 0.90.0 |", "| E1 | 0.90.0 |")
+
+    with pytest.raises(ValueError, match="IDs more than once: E1"):
+        compat.parse_breaking_points(page)
+
+
+def test_status_referring_to_an_unknown_breaking_point_is_rejected() -> None:
+    page = PAGE.replace("| 0.91.0 | ✅ Compatible |", "| 0.91.0 | ⚠️ Exceptions (E7) |")
+
+    with pytest.raises(ValueError, match="Release 0.91.0 refers to unknown breaking points: E7"):
+        compat.redraw_matrix(page)

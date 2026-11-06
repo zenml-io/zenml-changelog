@@ -26,7 +26,7 @@ layout:
 
 ## Client and server matrix
 
-Rows are the client version: the `zenml` package your team runs, including the one in your snapshot images. Columns are the server version. Versions are grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the listed breaking points. – the client is newer than the server, which is not supported.
+Rows are the client version: the `zenml` package your team runs, including the one in your snapshot images. Columns are the server version. Versions are grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the listed breaking points. – the client is newer than the server, which is not supported. A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that same minor release; check its Since column.
 
 Each hard break starts a new era. A client and a server from different eras do not work together: upgrade both at the same time.
 

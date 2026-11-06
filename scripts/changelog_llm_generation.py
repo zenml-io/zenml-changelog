@@ -140,7 +140,7 @@ def generate_compatibility_output(
     output = client.parse_structured_output(
         prompt=prompt,
         output_model=CompatibilityAssessment,
-        max_output_tokens=700,
+        max_output_tokens=1200,
         call_name=LLM_CALL_COMPATIBILITY,
     )
     validate_compatibility_output(output=output, breaking_prs=breaking_prs)

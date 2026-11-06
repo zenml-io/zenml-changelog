@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts import changelog_llm_generation as generation
 from scripts import changelog_llm_outputs as outputs
+from scripts import changelog_validators as validators
 from scripts.changelog_llm_providers import LLMOutputValidationError
 
 
@@ -78,6 +79,7 @@ def test_compatibility_generation_uses_its_own_call_and_author_notes() -> None:
     )
 
     assert client.calls[0]["call_name"] == outputs.LLM_CALL_COMPATIBILITY
+    assert client.calls[0]["max_output_tokens"] == 1200
     assert client.calls[0]["output_model"] == outputs.CompatibilityAssessment
     assert "Upgrade impact (written by the PR author): Older clients that list runs" in client.calls[0]["prompt"]
 
@@ -111,3 +113,15 @@ def test_compatibility_generation_rejects_inconsistent_breaking_points(
             release_notes_prs=[],
             breaking_points="- none",
         )
+
+
+def test_compatibility_validator_rejects_pr_references() -> None:
+    output = outputs.CompatibilityAssessment(
+        status=outputs.CompatibilityStatus.EXCEPTIONS,
+        server_impact="See https://github.com/zenml-io/zenml/pull/456 for details.",
+        client_upgrade_notes="",
+        breaking_point_description="Listing runs per pipeline fails for older clients.",
+    )
+
+    with pytest.raises(LLMOutputValidationError, match="must not include PR links"):
+        validators.validate_compatibility_output(output=output, breaking_prs=[make_breaking_pr()])

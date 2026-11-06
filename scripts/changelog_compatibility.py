@@ -37,7 +37,9 @@ MATRIX_INTRO = (
     "Rows are the client version: the `zenml` package your team runs, including the one in "
     "your snapshot images. Columns are the server version. Versions are grouped by minor "
     "release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the "
-    "listed breaking points. – the client is newer than the server, which is not supported."
+    "listed breaking points. – the client is newer than the server, which is not supported. "
+    "A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that "
+    "same minor release; check its Since column."
 )
 OLDER_ERAS_NOTE = (
     "Each hard break starts a new era. A client and a server from different eras do not "
@@ -49,6 +51,8 @@ Series = Tuple[int, int]
 _CELL_SEPARATOR = re.compile(r"(?<!\\)\|")
 _VERSION = re.compile(r"^v?(\d+)\.(\d+)(?:\.\d+)?$")
 _UPGRADE_IMPACT_HEADING = re.compile(r"^#{1,6}\s*upgrade impact\b.*$", flags=re.IGNORECASE | re.MULTILINE)
+_HTML_COMMENT = re.compile(r"<!--.*?-->", flags=re.DOTALL)
+_STATUS_REFERENCE = re.compile(r"\b[EH]\d+\b")
 
 
 class BreakingPointKind(str, Enum):
@@ -90,7 +94,9 @@ class CompatibilityUpdate(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     page: str
-    release: ReleaseCompatibility
+    version: str
+    # None when the version was already listed and the page was left unchanged.
+    release: Optional[ReleaseCompatibility] = None
     new_breaking_point: Optional[BreakingPoint] = None
 
 
@@ -106,13 +112,17 @@ def format_series(series: Series) -> str:
 
 
 def upgrade_impact_section(pr_body: str) -> str:
-    """Return the text under the PR description's "Upgrade impact" heading, or ''."""
+    """Return what the author wrote under the "Upgrade impact" heading, or ''.
+
+    HTML comments are dropped, so the PR template's placeholder doesn't count as an answer.
+    """
     match = _UPGRADE_IMPACT_HEADING.search(pr_body or "")
     if not match:
         return ""
     rest = pr_body[match.end():]
     next_heading = re.search(r"^#{1,6}\s", rest, flags=re.MULTILINE)
-    return (rest[: next_heading.start()] if next_heading else rest).strip()
+    section = rest[: next_heading.start()] if next_heading else rest
+    return _HTML_COMMENT.sub("", section).strip()
 
 
 def format_breaking_points(points: Sequence[BreakingPoint]) -> str:
@@ -167,6 +177,10 @@ def parse_breaking_points(page: str) -> List[BreakingPoint]:
             raise ValueError(f"Breaking point {point_id} has type {kind!r}; expected one of {allowed}") from exc
         series_of(since)
         points.append(BreakingPoint(id=point_id, since=since, kind=parsed_kind, description=description))
+    ids = [point.id for point in points]
+    duplicates = sorted({point_id for point_id in ids if ids.count(point_id) > 1})
+    if duplicates:
+        raise ValueError(f"Breaking points lists these IDs more than once: {', '.join(duplicates)}")
     return points
 
 
@@ -252,10 +266,20 @@ def _replace_section_body(page: str, heading: str, body: str) -> str:
     return page[:start] + "\n" + body.strip() + "\n" + trailing + page[end:]
 
 
+def _check_status_references(page: str, points: Sequence[BreakingPoint]) -> None:
+    known = {point.id for point in points}
+    for cells in _table_rows(page, RELEASES_HEADING):
+        unknown = sorted(set(_STATUS_REFERENCE.findall(cells[1])) - known) if len(cells) > 1 else []
+        if unknown:
+            raise ValueError(f"Release {cells[0]} refers to unknown breaking points: {', '.join(unknown)}")
+
+
 def redraw_matrix(page: str) -> str:
     """Rebuild the matrix from the page's breaking points and release rows."""
+    points = parse_breaking_points(page)
+    _check_status_references(page, points)
     series = sorted({series_of(version) for version in parse_release_versions(page)})
-    return _replace_section_body(page, MATRIX_HEADING, render_matrix(series, parse_breaking_points(page)))
+    return _replace_section_body(page, MATRIX_HEADING, render_matrix(series, points))
 
 
 def _cell_text(text: str) -> str:
@@ -296,7 +320,7 @@ def add_release(page: str, release: ReleaseCompatibility) -> CompatibilityUpdate
     automation for the same tag never duplicates or overwrites a reviewed row.
     """
     if release.version in parse_release_versions(page):
-        return CompatibilityUpdate(page=page, release=release)
+        return CompatibilityUpdate(page=page, version=release.version)
 
     new_point: Optional[BreakingPoint] = None
     if release.status is not CompatibilityStatus.COMPATIBLE:
@@ -322,12 +346,19 @@ def add_release(page: str, release: ReleaseCompatibility) -> CompatibilityUpdate
         f"{_cell_text(release.server_impact)} | {_cell_text(release.client_upgrade_notes)} |"
     )
     page = _insert_first_row(page, RELEASES_HEADING, release_row)
-    return CompatibilityUpdate(page=redraw_matrix(page), release=release, new_breaking_point=new_point)
+    return CompatibilityUpdate(
+        page=redraw_matrix(page),
+        version=release.version,
+        release=release,
+        new_breaking_point=new_point,
+    )
 
 
 def format_compatibility_summary(update: CompatibilityUpdate) -> str:
     """Summarize the update for the release-notes PR description."""
     release = update.release
+    if release is None:
+        return f"- {update.version} is already listed on the page, so it was left unchanged."
     lines = [
         f"- **Status:** {_status_cell(release.status, update.new_breaking_point)}",
         f"- **Server impact on existing clients:** {_cell_text(release.server_impact)}",

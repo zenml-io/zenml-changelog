@@ -37,6 +37,7 @@ try:
         format_breaking_points,
         format_compatibility_summary,
         parse_breaking_points,
+        parse_release_versions,
         upgrade_impact_section,
     )
     from scripts.changelog_config import (
@@ -135,6 +136,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
         format_breaking_points,
         format_compatibility_summary,
         parse_breaking_points,
+        parse_release_versions,
         upgrade_impact_section,
     )
     from changelog_config import (  # type: ignore[no-redef]
@@ -842,20 +844,18 @@ def collect_needs_attention(
     return needs_attention
 
 
-def collect_missing_upgrade_impact(
-    breaking_prs: List[Dict[str, Any]],
-    source_repo: str,
-) -> List[NeedsAttentionItem]:
-    """Flag breaking PRs from the trigger repo whose description has no "Upgrade impact" section."""
-    return [
-        {
-            "number": str(pr["number"]),
-            "title": f"No 'Upgrade impact' section: {pr['title']}"[:80],
-            "url": pr["url"],
-        }
+def format_missing_upgrade_impact(breaking_prs: List[Dict[str, Any]], source_repo: str) -> str:
+    """List breaking PRs from the trigger repo whose description has no "Upgrade impact" section."""
+    missing = [
+        pr
         for pr in breaking_prs
         if pr.get("repo", source_repo) == source_repo and not upgrade_impact_section(pr.get("body", ""))
     ]
+    if not missing:
+        return ""
+    lines = ["- **Breaking PRs without an `Upgrade impact` section** (check the row against them):"]
+    lines.extend(f"  - PR #{pr['number']}: {pr['title']} ({pr['url']})" for pr in missing)
+    return "\n".join(lines)
 
 
 def prepare_compatibility_update(
@@ -865,9 +865,11 @@ def prepare_compatibility_update(
 ) -> CompatibilityUpdate:
     """Build the updated Compatibility page for an OSS release without writing it.
 
-    Releases without breaking PRs are recorded as compatible without a model call.
+    Releases already on the page and releases without breaking PRs need no model call.
     """
     page = COMPATIBILITY_PAGE.read_text(encoding="utf-8")
+    if release_tag in parse_release_versions(page):
+        return CompatibilityUpdate(page=page, version=release_tag)
     if breaking_prs:
         assessment = llm_generate_compatibility_assessment(
             release_tag=release_tag,
@@ -884,6 +886,32 @@ def prepare_compatibility_update(
             client_upgrade_notes="",
         )
     return add_release(page, release)
+
+
+def build_compatibility_section(
+    release_tag: str,
+    source_repo: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+) -> Tuple[Optional[CompatibilityUpdate], str]:
+    """Prepare the Compatibility page update and its summary for the release-notes PR.
+
+    The page is secondary to the release notes: a malformed page or a failed model call
+    is reported in the summary for a reviewer to fix by hand instead of failing the run.
+    """
+    update: Optional[CompatibilityUpdate] = None
+    try:
+        update = prepare_compatibility_update(release_tag, breaking_prs, release_notes_prs)
+        summary = format_compatibility_summary(update)
+    except Exception as error:
+        print(f"Warning: skipping the Compatibility page update: {error}")
+        summary = (
+            f"- ⚠️ **The row for {release_tag} was not added:** {' '.join(str(error).split())[:300]} "
+            f"Add it to `{COMPATIBILITY_PAGE}` on this branch by hand, then run "
+            "`uv run scripts/changelog_compatibility.py redraw`."
+        )
+    missing = format_missing_upgrade_impact(breaking_prs, source_repo)
+    return update, "\n".join(part for part in (summary, missing) if part)
 
 
 def generate_valid_grouped_changelog_entries(
@@ -1035,9 +1063,11 @@ def main() -> None:
     )
 
     compatibility_update: Optional[CompatibilityUpdate] = None
+    compatibility_summary = ""
     if config["type"] == "oss":
-        compatibility_update = prepare_compatibility_update(
+        compatibility_update, compatibility_summary = build_compatibility_section(
             release_tag=env["RELEASE_TAG"],
+            source_repo=source_repo,
             breaking_prs=breaking_prs,
             release_notes_prs=release_notes_prs,
         )
@@ -1049,8 +1079,6 @@ def main() -> None:
 
     # Identify PRs with insufficient descriptions that should be reviewed manually
     needs_attention = collect_needs_attention(grouping_prs)
-    if compatibility_update is not None:
-        needs_attention.extend(collect_missing_upgrade_impact(breaking_prs, source_repo))
     if not release_notes_prs and breaking_prs:
         needs_attention.append(
             {
@@ -1129,7 +1157,7 @@ def main() -> None:
             ),
             needs_attention=format_needs_attention_output(needs_attention),
             source_windows=source_windows_body,
-            compatibility=format_compatibility_summary(compatibility_update) if compatibility_update else "",
+            compatibility=compatibility_summary,
         ),
         workflow_result_path,
     )
