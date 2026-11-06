@@ -1,9 +1,9 @@
 [
   {
     "id": 101,
-    "slug": "bots-and-refreshed-zenml-pro",
-    "title": "Bots are here, with a refreshed ZenML Pro",
-    "description": "Bots are now available alongside a refreshed ZenML Pro interface. Create and chat with Bots to investigate failed pipeline runs or explore agent behavior in Kitaru, and review the results they produce. You can also schedule recurring tasks. To use the previous interface, visit [classic.cloud.zenml.io](https://classic.cloud.zenml.io).",
+    "slug": "bots-and-refreshed-ui",
+    "title": "Bots are live, with a refreshed UI",
+    "description": "ZenML Pro now has Bots, an always-on team of AI engineers. Ask one to investigate a failed run or an agent's behavior, test a fix, and open a pull request, from the dashboard, Slack, or GitHub. You can also put recurring reviews on a schedule. The dashboard has a new look too, with the same runs, models, and artifacts. Prefer the old one? It's still at [classic.cloud.zenml.io](https://classic.cloud.zenml.io).",
     "feature_image_url": "https://assets.zenml.io/content/blog/introducing-bots-zenml-pro/500fc2c5/bot-automation-setup.avif",
     "published_at": "2026-11-06T13:09:40Z",
     "published": true,
@@ -12,8 +12,9 @@
       "feature",
       "improvement"
     ],
+    "learn_more_url": "https://www.zenml.io/blog/introducing-bots-zenml-pro",
     "docs_url": "https://docs.zenml.io/pro/bots/bots",
-    "should_highlight": false
+    "should_highlight": true
   },
   {
     "id": 100,
