@@ -15,6 +15,24 @@ from scripts import update_changelog as uc
 from scripts import workflow_result as wr
 
 
+COMPATIBILITY_PAGE = """# Compatibility
+
+## Client and server matrix
+
+## Breaking points
+
+| ID | Since | Type | What breaks for older clients |
+| --- | --- | --- | --- |
+| H1 | 0.83.0 | Hard break | Old clients stop working. |
+
+## Release by release
+
+| Release | Status | Server impact on existing clients | Client upgrade notes |
+| --- | --- | --- | --- |
+| 0.84.0 | ✅ Compatible | None known. | – |
+"""
+
+
 class FakeAnthropic:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
@@ -78,7 +96,42 @@ def configure_common_main_stubs(
     monkeypatch.setattr(uc, "Github", FakeGithub)
     monkeypatch.setattr(uc, "find_previous_tag", lambda *args: "0.84.0")
     monkeypatch.setattr(uc, "read_consumed_source_state", lambda: uc.ConsumedSourceState())
+    page_path = tmp_path / uc.COMPATIBILITY_PAGE
+    page_path.parent.mkdir(parents=True, exist_ok=True)
+    page_path.write_text(COMPATIBILITY_PAGE, encoding="utf-8")
     return result_path
+
+
+def stub_release_notes_generation(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        uc,
+        "generate_valid_grouped_changelog_entries",
+        lambda **kwargs: [
+            {
+                "id": kwargs["starting_id"],
+                "slug": "grouped-release-note",
+                "title": "Grouped release note",
+                "description": "Grouped release note description",
+                "published_at": "2026-06-02T10:00:00Z",
+                "published": True,
+                "audience": "oss",
+                "labels": ["improvement"],
+                "feature_image_url": "",
+                "video_url": "",
+                "learn_more_url": uc.PLACEHOLDER_LEARN_MORE_URL,
+                "docs_url": uc.PLACEHOLDER_DOCS_URL,
+                "should_highlight": False,
+            }
+        ],
+    )
+    monkeypatch.setattr(uc, "validate_changelog_data", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "validate_changelog", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "get_next_image_number", lambda **kwargs: 3)
+    monkeypatch.setattr(uc, "llm_generate_release_notes_body", lambda *args, **kwargs: "BODY")
+    monkeypatch.setattr(uc, "render_release_notes_section", lambda *args, **kwargs: "RELEASE NOTES\n")
+    monkeypatch.setattr(uc, "update_markdown_file", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "mark_consumed_after_success", lambda **kwargs: kwargs["state"])
+    monkeypatch.setattr(uc, "write_consumed_source_state", lambda *args, **kwargs: None)
 
 
 def test_main_no_changes_writes_structured_result_and_exits_cleanly(
@@ -152,33 +205,15 @@ def test_main_happy_path_writes_structured_result(
     )
     monkeypatch.setattr(
         uc,
-        "generate_valid_grouped_changelog_entries",
-        lambda **kwargs: [
-            {
-                "id": kwargs["starting_id"],
-                "slug": "grouped-release-note",
-                "title": "Grouped release note",
-                "description": "Grouped release note description",
-                "published_at": "2026-06-02T10:00:00Z",
-                "published": True,
-                "audience": "oss",
-                "labels": ["improvement"],
-                "feature_image_url": "",
-                "video_url": "",
-                "learn_more_url": uc.PLACEHOLDER_LEARN_MORE_URL,
-                "docs_url": uc.PLACEHOLDER_DOCS_URL,
-                "should_highlight": False,
-            }
-        ],
+        "llm_generate_compatibility_assessment",
+        lambda **kwargs: uc.CompatibilityAssessment(
+            status=uc.CompatibilityStatus.EXCEPTIONS,
+            server_impact="Older clients can no longer list runs per pipeline.",
+            client_upgrade_notes="Update code that lists runs per pipeline.",
+            breaking_point_description="Listing runs per pipeline fails for older clients.",
+        ),
     )
-    monkeypatch.setattr(uc, "validate_changelog_data", lambda *args, **kwargs: None)
-    monkeypatch.setattr(uc, "validate_changelog", lambda *args, **kwargs: None)
-    monkeypatch.setattr(uc, "get_next_image_number", lambda **kwargs: 3)
-    monkeypatch.setattr(uc, "llm_generate_release_notes_body", lambda *args, **kwargs: "BODY")
-    monkeypatch.setattr(uc, "render_release_notes_section", lambda *args, **kwargs: "RELEASE NOTES\n")
-    monkeypatch.setattr(uc, "update_markdown_file", lambda *args, **kwargs: None)
-    monkeypatch.setattr(uc, "mark_consumed_after_success", lambda **kwargs: kwargs["state"])
-    monkeypatch.setattr(uc, "write_consumed_source_state", lambda *args, **kwargs: None)
+    stub_release_notes_generation(monkeypatch)
 
     uc.main()
 
@@ -190,6 +225,11 @@ def test_main_happy_path_writes_structured_result(
         f"{wr.NEEDS_ATTENTION_HEADER}\n"
         "- PR #1: PR 1 (https://github.com/zenml-io/zenml/pull/1)"
     )
+    page = (tmp_path / uc.COMPATIBILITY_PAGE).read_text(encoding="utf-8")
+    assert "| 0.85.0 | ⚠️ Exceptions (E1) | Older clients can no longer list runs per pipeline." in page
+    assert "| E1 | 0.85.0 | Exception | Listing runs per pipeline fails for older clients. |" in page
+    assert "New breaking point E1" in result.compatibility
+    assert "  - PR #2: PR 2 (https://github.com/zenml-io/zenml/pull/2)" in result.compatibility
     assert "included zenml-io/zenml 0.84.0 -> 0.85.0" in result.source_windows
     assert "release_notes=1" in result.source_windows
     assert "breaking=1" in result.source_windows
@@ -317,3 +357,116 @@ def test_blank_private_repo_token_falls_back_to_github_token(
         uc.main()
 
     assert created["auth"] == "auth:token"
+
+
+def test_prepare_compatibility_update_records_release_without_breaking_prs_without_llm(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    configure_common_main_stubs(monkeypatch, tmp_path)
+
+    def fail_if_called(**kwargs: Any) -> None:
+        raise AssertionError("Releases without breaking PRs must not call the model")
+
+    monkeypatch.setattr(uc, "llm_generate_compatibility_assessment", fail_if_called)
+
+    update = uc.prepare_compatibility_update(
+        release_tag="0.85.0",
+        breaking_prs=[],
+        release_notes_prs=[make_pr(1)],
+    )
+
+    assert update.release.status is uc.CompatibilityStatus.COMPATIBLE
+    assert update.new_breaking_point is None
+    assert "| 0.85.0 | ✅ Compatible | None known. | – |" in update.page
+    assert (tmp_path / uc.COMPATIBILITY_PAGE).read_text(encoding="utf-8") == COMPATIBILITY_PAGE
+
+
+def test_main_leaves_compatibility_page_alone_for_pro_releases(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    result_path = configure_common_main_stubs(monkeypatch, tmp_path)
+    monkeypatch.setenv("SOURCE_REPO", "zenml-io/zenml-cloud-api")
+    release_pr = make_pr(1, body="This PR has enough body text to avoid manual-review noise.")
+    collection = make_collection(release_notes_prs=[release_pr], breaking_prs=[])
+    (tmp_path / "changelog.json").write_text("[]\n", encoding="utf-8")
+
+    def fail_if_called(**kwargs: Any) -> None:
+        raise AssertionError("Pro releases must not touch the Compatibility page")
+
+    monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: collection)
+    monkeypatch.setattr(uc, "prepare_compatibility_update", fail_if_called)
+    monkeypatch.setattr(uc, "llm_generate_breaking_changes_bullets", lambda **kwargs: [])
+    monkeypatch.setattr(uc, "generate_valid_grouped_changelog_entries", lambda **kwargs: [])
+    monkeypatch.setattr(uc, "validate_changelog_data", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "validate_changelog", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "get_next_image_number", lambda **kwargs: 3)
+    monkeypatch.setattr(uc, "llm_generate_release_notes_body", lambda *args, **kwargs: "BODY")
+    monkeypatch.setattr(uc, "render_release_notes_section", lambda *args, **kwargs: "RELEASE NOTES\n")
+    monkeypatch.setattr(uc, "update_markdown_file", lambda *args, **kwargs: None)
+    monkeypatch.setattr(uc, "mark_consumed_after_success", lambda **kwargs: kwargs["state"])
+    monkeypatch.setattr(uc, "write_consumed_source_state", lambda *args, **kwargs: None)
+
+    uc.main()
+
+    result = wr.read_changelog_workflow_result(result_path)
+    assert result.markdown_file == "gitbook-release-notes/pro-control-plane.md"
+    assert result.compatibility == ""
+    assert (tmp_path / uc.COMPATIBILITY_PAGE).read_text(encoding="utf-8") == COMPATIBILITY_PAGE
+
+
+@pytest.mark.parametrize("failure", ["broken_page", "failed_model_call"])
+def test_main_writes_release_notes_when_the_compatibility_update_fails(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    failure: str,
+) -> None:
+    result_path = configure_common_main_stubs(monkeypatch, tmp_path)
+    page_path = tmp_path / uc.COMPATIBILITY_PAGE
+    if failure == "broken_page":
+        page_path.write_text(COMPATIBILITY_PAGE.replace("| Hard break |", "| hard break |"), encoding="utf-8")
+
+    def fail_model_call(**kwargs: Any) -> None:
+        raise uc.LLMProviderNonRetryableError("structured output was incomplete")
+
+    breaking_pr = make_pr(2, body="## Upgrade impact\nOlder clients can no longer list runs per pipeline.")
+    collection = make_collection(release_notes_prs=[make_pr(1)], breaking_prs=[breaking_pr])
+    (tmp_path / "changelog.json").write_text("[]\n", encoding="utf-8")
+    monkeypatch.setattr(uc, "collect_multi_source_prs", lambda **kwargs: collection)
+    monkeypatch.setattr(uc, "llm_generate_breaking_changes_bullets", lambda **kwargs: ["Breaking API changed"])
+    monkeypatch.setattr(uc, "llm_generate_compatibility_assessment", fail_model_call)
+    stub_release_notes_generation(monkeypatch)
+    page_before = page_path.read_text(encoding="utf-8")
+
+    uc.main()
+
+    result = wr.read_changelog_workflow_result(result_path)
+    assert result.has_changes is True
+    assert "The row for 0.85.0 was not added" in result.compatibility
+    assert "without an `Upgrade impact` section" not in result.compatibility
+    assert page_path.read_text(encoding="utf-8") == page_before
+
+
+def test_prepare_compatibility_update_skips_the_model_for_listed_releases(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    configure_common_main_stubs(monkeypatch, tmp_path)
+
+    def fail_if_called(**kwargs: Any) -> None:
+        raise AssertionError("Releases already on the page must not call the model")
+
+    monkeypatch.setattr(uc, "llm_generate_compatibility_assessment", fail_if_called)
+
+    update = uc.prepare_compatibility_update(
+        release_tag="0.84.0",
+        breaking_prs=[make_pr(2)],
+        release_notes_prs=[],
+    )
+
+    assert update.release is None
+    assert update.page == COMPATIBILITY_PAGE
+    assert uc.format_compatibility_summary(update) == (
+        "- 0.84.0 is already listed on the page, so it was left unchanged."
+    )

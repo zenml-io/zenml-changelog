@@ -18,6 +18,7 @@ This repo is the canonical source of ZenML release metadata:
 - `gitbook-release-notes/`
   - `server-sdk.md` — OSS release notes (bundles content from zenml + zenml-dashboard).
   - `pro-control-plane.md` — Pro release notes (bundles content from zenml-cloud-api + zenml-cloud-ui).
+  - `compatibility.md` — Client/server compatibility matrix, updated for OSS releases. Its matrix is generated from the "Breaking points" and "Release by release" tables; never edit the matrix by hand.
   - `README.md` — Notes for GitBook syncing.
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
@@ -34,6 +35,7 @@ This repo is the canonical source of ZenML release metadata:
 - `scripts/workflow_result.py` — Deterministic workflow-result JSON model and GitHub Actions output writer.
 - `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
 - `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
+- `scripts/changelog_compatibility.py` — Compatibility page parsing, release-row insertion, and matrix redraw (`uv run scripts/changelog_compatibility.py redraw`).
 - `scripts/build_comparison_app.py` — Builds the offline single-file blind A/B comparison web app from an eval run.
 - `scripts/changelog_fixture_capture.py` — Turns real ZenML releases into eval fixtures (dependency-injected PR collection; powers `evaluate_changelog_llms.py capture-release`).
 - `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
@@ -51,7 +53,7 @@ This repo is the canonical source of ZenML release metadata:
 
 - Trigger: `repository_dispatch` with `event_type: release-published` from one of two trigger repos.
 - **Two-Path Architecture**:
-  - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md`
+  - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md` and adds a row to `compatibility.md`
   - **Pro Path**: Triggered by `zenml-io/zenml-cloud-api` release → aggregates PRs from zenml-cloud-api + zenml-cloud-ui → updates `pro-control-plane.md`
 - Workflow: `.github/workflows/process-release.yml`
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
@@ -91,6 +93,7 @@ This repo is the canonical source of ZenML release metadata:
 2. Update release notes:
    - OSS: insert a new section at the top of `gitbook-release-notes/server-sdk.md` after frontmatter.
    - Pro: insert at the top of `gitbook-release-notes/pro-control-plane.md` after frontmatter.
+   - Compatibility: edit the "Breaking points" or "Release by release" table in `gitbook-release-notes/compatibility.md`, then run `uv run scripts/changelog_compatibility.py redraw`.
 3. Validate locally (recommended): run `uv run scripts/validate_changelog.py`, or let the pre-commit hook catch issues on commit.
 4. Open a PR; `validate-changelog.yml` will re-validate `changelog.json`.
 

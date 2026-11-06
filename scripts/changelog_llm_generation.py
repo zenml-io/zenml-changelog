@@ -6,39 +6,47 @@ from typing import Any, Dict, List, Optional
 try:
     from scripts.changelog_llm_outputs import (
         LLM_CALL_BREAKING_CHANGES,
+        LLM_CALL_COMPATIBILITY,
         LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
         LLM_CALL_RELEASE_NOTES_BODY,
         BreakingChangesOutput,
+        CompatibilityAssessment,
         GroupedChangelogOutput,
         MarkdownSection,
     )
     from scripts.changelog_llm_providers import StructuredLLMClient
     from scripts.changelog_prompts import (
         build_breaking_changes_prompt,
+        build_compatibility_prompt,
         build_grouped_changelog_entries_prompt,
         build_release_notes_body_prompt,
     )
     from scripts.changelog_validators import (
         validate_breaking_changes_output,
+        validate_compatibility_output,
         validate_release_notes_body_output,
     )
 except ModuleNotFoundError:  # pragma: no cover
     from changelog_llm_outputs import (  # type: ignore[no-redef]
         LLM_CALL_BREAKING_CHANGES,
+        LLM_CALL_COMPATIBILITY,
         LLM_CALL_GROUPED_CHANGELOG_ENTRIES,
         LLM_CALL_RELEASE_NOTES_BODY,
         BreakingChangesOutput,
+        CompatibilityAssessment,
         GroupedChangelogOutput,
         MarkdownSection,
     )
     from changelog_llm_providers import StructuredLLMClient  # type: ignore[no-redef]
     from changelog_prompts import (  # type: ignore[no-redef]
         build_breaking_changes_prompt,
+        build_compatibility_prompt,
         build_grouped_changelog_entries_prompt,
         build_release_notes_body_prompt,
     )
     from changelog_validators import (  # type: ignore[no-redef]
         validate_breaking_changes_output,
+        validate_compatibility_output,
         validate_release_notes_body_output,
     )
 
@@ -110,3 +118,30 @@ def generate_release_notes_body_output(
         include_pr_links=include_pr_links,
     )
     return output, warnings
+
+
+def generate_compatibility_output(
+    *,
+    client: StructuredLLMClient,
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+    breaking_points: str,
+) -> CompatibilityAssessment:
+    """Generate and validate the compatibility assessment of a release with breaking PRs."""
+    if not breaking_prs:
+        raise RuntimeError("No breaking PRs provided to generate_compatibility_output")
+    prompt = build_compatibility_prompt(
+        release_tag=release_tag,
+        breaking_prs=breaking_prs,
+        release_notes_prs=release_notes_prs,
+        breaking_points=breaking_points,
+    )
+    output = client.parse_structured_output(
+        prompt=prompt,
+        output_model=CompatibilityAssessment,
+        max_output_tokens=1200,
+        call_name=LLM_CALL_COMPATIBILITY,
+    )
+    validate_compatibility_output(output=output, breaking_prs=breaking_prs)
+    return output

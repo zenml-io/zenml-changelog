@@ -25,3 +25,14 @@ def test_process_release_workflow_defaults_to_routed_openai_without_shadow_comme
     assert "find-comment" not in workflow
     assert "create-or-update-comment" not in workflow
     assert "issues: write" not in workflow
+
+
+def test_release_notes_pr_carries_the_compatibility_page() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+
+    assert (
+        'git diff --binary -- "$MARKDOWN_FILE" gitbook-release-notes/compatibility.md .consumed_sources_state'
+        in workflow
+    )
+    assert "            gitbook-release-notes/compatibility.md\n            .consumed_sources_state" in workflow
+    assert "${{ needs.generate.outputs.compatibility }}" in workflow

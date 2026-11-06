@@ -6,6 +6,7 @@ This repository is the canonical source for ZenML release metadata and GitBook r
 
 - `changelog.json` stores UI announcement entries, newest first.
 - `gitbook-release-notes/server-sdk.md` contains OSS release notes; `pro-control-plane.md` contains Pro release notes.
+- `gitbook-release-notes/compatibility.md` is the client/server compatibility page. `scripts/changelog_compatibility.py` adds OSS release rows and redraws its matrix from the "Breaking points" and "Release by release" tables; never edit the matrix by hand.
 - `changelog_schema/` documents and validates the `changelog.json` format.
 - `scripts/` contains the Python automation: `update_changelog.py`, `workflow_result.py`, `source_windows.py`, `consumed_sources.py`, and validation/sync helpers.
 - `scripts/build_comparison_app.py` builds the offline single-file blind A/B comparison web app from an eval run; `comparison_app/` holds its `template.html` shell and vendored `marked.min.js` renderer.

@@ -4,8 +4,10 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 try:
+    from scripts.changelog_compatibility import NO_KNOWN_IMPACT, upgrade_impact_section
     from scripts.changelog_config import REPO_CONFIG
 except ModuleNotFoundError:  # pragma: no cover
+    from changelog_compatibility import NO_KNOWN_IMPACT, upgrade_impact_section  # type: ignore[no-redef]
     from changelog_config import REPO_CONFIG  # type: ignore[no-redef]
 
 
@@ -241,3 +243,55 @@ def build_markdown_section_prompt(
         f"{footer_instruction}"
     )
 
+
+
+def _compatibility_pr_summary(pr: Dict[str, Any]) -> str:
+    summary = _detailed_pr_summary(pr, body_chars=1200)
+    impact = upgrade_impact_section(pr.get("body") or "")
+    if impact:
+        summary += f"\n  Upgrade impact (written by the PR author): {' '.join(impact.split())[:800]}"
+    return summary
+
+
+def build_compatibility_prompt(
+    *,
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+    breaking_points: str,
+) -> str:
+    breaking_keys = {(pr.get("repo", ""), pr["number"]) for pr in breaking_prs}
+    other_titles = "\n".join(
+        f"- #{pr['number']}: {pr['title']}"
+        for pr in release_notes_prs
+        if (pr.get("repo", ""), pr["number"]) not in breaking_keys
+    )
+    return (
+        "You are assessing a ZenML open source release for the public Compatibility page.\n\n"
+        f"The page answers one question: when a team upgrades its ZenML server to {release_tag}, "
+        "do clients on older ZenML versions keep working? A client is the `zenml` Python package, "
+        "including the version installed inside pipeline snapshot images.\n\n"
+        "Breaking points already on the page (clients older than the version lose what is described):\n"
+        f"{breaking_points}\n\n"
+        "PRs labeled as breaking changes in this release:\n"
+        f"{chr(10).join(_compatibility_pr_summary(pr) for pr in breaking_prs)}\n\n"
+        "Other user-facing PRs in this release (titles only, for context):\n"
+        f"{other_titles or '- none'}\n\n"
+        "Choose `status`:\n"
+        "- compatible: older clients keep working against this server. Changes that only matter when "
+        "a team upgrades its own client (dependency pins, dropped Python versions, deprecations, changed "
+        "SDK behavior) are still compatible; describe them in `client_upgrade_notes`.\n"
+        "- exceptions: older clients keep working, except for specific operations that now fail against "
+        "this server, such as a removed endpoint or a response field whose shape changed.\n"
+        "- breaking: older clients cannot work with this server at all, so client and server must be "
+        "upgraded together.\n\n"
+        "Fields:\n"
+        "- `server_impact`: one or two sentences on what happens to older clients once the server runs "
+        f"this release. Use \"{NO_KNOWN_IMPACT}\" when status is compatible and nothing changes for them.\n"
+        "- `client_upgrade_notes`: one or two sentences on what a team must change when it upgrades its own "
+        "client to this release. Use \"\" when nothing.\n"
+        "- `breaking_point_description`: for exceptions or breaking, one sentence naming what fails for "
+        f"clients older than {release_tag}. Use \"\" when compatible.\n\n"
+        "Rules: plain text only. No markdown links, PR numbers, URLs, line breaks, or '|' characters. "
+        "Base the assessment only on the PRs above, and prefer the PR author's upgrade impact notes when present."
+    )

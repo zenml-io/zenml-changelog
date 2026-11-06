@@ -5,10 +5,14 @@ import re
 from typing import Any, Dict, List
 
 try:
-    from scripts.changelog_llm_outputs import GroupedChangelogOutput
+    from scripts.changelog_llm_outputs import CompatibilityAssessment, CompatibilityStatus, GroupedChangelogOutput
     from scripts.changelog_llm_providers import LLMOutputValidationError
 except ModuleNotFoundError:  # pragma: no cover
-    from changelog_llm_outputs import GroupedChangelogOutput  # type: ignore[no-redef]
+    from changelog_llm_outputs import (  # type: ignore[no-redef]
+        CompatibilityAssessment,
+        CompatibilityStatus,
+        GroupedChangelogOutput,
+    )
     from changelog_llm_providers import LLMOutputValidationError  # type: ignore[no-redef]
 
 class GroupedChangelogSemanticError(RuntimeError):
@@ -129,6 +133,29 @@ def validate_breaking_changes_output(
     if details:
         raise LLMOutputValidationError(details)
     return warnings
+
+def validate_compatibility_output(
+    *,
+    output: CompatibilityAssessment,
+    breaking_prs: List[Dict[str, Any]],
+) -> None:
+    """Validate a compatibility assessment before it is written to the page."""
+    details: List[str] = []
+    if not output.server_impact.strip():
+        details.append("`server_impact` must not be empty.")
+
+    has_description = bool(output.breaking_point_description.strip())
+    if output.status is CompatibilityStatus.COMPATIBLE and has_description:
+        details.append("`breaking_point_description` must be empty when status is compatible.")
+    if output.status is not CompatibilityStatus.COMPATIBLE and not has_description:
+        details.append("`breaking_point_description` is required when status is exceptions or breaking.")
+
+    combined = "\n".join([output.server_impact, output.client_upgrade_notes, output.breaking_point_description])
+    if contains_forbidden_pr_reference(combined, breaking_prs):
+        details.append("Compatibility text must not include PR links, raw PR URLs, or PR numbers.")
+
+    if details:
+        raise LLMOutputValidationError(details)
 
 def format_repo_qualified_pr(pr: Dict[str, Any]) -> str:
     """Return a compact repo-qualified PR identifier for hard validation errors."""
