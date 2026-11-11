@@ -1,5 +1,357 @@
 [
   {
+    "id": 101,
+    "slug": "bots-and-refreshed-ui",
+    "title": "Bots are live, with a refreshed UI",
+    "description": "ZenML Pro now has Bots, an always-on team of AI engineers. Ask one to investigate a failed run or an agent's behavior, test a fix, and open a pull request, from the UI, Slack, or GitHub. You can also put recurring reviews on a schedule. The UI has a new look too, with the same runs, models, and artifacts. Prefer the old one? It's still at [classic.cloud.zenml.io](https://classic.cloud.zenml.io).",
+    "feature_image_url": "https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/new-ui-light.gif",
+    "published_at": "2026-11-06T13:09:40Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature",
+      "improvement"
+    ],
+    "learn_more_url": "https://www.zenml.io/blog/introducing-bots-zenml-pro",
+    "docs_url": "https://docs.zenml.io/pro/bots/bots",
+    "should_highlight": true
+  },
+  {
+    "id": 100,
+    "slug": "rename-projects-cli-sdk",
+    "title": "Rename projects from the CLI and SDK",
+    "description": "You can now rename a project from the CLI with `zenml project update <name-or-uuid>`, using `--name`, `--display-name`, and `--description`. The technical name and the display name can be changed separately, and the project keeps its UUID, so its runs, pipelines, and other resources stay attached. Updating a project from the SDK now also leaves fields you don't pass unchanged, and lets you explicitly clear the description.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/projects",
+    "should_highlight": false
+  },
+  {
+    "id": 99,
+    "slug": "helm-chart-pod-security-restricted",
+    "title": "Helm chart pods meet Pod Security `restricted` by default",
+    "description": "Every pod the ZenML Helm chart creates now satisfies the Kubernetes Pod Security `restricted` profile out of the box: the server, the database migration job, workers, CA certificate init containers, and the `helm test` pod. You no longer need extra overrides to deploy into locked-down namespaces. When you upgrade, use `--reset-then-reuse-values` (Helm 3.14+) instead of `--reuse-values`. With `--reuse-values`, Helm keeps the defaults from the chart version you first installed, and in a `restricted` namespace the upgrade fails because the database migration pod is rejected.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/deploying-zenml/deploying-zenml/deploy-with-helm",
+    "should_highlight": false
+  },
+  {
+    "id": 98,
+    "slug": "reliability-fixes-0-98-1",
+    "title": "More reliable installs, GCS runs, and replays",
+    "description": "Installing a ZenML integration no longer upgrades shared packages into versions that break ZenML's own imports, GCP runner images no longer pull in a conflicting OpenTelemetry version, and the MLflow integration now installs on Python 3.13 and slim images without needing a C++ compiler. Steps using a GCS artifact store no longer hang during final uploads or cleanup, and two new optional settings, `request_timeout` and `read_cache_type`, help if you still see stalls. ZenML also keeps step outputs when a step fails after its artifacts were recorded, replayed runs now pass along parameters the original run took from defaults, and CLI `--label` values can now contain `=`, such as URLs with query strings.",
+    "published_at": "2026-11-04T05:40:29Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/artifact-stores/gcp",
+    "should_highlight": false
+  },
+  {
+    "id": 97,
+    "slug": "sync-identity-provider-claims-self-hosted-pro",
+    "title": "Sync identity-provider claims into ZenML users (self-hosted Pro)",
+    "description": "Self-hosted ZenML Pro administrators can now copy selected claims from their enterprise identity provider onto ZenML user accounts, using new Helm values (`zenml.auth.sso.uidClaim`, `gidClaim` and `extraClaims`). Map a Linux UID and GID claim, and pipelines launched with the Kubernetes orchestrator or step operator on ZenML 0.98.0 or later run as that same Linux user and group, so file permissions on shared storage line up with your organization's accounts. Users pick up their claims on their next SSO login.",
+    "published_at": "2026-10-27T14:54:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/kubernetes#running-with-an-externally-synchronized-linux-identity",
+    "should_highlight": false
+  },
+  {
+    "id": 96,
+    "slug": "match-any-webhook-event-and-safer-snapshot-deletion",
+    "title": "Match any webhook event, and safer snapshot deletion",
+    "description": "Webhook triggers can now match a provider's raw event type and any field in the authenticated JSON payload, so you can react to events that ZenML's typed event catalog doesn't cover yet, such as only newly opened GitHub pull requests that target a specific branch. Snapshots updated with this release also resolve trigger types added in future ZenML versions, so you no longer need to refresh them just to use a new trigger type. ZenML now also warns you before you delete a snapshot that a trigger still depends on.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/webhooks/custom",
+    "should_highlight": false
+  },
+  {
+    "id": 95,
+    "slug": "typesafe-jev-hooks",
+    "title": "Store Jev failure triage and run summaries as run metadata",
+    "description": "A new `typesafe` integration adds two hooks backed by TypeSafe's Jev model. Attach `jev_failure_triage_hook` as an `on_failure` hook to classify each failure (for example infrastructure, data, code, dependency, or credentials) with a probability, and `jev_run_summary_hook` to record structured run summaries. The answers are stored as ZenML run metadata, so you get searchable failure triage on your runs without writing custom metadata code.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/concepts/steps_and_pipelines/hooks",
+    "should_highlight": true
+  },
+  {
+    "id": 94,
+    "slug": "kubernetes-workloads-carry-organization-identity",
+    "title": "Kubernetes workloads carry your organization's identity",
+    "description": "Kubernetes Jobs, pod templates, scheduled and dynamic executions, and Run:ai training workloads now carry a `zenml.io/workspace-user-id` annotation with the workspace account that launched them, which makes audit and platform tooling easier to wire up. ZenML Pro deployments with an enterprise identity provider can also pass synchronized `linux_uid` and `linux_gid` claims into Kubernetes orchestrator and step operator workloads, so processes run as the matching organization Linux account on shared filesystems. Kubernetes-managed sandbox sessions can now be given owners, so they are cleaned up with the step they belong to instead of being left orphaned.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/kubernetes",
+    "should_highlight": false
+  },
+  {
+    "id": 93,
+    "slug": "transformers-v5-and-wider-langchain-support",
+    "title": "Transformers v5 and wider LangChain support",
+    "description": "The Hugging Face integration now supports Transformers v5 while staying compatible with v4, and the Accelerate integration uses a CPU configuration that works across both versions. The `langchain` integration now accepts `langchain>=0.3.5,<1.0` instead of pinning `0.3.0`. LangChain 1.x is not supported yet, so if you pin an exact LangChain version, update your constraints to fall inside the new range.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 92,
+    "slug": "pipeline-reliability-fixes-0-98",
+    "title": "Pipeline reliability fixes",
+    "description": "Loading the same cached pandas DataFrame or NumPy array more than once inside a dynamic pipeline no longer fails with \"The truth value of a DataFrame is ambiguous\". Concurrent `/invoke` calls against deployments that use remote orchestrators such as Kubernetes no longer race and fail with `RuntimeError: Run context not initialized`.",
+    "published_at": "2026-10-14T08:50:05Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "bugfix"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 91,
+    "slug": "resource-pools-v2-resource-manager",
+    "title": "Resource pools now run on the ZenML Pro Resource Manager",
+    "description": "Resource pools have been rebuilt on the new ZenML Pro **Resource Manager**, which now decides scheduling, allocation, and eviction. Eligible dynamic steps request resources through it and wait for an allocation before they start, and Kubernetes is the first backend to apply the allocated CPU, memory, and GPU capacity as pod requests and limits. Running steps keep their allocation alive through step heartbeats and are cancelled gracefully if their resources are reclaimed. **Breaking:** the previous resource pool implementation has been removed together with its data — existing pools, policies, and resource requests are not migrated and need to be set up again.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement",
+      "deprecation"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/resource-pools",
+    "should_highlight": true
+  },
+  {
+    "id": 90,
+    "slug": "prune-unused-pipeline-snapshots",
+    "title": "Prune unused pipeline snapshots",
+    "description": "Unnamed pipeline snapshots left behind by deleted runs, deployments, and schedules can now be cleaned up. Run `zenml pipeline snapshot prune --older-than-days 90` (also available as `zenml prune snapshots`) to delete snapshots that nothing references anymore, or add `--dry-run` to see how many would go first. Replacing a named snapshot with `replace=True` now deletes the old one when it is unused, and snapshot creation is atomic, so a failed attempt no longer leaves a partial snapshot behind.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/user-guides/best-practices/keep-your-dashboard-server-clean",
+    "should_highlight": false
+  },
+  {
+    "id": 89,
+    "slug": "paginated-logs-for-external-log-stores",
+    "title": "Paginated, filterable logs for external log stores",
+    "description": "Reading logs from external log stores no longer means one huge query or hitting the backend's rate limits. A new `GET /api/v1/logs/{logs_id}/entries` endpoint returns logs in pages with cursors and supports `search`, `level`, `since`, and `until` filters, and the Datadog log store has been rewritten on top of it. If you maintain a custom log store, update it to the new `BaseLogStore.fetch()` signature and import `LogEntry` from `zenml.models`. For Datadog, the existing run and step log endpoints now return the newest 1,000 entries instead of up to 50,000.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement",
+      "deprecation"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/log-stores",
+    "should_highlight": false
+  },
+  {
+    "id": 88,
+    "slug": "pipeline-reliability-fixes-0-97",
+    "title": "Pipeline reliability fixes",
+    "description": "Dynamic pipeline graphs now render correctly even when step records come back out of dependency order, and long-running retry loops no longer crash with an `OverflowError` after reaching the maximum backoff delay. Dictionaries with non-string keys are no longer stored as JSON, so a step returning `{1: 1}` now hands `{1: 1}` to the next step instead of `{\"1\": 1}`. Large API responses are also cached correctly now, which avoids unnecessary retries after a client timeout.",
+    "published_at": "2026-09-23T13:30:23Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 87,
+    "slug": "webhook-driven-pipeline-automation",
+    "title": "Webhook-driven pipeline automation",
+    "description": "ZenML now supports first-class **webhook triggers**, so an external event can launch a pipeline snapshot. Attach a trigger to a snapshot and filter on typed GitHub events — merged pull requests, completed workflow runs, pushes, and published releases — or use the new built-in **Slack** and **ClickUp** providers to start runs from team activity. Custom webhook providers are supported for everything else, and every integration is project-scoped and signature-authenticated.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/webhooks",
+    "should_highlight": true
+  },
+  {
+    "id": 86,
+    "slug": "faster-and-more-reliable-pipeline-execution",
+    "title": "Faster and more reliable pipeline execution",
+    "description": "Pipeline runs are now more dependable and start faster. Dynamic pipelines running with `ExecutionMode.STOP_ON_FAILURE` no longer report success when an isolated step fails — the failed step state now propagates to the overall run status. ZenML also precalculates and reuses Docker build checksums while resolving builds instead of recomputing them, cutting startup overhead for pipelines with many steps.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
+    "id": 85,
+    "slug": "aws-rds-iam-database-authentication",
+    "title": "AWS RDS IAM authentication for MySQL stores",
+    "description": "The MySQL ZenML store can now authenticate to AWS RDS with **IAM database authentication** instead of a static password. ZenML generates a fresh IAM token for each database connection and enforces TLS hostname and certificate verification in IAM mode, giving self-hosted AWS deployments a passwordless option that matches RDS security best practices. Existing password-based setups keep working unchanged.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 84,
+    "slug": "workload-scoped-token-hardening",
+    "title": "Workload tokens can no longer be escalated",
+    "description": "Workload-scoped API tokens can no longer be exchanged for persistent, unscoped API tokens. Credentials issued to a pipeline run, schedule, or deployment now stay bound to that workload and expire with it, instead of being traded up for longer-lived generic API access.",
+    "published_at": "2026-09-04T13:32:22Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 83,
+    "slug": "safer-cloud-authentication",
+    "title": "Generic Cloud API tokens removed",
+    "description": "Generic ZenML Cloud API tokens are no longer supported: GET /auth/api_token and the GENERIC_TOKEN grant type have been removed, and previously issued generic tokens now fail immediately. These tokens turned a session into a standalone bearer token that outlived the credential it came from. Use personal access tokens, organization service-account API keys, or device-code login instead. The workspace-server endpoint GET /api/v1/api_token is not affected.",
+    "published_at": "2026-08-27T13:00:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "deprecation",
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/api-reference/pro-api/getting-started"
+  },
+  {
+    "id": 82,
+    "slug": "more-flexible-release-management",
+    "title": "Release versions managed through the API",
+    "description": "Supported and default ZenML and Kitaru release versions now live in the database instead of static Cloud API configuration, so they can change without a new Cloud API deployment. Anyone can list supported releases and the current default with GET /releases?release_service=<zenml|kitaru>. Superusers on self-hosted ZenML Pro can add, change, and remove versions through the new release management endpoints.",
+    "published_at": "2026-08-27T13:00:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 81,
+    "slug": "filter-workspaces-by-type-in-the-api",
+    "title": "Filter workspaces by type in the API",
+    "description": "Workspace list endpoints and the Python client now accept a `workspace_type` filter, so you can request only ZenML or only Kitaru workspaces. Useful when building admin tooling or automation against organizations that run both.",
+    "published_at": "2026-08-18T10:22:52Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 80,
+    "slug": "zenml-0-96-3-for-pro-workspaces",
+    "title": "ZenML 0.96.3 available for Pro workspaces",
+    "description": "Managed ZenML Pro workspaces can now be deployed or upgraded to ZenML 0.96.3. Upgrading brings the latest platform improvements to your workspace, including multi-pod command steps on Kubernetes, the local Docker sandbox, and stack selection at login.",
+    "published_at": "2026-08-10T15:46:41Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/pro/core-concepts/workspaces",
+    "should_highlight": false
+  },
+  {
+    "id": 79,
+    "slug": "multi-pod-kubernetes-step-operator",
+    "title": "Run command steps across multiple Kubernetes pods",
+    "description": "Command steps can now run across multiple pods with the Kubernetes step operator. Set pod_count in KubernetesStepOperatorSettings to launch the step as an indexed Kubernetes job, and ZenML injects coordination environment variables into each pod — making it easier to distribute workloads like torchrun-based training across pods.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/step-operators/kubernetes"
+  },
+  {
+    "id": 78,
+    "slug": "local-docker-sandbox",
+    "title": "Local Docker sandbox",
+    "description": "ZenML now includes a local Docker sandbox, plus a unified settings model for containerized sandboxes. Local sandbox workflows support file upload and download, so you can test containerized ZenML behavior on your own machine before moving to remote infrastructure.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "feature"
+    ]
+  },
+  {
+    "id": 77,
+    "slug": "stack-selection-at-login-and-dashboard-ux",
+    "title": "Pick your stack at login, plus dashboard improvements",
+    "description": "zenml login now accepts --stack, letting you connect to a server and set your active stack in one command. In the dashboard, long secret values are truncated for readability with a one-click copy action, and the run timeline now shows steps that never started because a run was cancelled, with a matching Not Started filter.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "improvement"
+    ]
+  },
+  {
+    "id": 76,
+    "slug": "reliability-and-integration-fixes",
+    "title": "Reliability and integration fixes",
+    "description": "This release smooths out many rough edges: fewer database-is-locked errors for local SQLite stores, correct project scoping for artifact deletion and prefix lookups, complete exception tracebacks, and no more unnecessary Kubernetes pod retries for already-finished runs. MLflow tracking behaves better on Databricks and managed runtimes, cloudpickle artifacts are validated with a SHA-256 hash on load, service account tokens and adopted API keys keep working through migrations, and Helm deployments can supply the ZenML Pro enrollment key from an existing Kubernetes Secret.",
+    "published_at": "2026-08-07T13:24:25Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ]
+  },
+  {
     "id": 75,
     "slug": "dynamic-pipelines-are-more-flexible",
     "title": "Dynamic pipelines are more flexible",
@@ -199,7 +551,7 @@
     "id": 60,
     "slug": "async-steps-and-hooks",
     "title": "Async steps and reworked hooks",
-    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously \u2014 submitting a run and returning immediately instead of blocking until it finishes.",
+    "description": "You can now define steps and hooks with `async def`, and ZenML runs them on a dedicated event loop in both standard and dynamic pipelines. Step and pipeline hooks have been reworked into a lifecycle-based system with persisted hook invocation records, and deployments can now be invoked asynchronously — submitting a run and returning immediately instead of blocking until it finishes.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -215,7 +567,7 @@
     "id": 59,
     "slug": "sandboxes-and-modal-execution",
     "title": "Sandboxes and Modal execution",
-    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors \u2014 each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
+    "description": "Run untrusted or generated code in isolated sessions with the new `Sandbox` stack component, available with built-in `local` and `kubernetes` flavors — each Kubernetes session runs in its own pod with streamed command execution and support for re-attaching to running sessions. A Modal sandbox flavor and a new Modal orchestrator let you run entire ZenML pipelines on Modal's cloud infrastructure.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -230,7 +582,7 @@
     "id": 58,
     "slug": "command-steps",
     "title": "Run arbitrary commands as steps",
-    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` \u2014 including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
+    "description": "You can now run arbitrary commands as pipeline steps with `CommandStep` — including non-Python commands and Python callables that don't require ZenML in the execution environment. This makes it easy to wrap existing scripts, CLIs, or shell commands as first-class steps in your pipelines.",
     "published_at": "2026-06-17T15:08:22Z",
     "published": true,
     "audience": "oss",
@@ -339,7 +691,7 @@
     "id": 50,
     "slug": "pipeline-run-statistics-endpoint",
     "title": "Pipeline Run Statistics Endpoint",
-    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata\u2014ideal for building dashboards and analytics.",
+    "description": "A new `POST /api/v1/runs/statistics` endpoint lets you query aggregated metrics across your pipeline runs. Group by status, pipeline, stack, user, time buckets (hour/day/week/month), metadata values, and tags, and calculate averages, sums, and min/max over run duration, step counts, cached steps, output artifacts, or custom numeric metadata—ideal for building dashboards and analytics.",
     "published_at": "2026-05-29T10:10:53Z",
     "published": true,
     "audience": "oss",
@@ -404,7 +756,7 @@
     "id": 45,
     "slug": "improved-service-connector-sharing",
     "title": "Improved service connector sharing",
-    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata\u2014matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
+    "description": "Sharing a service connector with Read or Edit access now correctly grants permission to use it for authentication, not just view its metadata—matching the behavior already available for secrets. The access list now accurately reflects who can actually use each connector.",
     "published_at": "2026-05-13T07:56:45Z",
     "published": true,
     "audience": "pro",

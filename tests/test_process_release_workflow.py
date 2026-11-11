@@ -14,9 +14,9 @@ def test_process_release_workflow_defaults_to_routed_openai_without_shadow_comme
     assert "ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}" in workflow
     assert "CHANGELOG_LLM_PROVIDER: ${{ vars.CHANGELOG_LLM_PROVIDER || 'openai' }}" in workflow
     assert "CHANGELOG_LLM_MODEL: ${{ vars.CHANGELOG_LLM_MODEL || '' }}" in workflow
-    assert "CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-5.4' }}" in workflow
-    assert "CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-5.4' }}" in workflow
-    assert "CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-5.5' }}" in workflow
+    assert "CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-6-luna' }}" in workflow
+    assert "CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-6-luna' }}" in workflow
+    assert "CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-6-luna' }}" in workflow
 
     assert "id: create_widget_pr" in workflow
     assert "id: create_release_notes_pr" in workflow
@@ -25,3 +25,14 @@ def test_process_release_workflow_defaults_to_routed_openai_without_shadow_comme
     assert "find-comment" not in workflow
     assert "create-or-update-comment" not in workflow
     assert "issues: write" not in workflow
+
+
+def test_release_notes_pr_carries_the_compatibility_page() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+
+    assert (
+        'git diff --binary -- "$MARKDOWN_FILE" gitbook-release-notes/compatibility.md .consumed_sources_state'
+        in workflow
+    )
+    assert "            gitbook-release-notes/compatibility.md\n            .consumed_sources_state" in workflow
+    assert "${{ needs.generate.outputs.compatibility }}" in workflow

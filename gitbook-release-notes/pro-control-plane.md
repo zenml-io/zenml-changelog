@@ -7,6 +7,64 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## Bots and a refreshed UI (2026-11-06)
+
+Bots are live in ZenML Pro, alongside a refreshed UI.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/new-ui-light.gif" align="left" alt="Refreshed ZenML Pro UI" width="800">
+
+- **Bots**: An always-on team of AI engineers in ZenML Pro. Ask a bot to investigate a failed run or an agent's behavior, test a fix, and open a pull request, from the UI, Slack, or GitHub. You can also put recurring reviews on a schedule. [Read the announcement](https://www.zenml.io/blog/introducing-bots-zenml-pro) or see the [Bots documentation](https://docs.zenml.io/pro/bots/bots).
+- **Refreshed UI**: The UI has a new look, with the same runs, models, and artifacts. The classic UI is still available at [classic.cloud.zenml.io](https://classic.cloud.zenml.io).
+
+***
+
+## 0.16.2 (2026-10-27)
+
+See what's new and improved in version 0.16.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML Pro 0.16.2" width="800">
+
+- **Synchronize OIDC claims into ZenML users**: On-premises ZenML Pro administrators can now configure selected OIDC claims from their enterprise identity provider to be synchronized onto ZenML user accounts. This enables identity-aware workspace setups, including propagating LDAP-backed Linux UID/GID values so Kubernetes pipeline workloads can run with the same POSIX identity as the authenticated user. The configuration also supports an extensible set of additional claims, making it easier to support future identity-driven workspace capabilities without custom database changes.
+
+***
+
+## 0.14.5 (2026-08-27)
+
+See what's new and improved in version 0.14.5.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML Pro 0.14.5" width="800">
+
+- **Release versions managed through the API**: Supported and default ZenML and Kitaru release versions are now stored in the database instead of static Cloud API configuration, so they can be updated without deploying a new Cloud API version. Users can list supported releases with `GET /releases?release_service=<zenml|kitaru>`, including the current default, while superusers can add and manage release strings through the new release management endpoints.
+- **Generic Cloud API tokens removed**: Generic ZenML Cloud API token support has been removed, including `GET /auth/api_token` and the `GENERIC_TOKEN` grant type. This reduces the risk of standalone bearer tokens that only encode user identity; integrations that relied on generic Cloud tokens should migrate to supported authentication flows. The separate workspace-server endpoint `GET /api/v1/api_token` is not affected.
+
+***
+
+## 0.14.2 (2026-08-18)
+
+See what's new and improved in version 0.14.2.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/20.jpg" align="left" alt="ZenML Pro 0.14.2" width="800">
+
+- **Filter workspaces by type**: Workspace list APIs and the Python client now support filtering by `workspace_type`, making it easier to separate ZenML and Kitaru workspaces in global and organization-level views. You can now request only the workspace category you need, for example when building admin dashboards, automation, or organization-specific workspace listings.
+
+***
+
+## 0.13.24 (2026-08-10)
+
+See what's new and improved in version 0.13.24.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML Pro 0.13.24" width="800">
+
+- **ZenML workspace version 0.96.3**: Managed ZenML workspaces can now be deployed or upgraded to version 0.96.3. This makes the latest supported ZenML workspace release available through ZenML Pro for teams that want to adopt the newest platform improvements.
+
+<details><summary>Fixed</summary>
+
+- **Dependency vulnerability fixes**: Security-related dependency updates resolve the current Dependabot findings, including aiohttp issues affecting HTTP parsing and WebSocket handling. This improves the security posture of ZenML Cloud API deployments and reduces vulnerability noise for Pro and on-prem operators.
+
+</details>
+
+***
+
 ## 0.13.21 (2026-07-09)
 
 See what's new and improved in version 0.13.21.

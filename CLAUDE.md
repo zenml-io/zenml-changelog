@@ -5,19 +5,20 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 ## Repository Purpose
 
 This repo is the canonical source of ZenML release metadata:
-- `changelog.json` feeds the ZenML dashboard "What’s New" widget.
+- `changelog.json` feeds the ZenML UI "What’s New" widget.
 - `gitbook-release-notes/server-sdk.md` and `gitbook-release-notes/pro-control-plane.md` power GitBook docs for OSS and Pro.
 - `.github/workflows/` orchestrates automated changelog generation from upstream releases.
 - `changelog_schema/` defines and documents the JSON schema for announcements.
 
 ## Directory Structure
 
-- `changelog.json` — Array of announcements consumed by the dashboard.
+- `changelog.json` — Array of announcements consumed by the UI.
 - `.image_state` — Persists rotating image index (1–49) for release note headers only.
 - `.consumed_sources_state` — Dedicated ledger of consumed source release windows and PR keys, used to prevent bundled repo PRs from being summarized again on later trigger releases.
 - `gitbook-release-notes/`
   - `server-sdk.md` — OSS release notes (bundles content from zenml + zenml-dashboard).
   - `pro-control-plane.md` — Pro release notes (bundles content from zenml-cloud-api + zenml-cloud-ui).
+  - `compatibility.md` — Client/server compatibility matrix, updated for OSS releases. Its matrix is generated from the "Breaking points" and "Release by release" tables; never edit the matrix by hand.
   - `README.md` — Notes for GitBook syncing.
 - `changelog_schema/`
   - `announcement-schema.json` — Validation schema for `changelog.json`.
@@ -34,6 +35,7 @@ This repo is the canonical source of ZenML release metadata:
 - `scripts/workflow_result.py` — Deterministic workflow-result JSON model and GitHub Actions output writer.
 - `scripts/consumed_sources.py` — Consumed-window/PR ledger models, structured provenance, and read-time validation.
 - `scripts/source_windows.py` — Source-window resolution, replay prevention, and PR collection.
+- `scripts/changelog_compatibility.py` — Compatibility page parsing, release-row insertion, and matrix redraw (`uv run scripts/changelog_compatibility.py redraw`).
 - `scripts/build_comparison_app.py` — Builds the offline single-file blind A/B comparison web app from an eval run.
 - `scripts/changelog_fixture_capture.py` — Turns real ZenML releases into eval fixtures (dependency-injected PR collection; powers `evaluate_changelog_llms.py capture-release`).
 - `scripts/validate_changelog.py` — Standalone schema validation (used by pre-commit hook).
@@ -51,7 +53,7 @@ This repo is the canonical source of ZenML release metadata:
 
 - Trigger: `repository_dispatch` with `event_type: release-published` from one of two trigger repos.
 - **Two-Path Architecture**:
-  - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md`
+  - **OSS Path**: Triggered by `zenml-io/zenml` release → aggregates PRs from zenml + zenml-dashboard → updates `server-sdk.md` and adds a row to `compatibility.md`
   - **Pro Path**: Triggered by `zenml-io/zenml-cloud-api` release → aggregates PRs from zenml-cloud-api + zenml-cloud-ui → updates `pro-control-plane.md`
 - Workflow: `.github/workflows/process-release.yml`
   - Uses `uv run` to execute the script (deps declared inline via PEP 723).
@@ -62,7 +64,8 @@ This repo is the canonical source of ZenML release metadata:
     - **Release notes PR** (`release-notes/{repo_slug}/{tag}`): Updates the appropriate markdown file and `.consumed_sources_state`. Reviewers: `schustmi,bcdurak`. Labels: `core-squad,internal`.
 - Script: `scripts/update_changelog.py`
   - Uses `REPO_CONFIG` with nested `sources[]` arrays to define bundled repos per trigger.
-  - For each source repo: finds its previous tag, computes release window, and checks `.consumed_sources_state` before fetching PRs.
+  - For each source repo: finds its previous tag, and checks `.consumed_sources_state` before fetching PRs.
+  - A source window is the commit range `<previous_tag>...<current_tag>` (GitHub compare API), not the time between GitHub release publish dates: release tags sit on `release/*` branches cut before publishing, so a PR merged after the cut ships in the next release. Each commit maps to the PR that merged it; PRs labeled `backport` into a non-default branch whose title ends in `(#N)` map to original PR `#N`, so a change is listed and recorded in the ledger once. Without a previous tag, it falls back to searching merged PRs on the source's default branch up to the release date.
   - Already-consumed windows are finalized windows: they are skipped before the LLM prompt is built and are not reopened for late-labeled PRs. Already-consumed repo-qualified PR keys are filtered as a second guardrail.
   - Aggregates and deduplicates PRs across all sources using `(repo, pr_number)` keys.
   - Generates 2-3 grouped changelog entries via the configured structured-output provider. The script default is Anthropic; the release workflow defaults production generation to OpenAI unless `CHANGELOG_LLM_PROVIDER` is set differently.
@@ -90,6 +93,7 @@ This repo is the canonical source of ZenML release metadata:
 2. Update release notes:
    - OSS: insert a new section at the top of `gitbook-release-notes/server-sdk.md` after frontmatter.
    - Pro: insert at the top of `gitbook-release-notes/pro-control-plane.md` after frontmatter.
+   - Compatibility: edit the "Breaking points" or "Release by release" table in `gitbook-release-notes/compatibility.md`, then run `uv run scripts/changelog_compatibility.py redraw`.
 3. Validate locally (recommended): run `uv run scripts/validate_changelog.py`, or let the pre-commit hook catch issues on commit.
 4. Open a PR; `validate-changelog.yml` will re-validate `changelog.json`.
 
@@ -106,9 +110,9 @@ This repo is the canonical source of ZenML release metadata:
 - `OPENAI_API_KEY` — Required when production generation uses OpenAI.
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai` — Optional production provider override. The script default is Anthropic; `process-release.yml` defaults release runs to OpenAI. Roll back the workflow by setting `CHANGELOG_LLM_PROVIDER=anthropic`.
 - `CHANGELOG_LLM_MODEL=<model>` — Optional global model override.
-- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for dashboard grouped changelog entries. Default: `gpt-5.4`.
-- `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-5.4`.
-- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-5.5`.
+- `CHANGELOG_LLM_MODEL_GROUPED=<model>` — Optional OpenAI model override for UI grouped changelog entries. Default: `gpt-6-luna`.
+- `CHANGELOG_LLM_MODEL_BREAKING=<model>` — Optional OpenAI model override for breaking-change bullets. Default: `gpt-6-luna`.
+- `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<model>` — Optional OpenAI model override for release-note body prose. Default: `gpt-6-luna`.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values. `gpt-5.4-mini` is not a production default.
 - `PRIVATE_REPO_TOKEN` (optional) — Use when the source repo is private (e.g., `zenml-cloud-ui`, `zenml-cloud-api`). If absent, the script falls back to `GITHUB_TOKEN` but will lack private repo access.
 
@@ -146,9 +150,11 @@ The bucket enforces upload-only permissions (no delete/overwrite). If the file a
 
 The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaws.com/whats_new/your-image-name.png`
 
-**Important:** Always upload both AVIF and PNG versions of feature images. The AVIF version is used by the dashboard widget (smaller file size), but the PNG version is needed for email newsletters since many email clients (Outlook, Brevo preview) don't support AVIF.
+**Important:** Always upload both AVIF and PNG versions of feature images. The AVIF version is used by the UI widget (smaller file size), but the PNG version is needed for email newsletters since many email clients (Outlook, Brevo preview) don't support AVIF.
 
 ## Naming Conventions
+
+For product-interface terminology in copy and generation prompts, follow the rule in [AGENTS.md](AGENTS.md#coding-style--naming-conventions).
 
 **Branch names**, **PR titles**, and **commit messages** should all use plain descriptive text without conventional commit prefixes (no `fix:`, `feat:`, `docs:`, etc.).
 
@@ -168,4 +174,4 @@ The resulting URL will be: `https://public-flavor-logos.s3.eu-central-1.amazonaw
 - When adjusting prompts or schema, update `design/plan.md` for traceability.
 - Do not commit intermediary plans, implementation reviews, prompt exports, oracle exports, or temporary investigation outputs unless explicitly requested. Keep working notes under ignored locations such as `design/`, `prompt-exports/`, `eval-results/`, `.agents/`, or `.claude/`.
 - Never commit secrets; use repo/org secrets for workflows.
-- IMPORTANT: **Before opening a PR or making a large commit**, always run `/simplify` to review changed code for reuse opportunities, quality issues, and efficiency improvements. Fix any issues it finds before committing.
+- Before committing substantial code changes or opening their PR, review the diff for unnecessary complexity, quality issues, and efficiency improvements. Use `/simplify` when available or perform an equivalent manual review, and fix relevant findings. Content-only and instruction-only PRs need a focused diff and consistency review, not a code-simplification command.

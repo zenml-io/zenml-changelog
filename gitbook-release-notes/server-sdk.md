@@ -7,6 +7,163 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.98.1 (2026-11-04)
+
+See what's new and improved in version 0.98.1.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/22.jpg" align="left" alt="ZenML 0.98.1" width="800">
+
+- **Rename projects from the CLI and SDK**: You can now rename projects with `zenml project update <name-or-uuid>` using `--name`, `--display-name`, and `--description` ([PR #5367](https://github.com/zenml-io/zenml/pull/5367)). Technical names and display names can be changed independently while preserving the project UUID and associated resources, and SDK updates now correctly preserve omitted fields or explicitly clear descriptive fields.
+- **Helm chart pods now satisfy restricted Pod Security defaults**: The default ZenML Helm chart pod security settings now work in namespaces enforcing Kubernetes Pod Security `restricted` ([PR #5397](https://github.com/zenml-io/zenml/pull/5397)). This also applies the chart security values consistently to CA certificate init containers and Helm test pods, reducing the extra overrides needed for locked-down clusters.
+
+<details>
+<summary>Fixed</summary>
+
+- **More reliable integration installs**: Installing ZenML integrations is now less likely to break ZenML’s already-installed dependency set ([PR #5399](https://github.com/zenml-io/zenml/pull/5399)). This prevents cases where adding an integration upgrades shared packages into incompatible versions and causes import failures before pipelines can run.
+- **GCP runner OpenTelemetry compatibility**: GCP runner images now avoid installing an incompatible OpenTelemetry API version alongside ZenML’s pinned SDK ([PR #5366](https://github.com/zenml-io/zenml/pull/5366)). This fixes import failures that could happen before any pipeline steps started.
+- **MLflow integration installs on Python 3.13 and slim images**: The MLflow integration no longer depends on the unused `python-rapidjson` package ([PR #5360](https://github.com/zenml-io/zenml/pull/5360)). This avoids source compilation failures in environments without build tools such as `g++`, especially on Python 3.13 or slim container images.
+- **GCS-backed runs no longer hang during final uploads or cleanup**: ZenML aligned GCS-related dependencies and added optional storage controls to avoid pipeline steps getting stuck after their work and outputs have already completed ([PR #5373](https://github.com/zenml-io/zenml/pull/5373)). This addresses hangs from indefinite GCS responses and affected `gcsfs` cleanup behavior, helping orchestrators observe completed containers instead of waiting forever.
+- **Step outputs are preserved after execution or finalization failures**: ZenML no longer deletes step output directories from the launcher exception handler when a step fails after artifacts or server-side completion have already been recorded ([PR #5362](https://github.com/zenml-io/zenml/pull/5362)). Persisted metadata will no longer point to missing files in these partial-failure scenarios, while the original error is still propagated.
+- **Replay runs include defaulted pipeline parameters**: Replaying a run now forwards pipeline parameters that were satisfied by defaults in the original run ([PR #5361](https://github.com/zenml-io/zenml/pull/5361)). This keeps replayed runs consistent with the source run even when users did not explicitly pass every parameter.
+- **CLI labels can contain equals signs**: CLI label parsing now splits `--label` values only on the first `=`, so values such as URLs and query strings are accepted ([PR #5383](https://github.com/zenml-io/zenml/pull/5383)). This fixes label handling across service connector and stack component commands where values like `https://example.com/?a=b` were previously rejected or misinterpreted.
+- **Hosted Classic dashboard CORS origins are allowed automatically**: Pro workspace servers now automatically include the hosted Classic dashboard origin in addition to their configured dashboard origin ([PR #5396](https://github.com/zenml-io/zenml/pull/5396)). Production and staging Classic dashboard URLs are matched exactly over HTTPS, while custom enterprise dashboards and existing custom CORS origins keep their current behavior.
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.98.1)
+
+***
+
+## 0.98.0 (2026-10-14)
+
+See what's new and improved in version 0.98.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/21.jpg" align="left" alt="ZenML 0.98.0" width="800">
+
+### Breaking Changes
+
+* The `langchain` integration now supports `langchain>=0.3.5,<1.0` instead of the previously pinned `0.3.0`. If you rely on a fixed LangChain version, update your environment constraints accordingly, and note that LangChain 1.x is still not supported by ZenML and may require you to stay on a compatible pre-1.0 release. [PR #5341](https://github.com/zenml-io/zenml/pull/5341)
+
+#### Triggers and automation
+
+- **Dynamic webhook event filters**: Webhook triggers can now match a provider’s raw event type and fields directly from the authenticated JSON body. This gives you an escape hatch for events or payload fields that ZenML’s typed event catalog does not expose yet, such as matching newly opened GitHub pull requests targeting a specific branch. [PR #5247](https://github.com/zenml-io/zenml/pull/5247)
+- **Forward-compatible `run.trigger` resolution**: Snapshots updated with this release can resolve trigger types that are introduced in future ZenML versions. This reduces the need to refresh snapshots just to use newly added trigger types such as platform or webhook triggers. [PR #5281](https://github.com/zenml-io/zenml/pull/5281)
+- **Safer snapshot deletion for triggered pipelines**: ZenML now checks whether snapshots are attached to triggers before deletion and warns users about unintended removals. This helps prevent accidentally breaking automations that still depend on a snapshot. [PR #5284](https://github.com/zenml-io/zenml/pull/5284)
+
+#### Kubernetes, Run:ai, and workload ownership
+
+- **Synchronized OIDC Linux identities for Kubernetes workloads**: ZenML Pro deployments using an enterprise identity provider can now carry synchronized `linux_uid` and `linux_gid` claims into workloads created by the Kubernetes orchestrator and Kubernetes step operator. This keeps the process UID and primary GID aligned with organization-managed Linux accounts, which is especially useful for shared filesystems and cluster security policies. [PR #5301](https://github.com/zenml-io/zenml/pull/5301)
+- **Workspace account annotations on Kubernetes and Run:ai workloads**: Kubernetes Jobs, Pod templates, scheduled and dynamic executions, and Run:ai training workloads now include a resolvable `zenml.io/workspace-user-id` annotation. This gives platform and audit tooling the actual workspace account UUID while preserving custom annotations and leaving `ZENML_USER_ID` unchanged. [PR #5326](https://github.com/zenml-io/zenml/pull/5326)
+- **Owners for managed Kubernetes sandboxes**: Kubernetes-managed Sandbox sessions can now be assigned owners. This makes sandbox sessions that are closely related to a step easier to track and helps avoid leaving orphaned sessions behind. [PR #5336](https://github.com/zenml-io/zenml/pull/5336)
+
+- **Workspace service account activation controls**: Activation and deactivation are restored for deprecated workspace service accounts and legacy API keys, including keys retained after adoption. This supports migration cleanup and credential rollback while preserving the existing deprecation restrictions and deletion checks. [PR #5340](https://github.com/zenml-io/zenml/pull/5340)
+- **Transformers v5 support in the Hugging Face integration**: The Hugging Face integration now supports Transformers v5 while retaining compatibility with v4. ZenML only registers the TensorFlow model materializer when running on Transformers v4, and the Accelerate integration now uses cross-version CPU configuration so users can upgrade their Hugging Face stack more smoothly. [PR #5321](https://github.com/zenml-io/zenml/pull/5321)
+- **TypeSafe Jev hooks integration**: A new `typesafe` integration adds `jev_failure_triage_hook` and `jev_run_summary_hook` for storing Jev’s typed, probability-scored answers as ZenML run metadata. Users can attach structured failure triage and run summaries to their runs without building custom metadata plumbing. [PR #5312](https://github.com/zenml-io/zenml/pull/5312)
+
+<details><summary>Fixed</summary>
+
+- **Artifact cache loading for pandas and NumPy artifacts**: `ArtifactVersionResponse.load()` no longer evaluates cached artifact data in a boolean context, which could raise errors like “The truth value of a DataFrame is ambiguous” when loading cached DataFrames or arrays. Loading the same artifact multiple times inside dynamic pipelines now works correctly for DataFrames, NumPy arrays, and other falsy values. [PR #5272](https://github.com/zenml-io/zenml/pull/5272)
+- **Concurrent deployed pipeline invocations with remote orchestrators**: ZenML no longer lets per-invocation step runner cleanup clear the deployment service’s process-wide run context. Concurrent `/invoke` calls against deployments that use remote orchestrators such as Kubernetes should no longer race and fail with `RuntimeError: Run context not initialized`. [PR #5159](https://github.com/zenml-io/zenml/pull/5159)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.98.0)
+
+***
+
+## 0.97.0 (2026-09-23)
+
+See what's new and improved in version 0.97.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/20.jpg" align="left" alt="ZenML 0.97.0" width="800">
+
+### Breaking Changes
+
+* Resource pools have been reworked to use ZenML Pro Resource Manager v2, and the old OSS resource-pool control-plane objects and related API/CLI/RBAC behavior have been removed. If you used legacy resource pool management in OSS or automation built on those endpoints/commands, you will need to migrate to the new resource request model and update any scripts or integrations accordingly. [PR #4977](https://github.com/zenml-io/zenml/pull/4977)
+* ZenML now requires Click `>=8.3.3,<=8.5.0`. If your environment, plugin, or custom CLI extension pins an older Click version or depends on older Click behavior, update those dependencies to a compatible version before upgrading ZenML. [PR #5145](https://github.com/zenml-io/zenml/pull/5145)
+* Dictionary outputs with non-string keys are no longer materialized through the JSON path. If you relied on reading such artifacts back as JSON-compatible data with keys converted to strings, update your code to preserve original key types or change outputs to use string keys for JSON interoperability. [PR #5124](https://github.com/zenml-io/zenml/pull/5124)
+* Log retrieval now uses a paginated/filterable entries API instead of assuming a single full log blob, especially for external log stores. If you consume ZenML log APIs directly or built tooling around the previous response shape, update it to use the new log entries endpoint and pagination/filter parameters. [PR #5158](https://github.com/zenml-io/zenml/pull/5158)
+
+- **Reduced database growth from unused pipeline snapshots**: ZenML now cleans up anonymous pipeline snapshots that are no longer referenced by runs, deployments, schedules, or templates. Snapshot creation is also atomic, so failed or interrupted creation attempts no longer leave partial snapshot records behind, and replacing named snapshots no longer keeps unused superseded snapshots around. This helps long-running ZenML deployments keep database size under control with less manual maintenance. [PR #5166](https://github.com/zenml-io/zenml/pull/5166)
+
+<details><summary>Fixed</summary>
+
+- **Dynamic pipeline DAG loading**: Dynamic pipeline run DAGs now load correctly even when step records are returned out of dependency order. This fixes cases where the UI or API could fail to render a dynamic run graph despite the underlying run data being valid. [PR #5263](https://github.com/zenml-io/zenml/pull/5263)
+- **Larger cached API transactions**: API transaction results are now validated against the compressed storage format instead of the uncompressed Base64 JSON representation. This allows large but highly compressible responses to be cached correctly, reducing unnecessary retries when an original request completes after the client timeout. [PR #5262](https://github.com/zenml-io/zenml/pull/5262)
+- **Capped exponential backoff overflow**: Retry loops using capped exponential backoff no longer keep calculating ever-growing delay values after the maximum delay has been reached. This prevents `OverflowError` failures in very long-running retry scenarios while preserving the configured maximum delay behavior. [PR #5265](https://github.com/zenml-io/zenml/pull/5265)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.97.0)
+
+***
+
+## 0.96.4 (2026-09-04)
+
+See what's new and improved in version 0.96.4.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/19.jpg" align="left" alt="ZenML 0.96.4" width="800">
+
+#### Webhook-driven automation
+
+- **Webhook triggers for pipeline snapshots**: ZenML now supports first-class webhook-driven automation for secure, project-scoped integrations with GitHub or custom systems [PR #5169](https://github.com/zenml-io/zenml/pull/5169). You can attach webhook triggers to pipeline snapshots and launch them when matching external events arrive, including typed GitHub filters for merged pull requests, completed workflow runs, pushes, and published releases.
+- **ClickUp webhook provider**: ZenML now includes a built-in ClickUp webhook provider for triggering automation from ClickUp task and list events [PR #5216](https://github.com/zenml-io/zenml/pull/5216). The provider authenticates deliveries with ClickUp’s raw hex HMAC signature and supports string-based filters, so teams can connect ClickUp activity directly to ZenML workflows.
+- **Slack webhook provider**: ZenML Pro now supports inbound Slack Events API callbacks as a first-class webhook provider [PR #5221](https://github.com/zenml-io/zenml/pull/5221). Slack apps can authenticate events such as mentions, messages, reactions, and other automation-focused activity to trigger pipeline snapshots or related workflows; this is separate from the existing Slack alerter that sends notifications to Slack.
+
+- **AWS RDS IAM authentication for MySQL stores**: The MySQL ZenML store now supports AWS RDS IAM database authentication while preserving the existing password-based behavior [PR #5113](https://github.com/zenml-io/zenml/pull/5113). ZenML generates fresh IAM tokens for database connections and enforces TLS hostname and certificate verification in IAM mode, giving AWS users a passwordless database authentication option aligned with RDS security best practices.
+- **Faster pipeline startup with reused build checksums**: ZenML now precalculates and reuses Docker build checksums while resolving pipeline builds [PR #5154](https://github.com/zenml-io/zenml/pull/5154). This avoids repeated build-configuration work during startup, especially for large pipelines with many steps, and also helps when `skip_build=True` because ZenML no longer repeats unnecessary build preparation checks.
+- **Safer workload-scoped tokens**: Workload-scoped API tokens can no longer be exchanged for persistent, unscoped API tokens [PR #5152](https://github.com/zenml-io/zenml/pull/5152). This keeps credentials bound to the pipeline run, schedule, or deployment that created them, so workload permissions expire with the workload authorization instead of being escalated into longer-lived generic API access.
+- **Production/stable package metadata**: Future ZenML releases are now marked as `Development Status :: 5 - Production/Stable` on PyPI instead of beta [PR #5186](https://github.com/zenml-io/zenml/pull/5186). This aligns the published package metadata with ZenML’s current maturity and makes the package classification clearer for users and automated tooling.
+
+<details><summary>Fixed</summary>
+
+- **Failed dynamic pipelines now report failure correctly**: Dynamic pipelines running with `ExecutionMode.STOP_ON_FAILURE` no longer complete successfully when an isolated step fails [PR #5182](https://github.com/zenml-io/zenml/pull/5182). ZenML now propagates the failed step state correctly so the overall pipeline run status matches the actual execution outcome.
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.4)
+
+***
+
+## 0.96.3 (2026-08-07)
+
+See what's new and improved in version 0.96.3.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/18.jpg" align="left" alt="ZenML 0.96.3" width="800">
+
+#### Runtime and orchestration
+
+- **Multi-pod Kubernetes step operator jobs**: Command steps can now run across multiple Kubernetes pods with the Kubernetes step operator. Set `pod_count` in `KubernetesStepOperatorSettings` to launch the step as an indexed job, making it easier to distribute command-style workloads across pods. [PR #5104](https://github.com/zenml-io/zenml/pull/5104)
+- **Local Docker sandbox**: ZenML now includes a local Docker sandbox, plus a unified settings model for containerized sandboxes. Local sandbox workflows also support file upload and download, making it easier to test containerized ZenML behavior locally before moving to remote infrastructure. [PR #5102](https://github.com/zenml-io/zenml/pull/5102)
+
+#### Deployment, security, and artifact integrity
+
+- **Enrollment keys from Kubernetes Secrets**: The Helm chart now supports `server.pro.enrollmentKeySecretRef`, so ZenML Pro enrollment keys can be injected from an existing Kubernetes Secret instead of being stored inline in Helm release values. The secret reference is applied consistently to the server, migration, and worker containers. [PR #5123](https://github.com/zenml-io/zenml/pull/5123)
+- **Cloudpickle artifact hash validation**: Cloudpickle-materialized artifacts now store a SHA-256 hash when written and validate that hash before loading. This helps detect corrupted or unexpectedly modified artifact files earlier and fail with a clearer integrity signal. [PR #5103](https://github.com/zenml-io/zenml/pull/5103)
+
+#### CLI and dashboard UX
+
+- **Select a stack during login**: `zenml login` now accepts `--stack`, allowing you to connect to a server and immediately set the active stack in one command. When used together with `--project`, ZenML applies the project first so the stack is resolved in the intended project context. [PR #5125](https://github.com/zenml-io/zenml/pull/5125)
+- **Improved secret value display**: Secret values in the dashboard no longer expand indefinitely in the UI and are truncated for readability. A direct copy action is now available, making it easier to work with long secret values without disrupting the page layout. [PR #1104](https://github.com/zenml-io/zenml-dashboard/pull/1104)
+- **Timeline updates for cancelled runs**: The dashboard timeline now shows steps that were not started because a run was cancelled. The timeline filter also supports filtering for `Not Started`, making cancelled or partially executed runs easier to inspect. [PR #1108](https://github.com/zenml-io/zenml-dashboard/pull/1108)
+
+<details><summary>Fixed</summary>
+
+- **Fewer SQLite lock failures for local stores**: Local SQL stores backed by SQLite now wait up to 60 seconds for write locks instead of using Python’s 5-second default. This reduces `sqlite3.OperationalError: database is locked` failures when concurrent steps, such as mapped dynamic pipeline steps, finish and publish artifacts at the same time. [PR #5096](https://github.com/zenml-io/zenml/pull/5096)
+- **Artifact deletion on deployed servers**: Artifact version deletion now correctly applies project scope when checking whether an artifact is unused. This fixes deletion through the API on remote deployed servers where the default project is disabled. [PR #5100](https://github.com/zenml-io/zenml/pull/5100)
+- **Complete exception tracebacks**: Exception reporting now includes the full traceback lineage instead of only the final exception traceback. This makes chained failures easier to debug because the original cause is preserved alongside the final error. [PR #5098](https://github.com/zenml-io/zenml/pull/5098)
+- **Smarter Kubernetes dynamic pipeline retries**: Kubernetes orchestrator pods are no longer retried when the pipeline run is already in a finished state that cannot be retried. This avoids unnecessary pod restarts that would immediately exit with `Run is already finished.` [PR #5107](https://github.com/zenml-io/zenml/pull/5107)
+- **Correct scoped prefix lookups**: Prefix-based lookups now keep scoped and default filters properly constrained when matching by ID or name prefix. This prevents unrelated entities from being returned, for example when looking up a schedule trigger by a prefix that does not match its name or ID. [PR #5126](https://github.com/zenml-io/zenml/pull/5126)
+- **Generic token provenance and service account auth**: Generic and stack-deployment tokens now preserve the original service account or device provenance used to create them. This fixes authentication failures for pipeline workloads using server-issued JWTs for workspace-local service accounts, especially with external authentication enabled. [PR #5127](https://github.com/zenml-io/zenml/pull/5127)
+- **MLflow tracking with managed runtimes and Databricks**: ZenML’s MLflow experiment tracker now behaves more reliably when managed runtimes inject MLflow environment variables such as `MLFLOW_RUN_ID`. This avoids accidentally resuming an inherited run when ZenML needs to create its own run, improving compatibility with Databricks-backed MLflow setups. [PR #5122](https://github.com/zenml-io/zenml/pull/5122)
+- **API keys after service account adoption**: Existing workspace-level API keys remain valid when a workspace service account is adopted by an organization-level service account with the same name. This allows teams to migrate service accounts gradually without interrupting workloads that still use older API keys. [PR #5138](https://github.com/zenml-io/zenml/pull/5138)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.96.3)
+
+***
+
 ## 0.96.2 (2026-07-17)
 
 See what's new and improved in version 0.96.2.

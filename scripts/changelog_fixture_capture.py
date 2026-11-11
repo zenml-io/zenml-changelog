@@ -6,9 +6,8 @@
 """Turn real ZenML releases into evaluation fixtures.
 
 This reuses the same GitHub PR-collection functions as the release automation
-(``find_previous_tag``, ``get_release_window``, ``search_merged_prs``,
-``dedupe_prs_by_number``) but, instead of writing production artifacts, it
-assembles an ``EvalFixture``-shaped dict so the evaluation harness can run real
+(``find_previous_tag``, ``list_window_prs``, ``dedupe_prs_by_number``) but,
+instead of writing production artifacts, it assembles an ``EvalFixture``-shaped dict so the evaluation harness can run real
 release content through the candidate models.
 
 Every function takes its GitHub-touching collaborators as parameters
@@ -104,7 +103,7 @@ SearchMergedPRs = Callable[[Any, str, str, datetime, datetime, Optional[str]], l
 DedupePRs = Callable[[list[dict]], list[dict]]
 FindPreviousTag = Callable[[Any, str, str], Optional[str]]
 FindLatestReleaseTag = Callable[[Any, str], Optional[str]]
-GetReleaseWindow = Callable[[Any, str, Optional[str], str], tuple[datetime, datetime]]
+ListWindowPRs = Callable[[Any, Any, list[str]], list[dict]]
 GetReleaseMetadata = Callable[[Any, str, str], tuple[str, str]]
 
 
@@ -141,8 +140,7 @@ def capture_release_fixture(
     breaking_change_labels: Sequence[str],
     find_latest_release_tag: FindLatestReleaseTag,
     find_previous_tag: FindPreviousTag,
-    get_release_window: GetReleaseWindow,
-    search_merged_prs: SearchMergedPRs,
+    list_window_prs: ListWindowPRs,
     dedupe_prs_by_number: DedupePRs,
     get_release_metadata: GetReleaseMetadata,
     starting_id: int = DEFAULT_STARTING_ID,
@@ -166,8 +164,7 @@ def capture_release_fixture(
         breaking_change_labels=list(breaking_change_labels),
         find_latest_release_tag=find_latest_release_tag,
         find_previous_tag=find_previous_tag,
-        get_release_window=get_release_window,
-        search_merged_prs=search_merged_prs,
+        list_window_prs=list_window_prs,
         dedupe_prs_by_number=dedupe_prs_by_number,
     )
     release_notes_prs = collection.release_notes_prs

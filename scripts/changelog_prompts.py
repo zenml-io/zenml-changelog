@@ -4,9 +4,17 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 try:
+    from scripts.changelog_compatibility import NO_KNOWN_IMPACT, upgrade_impact_section
     from scripts.changelog_config import REPO_CONFIG
 except ModuleNotFoundError:  # pragma: no cover
+    from changelog_compatibility import NO_KNOWN_IMPACT, upgrade_impact_section  # type: ignore[no-redef]
     from changelog_config import REPO_CONFIG  # type: ignore[no-redef]
+
+
+UI_TERMINOLOGY = (
+    'Call the product interface "ZenML UI" or "UI", and the previous interface "classic UI", '
+    'rather than "dashboard". Preserve repository names, identifiers, and URLs.\n'
+)
 
 
 def _audience_for_repo_type(repo_type: str) -> str:
@@ -47,6 +55,7 @@ def build_changelog_copy_prompt(pr_title: str, pr_body: str, pr_url: str, repo_t
         f"PR URL: {pr_url}\n"
         f"PR Body:\n{pr_body[:3500]}\n\n"
         f"The audience is {audience}. Focus on what users can now do or benefit from.\n"
+        f"{UI_TERMINOLOGY}"
         "Generate a concise title (max 60 characters, no PR number), a 1-3 sentence markdown-friendly "
         "description, and suggest appropriate labels. Always set `suggested_labels`; return [] when none apply. "
         "Feel free to include inline markdown links to well-known tools and libraries (e.g., "
@@ -68,6 +77,7 @@ def build_grouped_changelog_entries_prompt(
         "Each PR includes its number, title, labels, URL, and a truncated body:\n\n"
         f"{pr_summaries}\n\n"
         f"The audience is {audience}. Focus on what users can now do or benefit from.\n\n"
+        f"{UI_TERMINOLOGY}\n"
         "Your task:\n"
         "- Group these PRs into 2-3 thematic user-facing changelog entries when possible. "
         "For very small releases, 1 entry is acceptable.\n"
@@ -79,7 +89,9 @@ def build_grouped_changelog_entries_prompt(
         "- Produce between 1 and 3 entries in total (2-3 preferred when the number of PRs allows it).\n"
         "- For each entry, set `title`, `description`, `suggested_labels`, and `pr_numbers`.\n"
         "- Each title MUST be at most 60 characters. Keep titles concise and punchy.\n"
-        "- Titles should be short, generic, benefit-oriented dashboard-card titles.\n"
+        "- Titles should be short, generic, benefit-oriented UI-card titles.\n"
+        "- Write titles in sentence case: capitalize only the first word and proper nouns "
+        "(e.g. `Faster pipeline run queries`, not `Faster Pipeline Run Queries`).\n"
         "- Avoid over-specific titles that name one narrow implementation detail when the group covers a broader user benefit.\n"
         "- `pr_numbers` must be a list of the PR numbers from the list above that this entry covers.\n"
         "- Use `suggested_labels` based on the overall theme of the grouped PRs, using only: "
@@ -114,6 +126,7 @@ def build_breaking_changes_prompt(
         "You are writing the \"Breaking Changes\" section for ZenML release notes.\n\n"
         f"Repository: {source_repo}\n"
         f"Audience: {audience}\n\n"
+        f"{UI_TERMINOLOGY}\n"
         "Here are PRs labeled as breaking changes for this release:\n\n"
         f"{pr_summaries}\n\n"
         "Task:\n"
@@ -137,14 +150,17 @@ def build_release_notes_body_prompt(
         _inline_pr_summary(pr, body_chars=500, include_number_prefix=True) for pr in prs
     )
     include_links_instruction = (
-        "Include a markdown link to every input PR using the exact format [PR #<number>](<url>)."
+        "Include a markdown link to every input PR using the exact format [PR #<number>](<url>). "
+        "Every bullet ends with the link(s) for the PR(s) it covers, including UI PRs."
         if include_pr_links
         else "Do not include PR links, raw URLs, or PR numbers; keep the prose concise."
     )
+    example_link = " [PR #1234](https://github.com/zenml-io/zenml/pull/1234)" if include_pr_links else ""
     return (
         "You are writing the release notes body for ZenML.\n\n"
         f"Repository: {source_repo}\n"
         f"Audience: {audience}\n\n"
+        f"{UI_TERMINOLOGY}\n"
         "Merged PRs to cover (release-notes label):\n"
         f"{pr_summaries}\n\n"
         "Output rules (CRITICAL):\n"
@@ -164,7 +180,7 @@ def build_release_notes_body_prompt(
         "useful, not just a one-line summary. "
         "Example: `- **Faster run queries**: Common pipeline and step run views now load more efficiently on "
         "large deployments. ZenML adjusted how related data is fetched, avoiding expensive query plans that "
-        "previously slowed down paginated run listings.`\n"
+        f"previously slowed down paginated run listings.{example_link}`\n"
         "- Only add a `#### Subsection` header when two or more PRs share a clear theme, and group those PRs "
         "as bullets under it. When PRs do not share a theme, list them as flat top-level bullets with no "
         "subsection header and no framing sentence.\n"
@@ -208,6 +224,7 @@ def build_markdown_section_prompt(
         f"Write release notes for repository {source_repo} version {release_tag}.\n"
         f"Release URL: {release_url}\n"
         f"Published at: {published_at}\n\n"
+        f"{UI_TERMINOLOGY}\n"
         "PRs with the release-notes label:\n"
         f"{pr_summaries}\n\n"
         "Generate a markdown section with this structure:\n"
@@ -226,3 +243,55 @@ def build_markdown_section_prompt(
         f"{footer_instruction}"
     )
 
+
+
+def _compatibility_pr_summary(pr: Dict[str, Any]) -> str:
+    summary = _detailed_pr_summary(pr, body_chars=1200)
+    impact = upgrade_impact_section(pr.get("body") or "")
+    if impact:
+        summary += f"\n  Upgrade impact (written by the PR author): {' '.join(impact.split())[:800]}"
+    return summary
+
+
+def build_compatibility_prompt(
+    *,
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+    breaking_points: str,
+) -> str:
+    breaking_keys = {(pr.get("repo", ""), pr["number"]) for pr in breaking_prs}
+    other_titles = "\n".join(
+        f"- #{pr['number']}: {pr['title']}"
+        for pr in release_notes_prs
+        if (pr.get("repo", ""), pr["number"]) not in breaking_keys
+    )
+    return (
+        "You are assessing a ZenML open source release for the public Compatibility page.\n\n"
+        f"The page answers one question: when a team upgrades its ZenML server to {release_tag}, "
+        "do clients on older ZenML versions keep working? A client is the `zenml` Python package, "
+        "including the version installed inside pipeline snapshot images.\n\n"
+        "Breaking points already on the page (clients older than the version lose what is described):\n"
+        f"{breaking_points}\n\n"
+        "PRs labeled as breaking changes in this release:\n"
+        f"{chr(10).join(_compatibility_pr_summary(pr) for pr in breaking_prs)}\n\n"
+        "Other user-facing PRs in this release (titles only, for context):\n"
+        f"{other_titles or '- none'}\n\n"
+        "Choose `status`:\n"
+        "- compatible: older clients keep working against this server. Changes that only matter when "
+        "a team upgrades its own client (dependency pins, dropped Python versions, deprecations, changed "
+        "SDK behavior) are still compatible; describe them in `client_upgrade_notes`.\n"
+        "- exceptions: older clients keep working, except for specific operations that now fail against "
+        "this server, such as a removed endpoint or a response field whose shape changed.\n"
+        "- breaking: older clients cannot work with this server at all, so client and server must be "
+        "upgraded together.\n\n"
+        "Fields:\n"
+        "- `server_impact`: one or two sentences on what happens to older clients once the server runs "
+        f"this release. Use \"{NO_KNOWN_IMPACT}\" when status is compatible and nothing changes for them.\n"
+        "- `client_upgrade_notes`: one or two sentences on what a team must change when it upgrades its own "
+        "client to this release. Use \"\" when nothing.\n"
+        "- `breaking_point_description`: for exceptions or breaking, one sentence naming what fails for "
+        f"clients older than {release_tag}. Use \"\" when compatible.\n\n"
+        "Rules: plain text only. No markdown links, PR numbers, URLs, line breaks, or '|' characters. "
+        "Base the assessment only on the PRs above, and prefer the PR author's upgrade impact notes when present."
+    )

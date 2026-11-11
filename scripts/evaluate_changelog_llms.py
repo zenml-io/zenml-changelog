@@ -67,6 +67,7 @@ PRICE_PER_MILLION_USD: dict[str, tuple[float, float]] = {
     "gpt-5.4-mini": (0.75, 4.50),
     "gpt-5.4": (2.50, 15.00),
     "gpt-5.5": (5.00, 30.00),
+    "gpt-6-luna": (0.10, 0.50),
 }
 
 TOutput = TypeVar("TOutput", bound=BaseModel)
@@ -1051,8 +1052,7 @@ def run_capture_release(
             breaking_change_labels=cfg.BREAKING_CHANGE_LABELS,
             find_latest_release_tag=uc.find_latest_release_tag,
             find_previous_tag=uc.find_previous_tag,
-            get_release_window=uc.get_release_window,
-            search_merged_prs=uc.search_merged_prs,
+            list_window_prs=uc.list_window_prs,
             dedupe_prs_by_number=uc.dedupe_prs_by_number,
             get_release_metadata=capture.github_release_metadata,
             starting_id=starting_id,

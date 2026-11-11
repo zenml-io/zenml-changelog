@@ -24,6 +24,7 @@ GITHUB_MULTILINE_OUTPUT_FIELDS = (
     "breaking_changes",
     "needs_attention",
     "source_windows",
+    "compatibility",
 )
 ALLOWED_MARKDOWN_FILES = frozenset(
     {
@@ -47,6 +48,8 @@ class ChangelogWorkflowResult(BaseModel):
     breaking_changes: StrictStr
     needs_attention: StrictStr
     source_windows: StrictStr
+    # Summary of the Compatibility page row added for OSS releases; empty for Pro releases.
+    compatibility: StrictStr = ""
 
     @model_validator(mode="after")
     def require_changed_artifacts(self) -> "ChangelogWorkflowResult":

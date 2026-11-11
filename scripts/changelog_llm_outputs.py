@@ -28,6 +28,13 @@ LLM_CALL_RELEASE_NOTES_BODY = "release_notes_body"
 
 LLM_CALL_MARKDOWN_SECTION = "markdown_section"
 
+LLM_CALL_COMPATIBILITY = "compatibility"
+
+class CompatibilityStatus(str, Enum):
+    COMPATIBLE = "compatible"
+    EXCEPTIONS = "exceptions"
+    BREAKING = "breaking"
+
 class StrictLLMOutput(BaseModel):
     """Base for model-produced structured outputs.
 
@@ -79,4 +86,22 @@ class BreakingChangesOutput(StrictLLMOutput):
 
 class MarkdownSection(StrictLLMOutput):
     content: str = Field(..., description="Complete markdown section for the release notes")
+
+class CompatibilityAssessment(StrictLLMOutput):
+    status: CompatibilityStatus = Field(
+        ...,
+        description="Whether clients older than this release keep working against a server on this release.",
+    )
+    server_impact: str = Field(
+        ...,
+        description="One or two plain sentences on what happens to older clients once the server runs this release.",
+    )
+    client_upgrade_notes: str = Field(
+        ...,
+        description="One or two plain sentences on what a team must change when it upgrades its own client; '' when nothing.",
+    )
+    breaking_point_description: str = Field(
+        ...,
+        description="For exceptions or breaking: one plain sentence on what fails for older clients; '' when compatible.",
+    )
 

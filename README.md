@@ -6,12 +6,13 @@ Central hub for ZenML release metadata and release notes. This repo stores struc
 
 ```
 zenml-changelog/
-├── changelog.json                  # Announcement entries consumed by the dashboard
+├── changelog.json                  # Announcement entries consumed by the UI
 ├── .image_state                    # Tracks rotating header image (1-49) only
 ├── .consumed_sources_state         # Tracks consumed source windows/PRs to prevent replay
 ├── gitbook-release-notes/
-│   ├── server-sdk.md               # OSS + dashboard release notes
+│   ├── server-sdk.md               # OSS + UI release notes
 │   ├── pro-control-plane.md        # Pro/Cloud release notes
+│   ├── compatibility.md            # Client/server compatibility matrix (OSS releases)
 │   └── README.md
 ├── changelog_schema/
 │   ├── announcement-schema.json    # JSON Schema for changelog.json
@@ -29,6 +30,7 @@ zenml-changelog/
 │   ├── workflow_result.py          # Structured workflow handoff and GitHub output writer
 │   ├── consumed_sources.py         # Consumed-window/PR ledger models and validation
 │   ├── source_windows.py           # Source-window resolution and PR collection
+│   ├── changelog_compatibility.py  # Compatibility page tables, release rows, and matrix redraw
 │   └── build_comparison_app.py     # Builds the offline blind-comparison web app from an eval run
 ├── comparison_app/
 │   ├── template.html               # Blind A/B taste-test app shell (HTML/CSS/JS)
@@ -54,9 +56,10 @@ flowchart TD
 ```
 
 - Trigger: One of two trigger repos (`zenml-io/zenml` or `zenml-io/zenml-cloud-api`) emits `repository_dispatch` (`release-published`).
-- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on ownership: a widget PR for dashboard files and a release-notes PR for markdown plus the consumed-source ledger.
+- Receiver: `.github/workflows/process-release.yml` installs deps, runs `scripts/update_changelog.py`, validates `changelog.json`, then opens two PRs with reviewers and labels based on ownership: a widget PR for UI files and a release-notes PR for markdown plus the consumed-source ledger.
 - Workflow handoff: `scripts/update_changelog.py` writes deterministic machine metadata to `changelog_workflow_result.json` (or the `CHANGELOG_WORKFLOW_RESULT` path). The workflow then runs `scripts/workflow_result.py write-github-outputs` to publish the stable GitHub Actions outputs: `has_changes`, `markdown_file`, `breaking_changes`, `needs_attention`, and `source_windows`. Stdout is only for human-readable logs, not workflow parsing.
-- Script tasks: resolve each source repo's release window, skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
+- Script tasks: resolve each source repo's release window (the commit range between its previous and current tag, with PRs labeled `backport` mapped to their original PR), skip windows/PRs already recorded in `.consumed_sources_state`, fetch `release-notes` PRs from the remaining bundled source windows, aggregate and deduplicate, generate 2-3 grouped changelog entries with the configured structured-output provider, rotate header image, update markdown, validate JSON, and update the consumed-source ledger after successful output.
+- Compatibility page: for OSS releases, the script also adds a row to `gitbook-release-notes/compatibility.md` in the release-notes PR. Releases without breaking PRs are recorded as compatible without a model call; otherwise one structured model call classifies the release as compatible, exceptions, or a hard break, and a new exception or hard break is added to the page's "Breaking points" table. The client/server matrix is always redrawn from that table and the release rows. The release-notes PR's Compatibility section shows the new row and lists breaking PRs from `zenml-io/zenml` without an "Upgrade impact" section in their description. If the page can't be read or the model call fails, the release notes are still written and that section says to add the row by hand.
 - Breaking changes detection: PRs labeled `breaking-change` (and variants) are detected independently of `release-notes` and highlighted in a dedicated `### Breaking Changes` section near the top of release notes. Major version bumps always include this section (with a manual review prompt if no breaking PRs are found).
 
 ### PR Routing
@@ -93,6 +96,7 @@ Generated PR bodies include a `Source windows` block. Reviewers should check whi
 
 - **Automated** (preferred): Triggered by releases; creates a PR with new JSON entries and markdown sections. Reviewers verify summaries, labels, and formatting before merge.
 - **Manual**: Edit `changelog.json` (add new object with required fields) and prepend a section to `gitbook-release-notes/server-sdk.md` or `pro-control-plane.md` after frontmatter. Run validation before opening a PR.
+- **Compatibility page**: edit the "Breaking points" and "Release by release" tables in `gitbook-release-notes/compatibility.md`, never the matrix. Run `uv run scripts/changelog_compatibility.py redraw` to redraw the matrix, or let the next release run redraw it. The automation only adds rows for new releases and never rewrites existing ones.
 
 ## Required Secrets and Setup
 
@@ -109,9 +113,10 @@ Provider and model selection:
 - Rollback: set `CHANGELOG_LLM_PROVIDER=anthropic`. Keep `ANTHROPIC_API_KEY` configured for that rollback path.
 - `CHANGELOG_LLM_MODEL=<model>` is a global model override.
 - OpenAI production routing, when no override is set:
-  - `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4` for dashboard grouped changelog entries.
-  - `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4` for breaking-change bullets.
-  - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5` for release-note body prose.
+  - `CHANGELOG_LLM_MODEL_GROUPED=gpt-6-luna` for UI grouped changelog entries.
+  - `CHANGELOG_LLM_MODEL_BREAKING=gpt-6-luna` for breaking-change bullets.
+  - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-6-luna` for release-note body prose.
+- To return to the previous OpenAI routing without a code change, set the repo variables `CHANGELOG_LLM_MODEL_GROUPED=gpt-5.4`, `CHANGELOG_LLM_MODEL_BREAKING=gpt-5.4`, and `CHANGELOG_LLM_MODEL_RELEASE_NOTES=gpt-5.5`.
 - Per-call OpenAI model env vars override `CHANGELOG_LLM_MODEL`; blank values behave like missing values.
 - `gpt-5.4-mini` is not a production default.
 
@@ -163,7 +168,7 @@ Production provider configuration remains separate from evaluation:
 
 - `CHANGELOG_LLM_PROVIDER=anthropic|openai`
 - `CHANGELOG_LLM_MODEL=<global model override>`
-- `CHANGELOG_LLM_MODEL_GROUPED=<dashboard grouped model override>`
+- `CHANGELOG_LLM_MODEL_GROUPED=<UI grouped model override>`
 - `CHANGELOG_LLM_MODEL_BREAKING=<breaking-change model override>`
 - `CHANGELOG_LLM_MODEL_RELEASE_NOTES=<release-note body model override>`
 - `ANTHROPIC_API_KEY` when `CHANGELOG_LLM_PROVIDER=anthropic`
@@ -215,7 +220,7 @@ uv run scripts/build_comparison_app.py \
   --model "Claude baseline" --model "OpenAI routed" --model "OpenAI 5.4" --model "OpenAI 5.5"
 ```
 
-`capture-release` reuses the automation's own PR-collection (previous-tag → date window → merged `release-notes`/breaking PRs), bundling `zenml` + `zenml-dashboard`, and writes `real-zenml-*.json` fixtures. The built HTML lives under the gitignored `eval-results/` tree and is a build artifact, not committed. Do not commit generated real fixtures from `tests/fixtures/changelog-evals/real/` unless explicitly requested.
+`capture-release` reuses the automation's own PR-collection (previous-tag → tag commit range → merged `release-notes`/breaking PRs), bundling `zenml` + `zenml-dashboard`, and writes `real-zenml-*.json` fixtures. The built HTML lives under the gitignored `eval-results/` tree and is a build artifact, not committed. Do not commit generated real fixtures from `tests/fixtures/changelog-evals/real/` unless explicitly requested.
 
 ## OSS GitHub Release Sync Contract
 

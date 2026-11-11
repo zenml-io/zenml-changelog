@@ -36,6 +36,7 @@ jobs:
       breaking_changes: ${{ steps.workflow_outputs.outputs.breaking_changes }}
       needs_attention: ${{ steps.workflow_outputs.outputs.needs_attention }}
       source_windows: ${{ steps.workflow_outputs.outputs.source_windows }}
+      compatibility: ${{ steps.workflow_outputs.outputs.compatibility }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -51,9 +52,9 @@ jobs:
           PRIVATE_REPO_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
           CHANGELOG_LLM_PROVIDER: ${{ vars.CHANGELOG_LLM_PROVIDER || 'openai' }}
           CHANGELOG_LLM_MODEL: ${{ vars.CHANGELOG_LLM_MODEL || '' }}
-          CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-5.4' }}
-          CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-5.4' }}
-          CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-5.5' }}
+          CHANGELOG_LLM_MODEL_GROUPED: ${{ vars.CHANGELOG_LLM_MODEL_GROUPED || 'gpt-6-luna' }}
+          CHANGELOG_LLM_MODEL_BREAKING: ${{ vars.CHANGELOG_LLM_MODEL_BREAKING || 'gpt-6-luna' }}
+          CHANGELOG_LLM_MODEL_RELEASE_NOTES: ${{ vars.CHANGELOG_LLM_MODEL_RELEASE_NOTES || 'gpt-6-luna' }}
           SOURCE_REPO: ${{ env.SOURCE_REPO }}
           RELEASE_TAG: ${{ env.RELEASE_TAG }}
           RELEASE_URL: ${{ env.RELEASE_URL }}
@@ -90,7 +91,7 @@ jobs:
           MARKDOWN_FILE: ${{ steps.workflow_outputs.outputs.markdown_file }}
         run: |
           set -euo pipefail
-          git diff --binary -- "$MARKDOWN_FILE" .consumed_sources_state > release-notes.patch
+          git diff --binary -- "$MARKDOWN_FILE" gitbook-release-notes/compatibility.md .consumed_sources_state > release-notes.patch
 
       - name: Upload widget patch artifact
         if: steps.workflow_outputs.outputs.has_changes == 'true'
@@ -148,7 +149,7 @@ jobs:
             - **Repository:** ${{ env.SOURCE_REPO }}
             - **Tag:** ${{ env.RELEASE_TAG }}
 
-            This PR intentionally contains only dashboard widget state: `changelog.json` and `.image_state`. The release-notes PR for the same run owns the markdown file and `.consumed_sources_state` ledger.
+            This PR intentionally contains only UI widget state: `changelog.json` and `.image_state`. The release-notes PR for the same run owns the markdown file and `.consumed_sources_state` ledger.
 
             ### Source windows
 
@@ -238,7 +239,7 @@ jobs:
             - **Tag:** ${{ env.RELEASE_TAG }}
             - **Markdown file:** `${{ needs.generate.outputs.markdown_file }}`
 
-            This PR owns the release-note markdown and `.consumed_sources_state`. Keeping the consumed-source ledger in this PR prevents a source window from being marked consumed unless the markdown that represents it is merged.
+            This PR owns the release-note markdown, the Compatibility page row (OSS releases), and `.consumed_sources_state`. Keeping the consumed-source ledger in this PR prevents a source window from being marked consumed unless the markdown that represents it is merged.
 
             ### Source windows
 
@@ -249,12 +250,20 @@ jobs:
             ${{ needs.generate.outputs.breaking_changes && '### ⚠️ Breaking Changes' || '' }}
             ${{ needs.generate.outputs.breaking_changes }}
 
+            ${{ needs.generate.outputs.compatibility && '### Compatibility' || '' }}
+            ${{ needs.generate.outputs.compatibility }}
+
+            ${{ needs.generate.outputs.needs_attention && '### ⚠️ PRs Needing Manual Review' || '' }}
+            ${{ needs.generate.outputs.needs_attention }}
+
             **Please review:**
             - [ ] Markdown formatting looks good in GitBook
             - [ ] Breaking changes are accurately described and migration guidance is clear (if applicable)
+            - [ ] Compatibility row is right for older clients; edit it on this branch if not (OSS releases)
             - [ ] Source windows make sense; skipped windows are finalized and will not be reopened for late-labeled PRs
           reviewers: ${{ steps.routing.outputs.reviewers }}
           labels: ${{ steps.routing.outputs.labels }}
           add-paths: |
             ${{ needs.generate.outputs.markdown_file }}
+            gitbook-release-notes/compatibility.md
             .consumed_sources_state

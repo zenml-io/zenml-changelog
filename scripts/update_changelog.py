@@ -20,11 +20,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from github import Auth, Github
+from github import Auth, Github, UnknownObjectException
+from github.Commit import Commit
+from github.PullRequest import PullRequest
+from github.Repository import Repository
 from pydantic import BaseModel, Field
 
 try:
     from scripts import changelog_llm_providers as _llm_providers
+    from scripts.changelog_compatibility import (
+        COMPATIBILITY_PAGE,
+        NO_KNOWN_IMPACT,
+        CompatibilityUpdate,
+        ReleaseCompatibility,
+        add_release,
+        format_breaking_points,
+        format_compatibility_summary,
+        parse_breaking_points,
+        parse_release_versions,
+        upgrade_impact_section,
+    )
     from scripts.changelog_config import (
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -43,6 +58,7 @@ try:
     from scripts.changelog_env import env_value, require_env_values
     from scripts.changelog_llm_generation import (
         generate_breaking_changes_output,
+        generate_compatibility_output,
         generate_grouped_changelog_output,
         generate_release_notes_body_output,
     )
@@ -56,6 +72,8 @@ try:
         BreakingChangesOutput,
         ChangelogCopy,
         ChangelogLabel,
+        CompatibilityAssessment,
+        CompatibilityStatus,
         GroupedChangelogEntry,
         GroupedChangelogOutput,
         MarkdownSection,
@@ -109,6 +127,18 @@ try:
     )
 except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_changelog.py`
     import changelog_llm_providers as _llm_providers  # type: ignore[no-redef]
+    from changelog_compatibility import (  # type: ignore[no-redef]
+        COMPATIBILITY_PAGE,
+        NO_KNOWN_IMPACT,
+        CompatibilityUpdate,
+        ReleaseCompatibility,
+        add_release,
+        format_breaking_points,
+        format_compatibility_summary,
+        parse_breaking_points,
+        parse_release_versions,
+        upgrade_impact_section,
+    )
     from changelog_config import (  # type: ignore[no-redef]
         BREAKING_CHANGE_LABELS,
         LABEL_MAPPING,
@@ -127,6 +157,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
     from changelog_env import env_value, require_env_values  # type: ignore[no-redef]
     from changelog_llm_generation import (  # type: ignore[no-redef]
         generate_breaking_changes_output,
+        generate_compatibility_output,
         generate_grouped_changelog_output,
         generate_release_notes_body_output,
     )
@@ -140,6 +171,8 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
         BreakingChangesOutput,
         ChangelogCopy,
         ChangelogLabel,
+        CompatibilityAssessment,
+        CompatibilityStatus,
         GroupedChangelogEntry,
         GroupedChangelogOutput,
         MarkdownSection,
@@ -208,6 +241,7 @@ try:
     from scripts.source_windows import (
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
         MultiSourceCollectionResult,
+        SourceReleaseWindow,
         collect_multi_source_prs as _collect_multi_source_prs,
         format_source_window_body,
     )
@@ -236,6 +270,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct `uv run scripts/update_
     from source_windows import (  # type: ignore[no-redef]
         SKIP_REASON_ALREADY_CONSUMED_WINDOW,
         MultiSourceCollectionResult,
+        SourceReleaseWindow,
         collect_multi_source_prs as _collect_multi_source_prs,
         format_source_window_body,
     )
@@ -437,6 +472,13 @@ def find_previous_tag(gh: Github, repo_name: str, current_tag: str) -> Optional[
     return strip_prefix(repo_name, previous_prefixed)
 
 
+# Backports are squash-merged with the original PR's title, so their own title
+# ends with the original PR reference, e.g. "Fix X (#5405)" merged as #5407.
+BACKPORT_TITLE_PR_REF = re.compile(r"\(#(\d+)\)\s*$")
+
+FIRST_RELEASE_SINCE_DATE = datetime(2020, 1, 1, tzinfo=timezone.utc)
+
+
 def _release_date(repo, prefixed_tag: str) -> datetime:
     """Return release timestamp for a tag that already includes any repo-specific prefix."""
     release = repo.get_release(prefixed_tag)
@@ -447,27 +489,22 @@ def _release_date(repo, prefixed_tag: str) -> datetime:
         published = published.replace(tzinfo=timezone.utc)
     return published
 
-def get_release_window(
-    gh: Github,
-    repo_name: str,
-    since_tag: Optional[str],
-    until_tag: str,
-) -> Tuple[datetime, datetime]:
-    """Compute the date range between two release tags.
 
-    Returns (since_date, until_date) where since_date defaults to 2020-01-01 if no previous tag.
-    """
-    repo = gh.get_repo(repo_name)
-    prefixed_until_tag = with_prefix(repo_name, until_tag)
-    until_date = _release_date(repo, prefixed_until_tag)
+def _pr_to_dict(pr: PullRequest, repo_name: str) -> Dict[str, Any]:
+    merged_at = pr.merged_at
+    if merged_at is not None and merged_at.tzinfo is None:
+        merged_at = merged_at.replace(tzinfo=timezone.utc)
+    return {
+        "number": pr.number,
+        "title": pr.title,
+        "url": pr.html_url,
+        "author": pr.user.login if pr.user else "unknown",
+        "body": pr.body or "",
+        "labels": [label_item.name for label_item in pr.labels],
+        "merged_at": merged_at,
+        "repo": repo_name,
+    }
 
-    if since_tag is None:
-        since_date = datetime(2020, 1, 1, tzinfo=timezone.utc)
-    else:
-        prefixed_since_tag = with_prefix(repo_name, since_tag)
-        since_date = _release_date(repo, prefixed_since_tag)
-
-    return since_date, until_date
 
 def search_merged_prs(
     gh: Github,
@@ -496,26 +533,111 @@ def search_merged_prs(
         pr = repo.get_pull(issue.number)
         if not pr.merged_at:
             continue
-
-        merged_at = pr.merged_at
-        if merged_at.tzinfo is None:
-            merged_at = merged_at.replace(tzinfo=timezone.utc)
-
-        prs.append(
-            {
-                "number": pr.number,
-                "title": pr.title,
-                "url": pr.html_url,
-                "author": pr.user.login if pr.user else "unknown",
-                "body": pr.body or "",
-                "labels": [label_item.name for label_item in pr.labels],
-                "merged_at": merged_at,
-                "repo": repo_name,
-            }
-        )
+        prs.append(_pr_to_dict(pr, repo_name))
 
     prs.sort(key=lambda pr_item: pr_item["merged_at"])
     return prs
+
+
+def _merged_prs_for_commit(commit: Commit) -> List[PullRequest]:
+    """Return the merged PRs that introduced a commit.
+
+    GitHub also lists open PRs whose branches contain the commit, and later merge
+    PRs that carried it (e.g. a staging -> main release PR), so the PR whose merge
+    commit is this exact commit wins when there is one.
+    """
+    merged = [pr for pr in commit.get_pulls() if pr.merged_at]
+    exact = [pr for pr in merged if pr.merge_commit_sha == commit.sha]
+    return exact or merged
+
+
+def _resolve_backport(repo: Repository, pr: PullRequest, base_branch: str) -> PullRequest:
+    """Map a PR labeled ``backport`` to its original base-branch PR.
+
+    Keying on the original lists the change once when both commits are in the
+    range, and records the number the consumed-PR ledger needs to filter the
+    original out of a later release whose range contains its base-branch commit.
+    """
+    if pr.base.ref == base_branch or not any(label.name == "backport" for label in pr.labels):
+        return pr
+    match = BACKPORT_TITLE_PR_REF.search(pr.title or "")
+    if match is None or int(match.group(1)) == pr.number:
+        return pr
+    try:
+        original = repo.get_pull(int(match.group(1)))
+    except UnknownObjectException:
+        return pr
+    if original.merged_at and original.base.ref == base_branch:
+        return original
+    return pr
+
+
+def list_commit_range_prs(
+    gh: Github,
+    repo_name: str,
+    base_branch: str,
+    previous_tag: str,
+    current_tag: str,
+) -> List[Dict[str, Any]]:
+    """List merged PRs whose commits are in ``previous_tag...current_tag``, oldest first.
+
+    Backports are reported as their original PR, with the labels of both.
+    """
+    repo = gh.get_repo(repo_name)
+    comparison = repo.compare(
+        with_prefix(repo_name, previous_tag),
+        with_prefix(repo_name, current_tag),
+    )
+    prs_by_number: Dict[int, Dict[str, Any]] = {}
+    for commit in comparison.commits:
+        for pr in _merged_prs_for_commit(commit):
+            original = _resolve_backport(repo, pr, base_branch)
+            pr_dict = prs_by_number.setdefault(original.number, _pr_to_dict(original, repo_name))
+            for label_item in pr.labels:
+                if label_item.name not in pr_dict["labels"]:
+                    pr_dict["labels"].append(label_item.name)
+    return sorted(prs_by_number.values(), key=lambda pr_item: pr_item["merged_at"])
+
+
+def list_window_prs(
+    gh: Github,
+    window: SourceReleaseWindow,
+    labels: List[str],
+) -> List[Dict[str, Any]]:
+    """List merged PRs in a source window that carry any of ``labels``.
+
+    The window is the commit range between its two tags, not the time between
+    their GitHub releases: tags sit on release branches cut before publishing,
+    so a PR merged between the cut and the publish date ships in the next release.
+    """
+    if window.previous_tag is not None:
+        prs = list_commit_range_prs(
+            gh,
+            window.source_repo,
+            window.base_branch,
+            window.previous_tag,
+            window.current_tag,
+        )
+        return [pr for pr in prs if any(label in pr["labels"] for label in labels)]
+
+    # Without a previous tag there is no range to compare, so take every PR merged
+    # into the base branch up to the current release.
+    repo = gh.get_repo(window.source_repo)
+    until_date = _release_date(repo, with_prefix(window.source_repo, window.current_tag))
+    prs = []
+    for label in labels:
+        prs.extend(
+            search_merged_prs(
+                gh,
+                window.source_repo,
+                window.base_branch,
+                FIRST_RELEASE_SINCE_DATE,
+                until_date,
+                label,
+            )
+        )
+    return dedupe_prs_by_number(prs)
+
 
 def dedupe_prs_by_number(prs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove duplicate PRs by number, keeping first occurrence, then sort by merged_at."""
@@ -583,8 +705,7 @@ def collect_multi_source_prs(
         breaking_change_labels=BREAKING_CHANGE_LABELS,
         find_latest_release_tag=find_latest_release_tag,
         find_previous_tag=find_previous_tag,
-        get_release_window=get_release_window,
-        search_merged_prs=search_merged_prs,
+        list_window_prs=list_window_prs,
         dedupe_prs_by_number=dedupe_prs_by_number,
     )
 
@@ -639,6 +760,23 @@ def llm_generate_breaking_changes_bullets(
     for warning in warnings:
         print(f"Warning: {warning}")
     return output.bullets
+
+
+@llm_retryable()
+def llm_generate_compatibility_assessment(
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+    breaking_points: str,
+) -> CompatibilityAssessment:
+    """Assess what a release with breaking PRs means for clients older than it."""
+    return generate_compatibility_output(
+        client=require_llm_client(),
+        release_tag=release_tag,
+        breaking_prs=breaking_prs,
+        release_notes_prs=release_notes_prs,
+        breaking_points=breaking_points,
+    )
 
 
 @llm_retryable()
@@ -704,6 +842,76 @@ def collect_needs_attention(
                 }
             )
     return needs_attention
+
+
+def format_missing_upgrade_impact(breaking_prs: List[Dict[str, Any]], source_repo: str) -> str:
+    """List breaking PRs from the trigger repo whose description has no "Upgrade impact" section."""
+    missing = [
+        pr
+        for pr in breaking_prs
+        if pr.get("repo", source_repo) == source_repo and not upgrade_impact_section(pr.get("body", ""))
+    ]
+    if not missing:
+        return ""
+    lines = ["- **Breaking PRs without an `Upgrade impact` section** (check the row against them):"]
+    lines.extend(f"  - PR #{pr['number']}: {pr['title']} ({pr['url']})" for pr in missing)
+    return "\n".join(lines)
+
+
+def prepare_compatibility_update(
+    release_tag: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+) -> CompatibilityUpdate:
+    """Build the updated Compatibility page for an OSS release without writing it.
+
+    Releases already on the page and releases without breaking PRs need no model call.
+    """
+    page = COMPATIBILITY_PAGE.read_text(encoding="utf-8")
+    if release_tag in parse_release_versions(page):
+        return CompatibilityUpdate(page=page, version=release_tag)
+    if breaking_prs:
+        assessment = llm_generate_compatibility_assessment(
+            release_tag=release_tag,
+            breaking_prs=breaking_prs,
+            release_notes_prs=release_notes_prs,
+            breaking_points=format_breaking_points(parse_breaking_points(page)),
+        )
+        release = ReleaseCompatibility(version=release_tag, **assessment.model_dump())
+    else:
+        release = ReleaseCompatibility(
+            version=release_tag,
+            status=CompatibilityStatus.COMPATIBLE,
+            server_impact=NO_KNOWN_IMPACT,
+            client_upgrade_notes="",
+        )
+    return add_release(page, release)
+
+
+def build_compatibility_section(
+    release_tag: str,
+    source_repo: str,
+    breaking_prs: List[Dict[str, Any]],
+    release_notes_prs: List[Dict[str, Any]],
+) -> Tuple[Optional[CompatibilityUpdate], str]:
+    """Prepare the Compatibility page update and its summary for the release-notes PR.
+
+    The page is secondary to the release notes: a malformed page or a failed model call
+    is reported in the summary for a reviewer to fix by hand instead of failing the run.
+    """
+    update: Optional[CompatibilityUpdate] = None
+    try:
+        update = prepare_compatibility_update(release_tag, breaking_prs, release_notes_prs)
+        summary = format_compatibility_summary(update)
+    except Exception as error:
+        print(f"Warning: skipping the Compatibility page update: {error}")
+        summary = (
+            f"- ⚠️ **The row for {release_tag} was not added:** {' '.join(str(error).split())[:300]} "
+            f"Add it to `{COMPATIBILITY_PAGE}` on this branch by hand, then run "
+            "`uv run scripts/changelog_compatibility.py redraw`."
+        )
+    missing = format_missing_upgrade_impact(breaking_prs, source_repo)
+    return update, "\n".join(part for part in (summary, missing) if part)
 
 
 def generate_valid_grouped_changelog_entries(
@@ -854,6 +1062,16 @@ def main() -> None:
         include_pr_links=include_pr_links,
     )
 
+    compatibility_update: Optional[CompatibilityUpdate] = None
+    compatibility_summary = ""
+    if config["type"] == "oss":
+        compatibility_update, compatibility_summary = build_compatibility_section(
+            release_tag=env["RELEASE_TAG"],
+            source_repo=source_repo,
+            breaking_prs=breaking_prs,
+            release_notes_prs=release_notes_prs,
+        )
+
     changelog_path = Path("changelog.json")
     existing_changelog = json.loads(changelog_path.read_text())
     max_existing_id = max((entry.get("id", 0) for entry in existing_changelog), default=0)
@@ -890,7 +1108,7 @@ def main() -> None:
     updated_changelog = new_entries + existing_changelog
     schema_path = Path(__file__).resolve().parents[1] / "changelog_schema" / "announcement-schema.json"
     validate_changelog_data(updated_changelog, schema_path)
-    changelog_path.write_text(json.dumps(updated_changelog, indent=2) + "\n")
+    changelog_path.write_text(json.dumps(updated_changelog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     validate_changelog(changelog_path, schema_path)
 
     image_number = get_next_image_number(
@@ -910,6 +1128,8 @@ def main() -> None:
     )
 
     update_markdown_file(Path(markdown_file), md_section)
+    if compatibility_update is not None:
+        COMPATIBILITY_PAGE.write_text(compatibility_update.page, encoding="utf-8")
 
     consumed_state = mark_consumed_after_success(
         state=consumed_state,
@@ -937,6 +1157,7 @@ def main() -> None:
             ),
             needs_attention=format_needs_attention_output(needs_attention),
             source_windows=source_windows_body,
+            compatibility=compatibility_summary,
         ),
         workflow_result_path,
     )
