@@ -359,6 +359,22 @@ def test_blank_private_repo_token_falls_back_to_github_token(
     assert created["auth"] == "auth:token"
 
 
+def test_breaking_change_label_passes_schema_validation() -> None:
+    """A changelog entry with labels=["breaking change"] must validate."""
+    from scripts.changelog_schema_validation import validate_changelog_data
+
+    entry = [{
+        "id": 9999,
+        "slug": "test-breaking-change",
+        "title": "Test",
+        "description": "Test entry.",
+        "published_at": "2026-07-22T12:00:00Z",
+        "labels": ["breaking change"],
+    }]
+    schema_path = REPO_ROOT / "changelog_schema" / "announcement-schema.json"
+    validate_changelog_data(entry, schema_path)  # must not raise
+
+
 def test_prepare_compatibility_update_records_release_without_breaking_prs_without_llm(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

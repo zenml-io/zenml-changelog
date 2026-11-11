@@ -29,7 +29,7 @@ This skill helps complete new changelog entries after our automated release work
 - `highlight_until` - datetime to stop highlighting
 - `should_highlight` - boolean, makes announcement pop up for users
 - `audience` - "oss", "pro", or "all" (default: "all")
-- `labels` - array of: "feature", "improvement", "bugfix", "deprecation"
+- `labels` - array of: "feature", "improvement", "bugfix", "deprecation", "breaking change"
 
 ## Workflow
 
@@ -112,6 +112,7 @@ Verify the labels are correct. Options:
 - `improvement` - Enhancement to existing functionality
 - `bugfix` - Bug fix
 - `deprecation` - Deprecated features
+- `breaking change` - Changes that break existing setups; added automatically when a PR is labeled `breaking-change`
 
 #### 2.3 Feature Image
 Preserve suitable existing images and use supplied assets. If the image decision remains material and unresolved, include it in the batched editorial question. Options:

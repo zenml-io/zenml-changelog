@@ -7,6 +7,14 @@ from typing import List
 from pydantic import BaseModel, ConfigDict, Field
 
 class ChangelogLabel(str, Enum):
+    """Labels the model may suggest for a changelog entry.
+
+    "breaking change" is left out on purpose. Suggestions only apply when none of
+    the grouped PRs has a mappable label, so a suggested breaking change would
+    never be backed by a PR labeled breaking. That label comes from LABEL_MAPPING
+    alone.
+    """
+
     BUGFIX = "bugfix"
     DEPRECATION = "deprecation"
     IMPROVEMENT = "improvement"
