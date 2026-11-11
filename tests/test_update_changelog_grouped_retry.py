@@ -122,6 +122,15 @@ def test_valid_grouped_output_preserves_conversion_behavior() -> None:
     assert all(entry["published"] is True for entry in entries)
 
 
+def test_breaking_change_pr_label_maps_to_breaking_change() -> None:
+    labels = entry_builder.map_labels(
+        ["release-notes", "breaking-change", "enhancement"],
+        [ChangelogLabel.FEATURE],
+    )
+
+    assert labels == ["breaking change", "improvement"]
+
+
 def test_semantic_retry_succeeds_on_second_attempt(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[str | None] = []
     invalid_output = make_output(

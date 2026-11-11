@@ -88,7 +88,7 @@ This repo is the canonical source of ZenML release metadata:
 ## Manually Adding Changelog Entries
 
 1. Edit `changelog.json`:
-   - Add a new object with required fields: `id` (next sequential number), `slug`, `title`, `description`, `published_at` (ISO8601 with `Z`), `audience` (`oss|pro|all`), `labels` (`bugfix|deprecation|improvement|feature`).
+   - Add a new object with required fields: `id` (next sequential number), `slug`, `title`, `description`, `published_at` (ISO8601 with `Z`), `audience` (`oss|pro|all`), `labels` (`breaking change|bugfix|deprecation|improvement|feature`).
    - Optional fields: `feature_image_url`, `learn_more_url`, `docs_url`, `highlight_until`, `should_highlight`, `video_url`, `published`.
 2. Update release notes:
    - OSS: insert a new section at the top of `gitbook-release-notes/server-sdk.md` after frontmatter.
