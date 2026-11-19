@@ -32,17 +32,18 @@ Each hard break starts a new era. A client and a server from different eras do n
 
 **ZenML 0.90 and later**
 
-| Client ↓ / Server → | 0.90 | 0.91 | 0.92 | 0.93 | 0.94 | 0.95 | 0.96 | 0.97 | 0.98 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **0.90** | ✅ | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 |
-| **0.91** | – | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 |
-| **0.92** | – | – | ✅ | ⚠️ E3–E4 | ⚠️ E3–E7 | ⚠️ E3–E8 | ⚠️ E3–E8 | ⚠️ E3–E9 | ⚠️ E3–E9 |
-| **0.93** | – | – | – | ✅ | ⚠️ E5–E7 | ⚠️ E5–E8 | ⚠️ E5–E8 | ⚠️ E5–E9 | ⚠️ E5–E9 |
-| **0.94** | – | – | – | – | ✅ | ⚠️ E8 | ⚠️ E8 | ⚠️ E8–E9 | ⚠️ E8–E9 |
-| **0.95** | – | – | – | – | – | ✅ | ✅ | ⚠️ E9 | ⚠️ E9 |
-| **0.96** | – | – | – | – | – | – | ✅ | ⚠️ E9 | ⚠️ E9 |
-| **0.97** | – | – | – | – | – | – | – | ✅ | ✅ |
-| **0.98** | – | – | – | – | – | – | – | – | ✅ |
+| Client ↓ / Server → | 0.90 | 0.91 | 0.92 | 0.93 | 0.94 | 0.95 | 0.96 | 0.97 | 0.98 | 0.99 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| **0.90** | ✅ | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 | ⚠️ E2–E10 |
+| **0.91** | – | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 | ⚠️ E2–E10 |
+| **0.92** | – | – | ✅ | ⚠️ E3–E4 | ⚠️ E3–E7 | ⚠️ E3–E8 | ⚠️ E3–E8 | ⚠️ E3–E9 | ⚠️ E3–E9 | ⚠️ E3–E10 |
+| **0.93** | – | – | – | ✅ | ⚠️ E5–E7 | ⚠️ E5–E8 | ⚠️ E5–E8 | ⚠️ E5–E9 | ⚠️ E5–E9 | ⚠️ E5–E10 |
+| **0.94** | – | – | – | – | ✅ | ⚠️ E8 | ⚠️ E8 | ⚠️ E8–E9 | ⚠️ E8–E9 | ⚠️ E8–E10 |
+| **0.95** | – | – | – | – | – | ✅ | ✅ | ⚠️ E9 | ⚠️ E9 | ⚠️ E9–E10 |
+| **0.96** | – | – | – | – | – | – | ✅ | ⚠️ E9 | ⚠️ E9 | ⚠️ E9–E10 |
+| **0.97** | – | – | – | – | – | – | – | ✅ | ✅ | ⚠️ E10 |
+| **0.98** | – | – | – | – | – | – | – | – | ✅ | ⚠️ E10 |
+| **0.99** | – | – | – | – | – | – | – | – | – | ✅ |
 
 <details>
 <summary>ZenML 0.83 to 0.85</summary>
@@ -72,6 +73,7 @@ Each row is a release from which older clients lose something. A **hard break** 
 
 | ID | Since | Type | What breaks for older clients |
 | --- | --- | --- | --- |
+| E10 | 0.99.0 | Exception | Clients using custom roles that grant only read cannot create or update stacks or components that reference existing stack components or service connectors. |
 | E9 | 0.97.0 | Exception | ZenML Pro only: the old resource pool endpoints were removed, so clients 0.94.3 to 0.96.x can't manage resource pools, and their dynamic pipeline steps that request pooled resources fail. |
 | E8 | 0.95.0 | Exception | The new `sandbox` component type: older clients fail on unfiltered flavor listings and can't load a stack that contains a sandbox. |
 | E7 | 0.94.1 | Exception | The new `override` step input type: older clients can't read steps whose inputs were overridden in a replay. |
@@ -90,6 +92,7 @@ Before you upgrade, read every row between the version you run and the one you w
 
 | Release | Status | Server impact on existing clients | Client upgrade notes |
 | --- | --- | --- | --- |
+| 0.99.0 | ⚠️ Exceptions (E10) | Older clients remain usable, but server RBAC now requires attach in addition to read when referencing existing stack components or service connectors in new or updated stacks or components. Custom roles granting only read will be denied those operations. | – |
 | 0.98.1 | ✅ Compatible | None known. | – |
 | 0.98.0 | ✅ Compatible | None known. | The LangChain integration now accepts `langchain>=0.3.5,<1.0` instead of a fixed 0.3.0 pin. |
 | 0.97.0 | ⚠️ Exceptions (E9) | ZenML Pro: the old resource pool endpoints were removed. | Needs Click 8.3.3 to 8.5.0. Custom log stores must adopt the new `fetch()` signature. Dict outputs with non-string keys may read back with different key types. |
