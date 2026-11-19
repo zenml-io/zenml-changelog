@@ -7,6 +7,49 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML OSS.
 
+## 0.99.0 (2026-11-19)
+
+See what's new and improved in version 0.99.0.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/23.jpg" align="left" alt="ZenML 0.99.0" width="800">
+
+### Breaking Changes
+
+* ZenML Pro only: custom roles that grant only `read` on stack components or service connectors can no longer use those resources when creating or updating stacks or components. Grant the `attach` action as well to preserve that access. [PR #5414](https://github.com/zenml-io/zenml/pull/5414)
+* Custom OpenTelemetry log exporters must implement the newly required `force_flush()` method to remain compatible with the upgraded OpenTelemetry SDK. [PR #5415](https://github.com/zenml-io/zenml/pull/5415)
+* ZenML now requires `certifi>=2026.10.19`. Update environments that pin an older `certifi` version to meet the new minimum. [PR #5447](https://github.com/zenml-io/zenml/pull/5447)
+
+#### Faster run queries
+
+- **More efficient run views and polling**: Common execution paths—including run polling, list views, permission checks, and run-status events—now use SQL columns instead of parsing configuration JSON they do not need. This reduces unnecessary work on frequently accessed run data. [PR #5308](https://github.com/zenml-io/zenml/pull/5308)
+- **Faster filtering with many values**: Large tag and run-metadata filters now avoid query plans whose planning cost grows with each filter value, helping prevent slow listings on MySQL. Small filters continue to generate the same SQL as before. [PR #5426](https://github.com/zenml-io/zenml/pull/5426)
+
+#### Other improvements
+
+- **Filter runs by deployment origin**: `PipelineRunFilter` and `Client.list_pipeline_runs` now accept `triggered_by_deployment` to select runs launched by deployment invocations or runs launched in other ways. This also lets you keep deployment-triggered runs separate from batch runs in run statistics. [PR #5368](https://github.com/zenml-io/zenml/pull/5368)
+- **Control Kubernetes image pulls**: Set `image_pull_policy` in `KubernetesPodSettings` to `Always`, `IfNotPresent`, or `Never` for pods created by ZenML. This is useful when reusing an image tag, such as `:dev`, and you need Kubernetes to pull the updated image instead of using a cached one. [PR #5380](https://github.com/zenml-io/zenml/pull/5380)
+- **Use the compatibility page when upgrading**: Upgrade guidance now points to the release-maintained compatibility page at [`docs.zenml.io/changelog/compatibility`](https://docs.zenml.io/changelog/compatibility), helping you check whether clients and snapshot images work with a server or ZenML Pro workspace. The release-note automation also gets the information it needs to keep that page current. [PR #5425](https://github.com/zenml-io/zenml/pull/5425)
+- **Generate names that follow your random seed when desired**: Orchestrator run names can now optionally use the user's random seed, making generated suffixes reproducible when needed. [PR #5449](https://github.com/zenml-io/zenml/pull/5449)
+- **Improve CI turnaround and dependency security**: Tests can now start independently of linting, and migration databases use bounded readiness checks, reducing avoidable CI waiting. CI tooling was also stabilized, the weekly generator validates its generated PR before publishing its release-label check, and the server extra now uses PyJWT 2.15.1 with fixes for security advisories. [PR #5320](https://github.com/zenml-io/zenml/pull/5320)
+
+<details>
+<summary>Fixed</summary>
+
+- **Keep the ChatGPT failure hook working**: The `openai_chatgpt_alerter_failure_hook` now requests `gpt-6-luna` instead of the retired `gpt-3.5-turbo` model. This prevents the suggestion request from failing before the failure alert is posted. [PR #5376](https://github.com/zenml-io/zenml/pull/5376)
+- **Preserve Kubernetes cluster names during auto-configuration**: Cluster names derived from kubeconfig hosts are no longer mangled when they contain certain letters at the beginning or end. [PR #5300](https://github.com/zenml-io/zenml/pull/5300)
+- **Keep completed Kubernetes steps successful after Job cleanup**: The Kubernetes orchestrator no longer marks a completed step as failed when Kubernetes deletes its finished Job before the orchestrator's next check. [PR #5435](https://github.com/zenml-io/zenml/pull/5435)
+- **Redact environment values in Vertex job logs**: Vertex job request logs now hide environment variable values, and job failures report the job state without exposing the full response. This helps keep credentials out of logs and error messages. [PR #5443](https://github.com/zenml-io/zenml/pull/5443)
+- **Keep name generation from changing application randomness**: `random_str()` no longer reseeds Python's module-level random generator, so generating ZenML names does not disrupt a sequence seeded by your application. [PR #5418](https://github.com/zenml-io/zenml/pull/5418)
+- **Retry transient Kubernetes sandbox connection failures**: Sandbox exec websocket handshakes now retry transient Kubernetes API errors, matching the retry behavior of other sandbox API operations. [PR #5451](https://github.com/zenml-io/zenml/pull/5451)
+- **Fail dynamic steps that will not be retried**: A failed isolated step that the runner will not relaunch is now reported as failed instead of remaining in `retrying`. This prevents its pipeline run from hanging while it waits for another attempt. [PR #5456](https://github.com/zenml-io/zenml/pull/5456)
+- **Preserve stopped and stopping run statuses**: Step updates and status refreshes no longer override a run's stopped state or raise an error when updating a step in a stopped run. [PR #5444](https://github.com/zenml-io/zenml/pull/5444)
+
+</details>
+
+[View full release on GitHub](https://github.com/zenml-io/zenml/releases/tag/0.99.0)
+
+***
+
 ## 0.98.1 (2026-11-04)
 
 See what's new and improved in version 0.98.1.
