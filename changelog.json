@@ -1,5 +1,61 @@
 [
   {
+    "id": 104,
+    "slug": "faster-more-reliable-pipeline-runs",
+    "title": "Faster, more reliable pipeline runs",
+    "description": "Pipeline run listings and metadata filters stay responsive with larger datasets, and you can filter runs by whether a deployment triggered them. Fixes also help stopped or dynamically retried runs, and Kubernetes steps and sandbox commands handle job cleanup and transient API failures more reliably.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 103,
+    "slug": "more-control-over-cloud-and-kubernetes-workflows",
+    "title": "More control over cloud and Kubernetes workflows",
+    "description": "Configure when Kubernetes pulls images, and use stack components and service connectors with the required attach permission. Fixes also improve Kubernetes cluster-name detection, keep environment values out of Vertex job logs, and preserve or follow your random seed when ZenML generates names.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "breaking change",
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 102,
+    "slug": "safer-upgrades-and-more-reliable-tooling",
+    "title": "Safer upgrades and more reliable tooling",
+    "description": "Security updates address vulnerabilities in OpenTelemetry and certifi, while upgrade guidance points users to the compatibility page. The ChatGPT alerter failure hook uses a supported model, and CI improvements help validate changes more efficiently.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "oss",
+    "labels": [
+      "breaking change",
+      "bugfix",
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 101,
     "slug": "bots-and-refreshed-ui",
     "title": "Bots are live, with a refreshed UI",
