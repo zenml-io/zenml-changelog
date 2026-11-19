@@ -73,7 +73,7 @@ Each row is a release from which older clients lose something. A **hard break** 
 
 | ID | Since | Type | What breaks for older clients |
 | --- | --- | --- | --- |
-| E10 | 0.99.0 | Exception | Clients using custom roles that grant only read cannot create or update stacks or components that reference existing stack components or service connectors. |
+| E10 | 0.99.0 | Exception | ZenML Pro only: custom roles that grant only `read` on stack components or service connectors can no longer reference them when creating or updating stacks or components. Grant `attach` as well. |
 | E9 | 0.97.0 | Exception | ZenML Pro only: the old resource pool endpoints were removed, so clients 0.94.3 to 0.96.x can't manage resource pools, and their dynamic pipeline steps that request pooled resources fail. |
 | E8 | 0.95.0 | Exception | The new `sandbox` component type: older clients fail on unfiltered flavor listings and can't load a stack that contains a sandbox. |
 | E7 | 0.94.1 | Exception | The new `override` step input type: older clients can't read steps whose inputs were overridden in a replay. |
@@ -92,7 +92,7 @@ Before you upgrade, read every row between the version you run and the one you w
 
 | Release | Status | Server impact on existing clients | Client upgrade notes |
 | --- | --- | --- | --- |
-| 0.99.0 | ⚠️ Exceptions (E10) | Older clients remain usable, but server RBAC now requires attach in addition to read when referencing existing stack components or service connectors in new or updated stacks or components. Custom roles granting only read will be denied those operations. | – |
+| 0.99.0 | ⚠️ Exceptions (E10) | Older clients remain usable. ZenML Pro only: server RBAC now requires `attach` in addition to `read` when new or updated stacks or components reference existing stack components or service connectors, so custom roles that grant only `read` are denied those operations. OSS servers are unaffected. | – |
 | 0.98.1 | ✅ Compatible | None known. | – |
 | 0.98.0 | ✅ Compatible | None known. | The LangChain integration now accepts `langchain>=0.3.5,<1.0` instead of a fixed 0.3.0 pin. |
 | 0.97.0 | ⚠️ Exceptions (E9) | ZenML Pro: the old resource pool endpoints were removed. | Needs Click 8.3.3 to 8.5.0. Custom log stores must adopt the new `fetch()` signature. Dict outputs with non-string keys may read back with different key types. |
