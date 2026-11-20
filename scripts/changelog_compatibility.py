@@ -32,12 +32,17 @@ BREAKING_POINTS_HEADING = "## Breaking points"
 RELEASES_HEADING = "## Release by release"
 NO_KNOWN_IMPACT = "None known."
 EMPTY_CELL = "–"
+# A client this many breaking points behind its server is shown as not recommended
+# instead of listing them all: the list stops being actionable and stretches the matrix.
+NOT_RECOMMENDED_THRESHOLD = 4
 
 MATRIX_INTRO = (
     "Rows are the client version: the `zenml` package your team runs, including the one in "
     "your snapshot images. Columns are the server version. Versions are grouped by minor "
-    "release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the "
-    "listed breaking points. – the client is newer than the server, which is not supported. "
+    "release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ✅⚠️ works, except for the "
+    f"listed breaking points. ❌ not recommended: {NOT_RECOMMENDED_THRESHOLD} or more breaking "
+    "points apply, so upgrade the client. – the client is newer than the server, which is "
+    "not supported. "
     "A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that "
     "same minor release; check its Since column."
 )
@@ -222,7 +227,11 @@ def _matrix_cell(client: Series, server: Series, exceptions: Sequence[BreakingPo
     if client > server:
         return EMPTY_CELL
     applying = [point.id for point in exceptions if client < point.series <= server]
-    return f"⚠️ {_compact_ids(applying)}" if applying else "✅"
+    if not applying:
+        return "✅"
+    if len(applying) >= NOT_RECOMMENDED_THRESHOLD:
+        return "❌"
+    return f"✅⚠️ {_compact_ids(applying)}"
 
 
 def _render_era_table(era: Sequence[Series], exceptions: Sequence[BreakingPoint]) -> str:
