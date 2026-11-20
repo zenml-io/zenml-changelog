@@ -73,7 +73,7 @@ def test_redraw_follows_breaking_points_and_eras() -> None:
 
     assert "Stale matrix" not in matrix
     assert "**ZenML 0.90 and later**" in matrix
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 |" in matrix
+    assert "| **0.90** | ✅ | ✅ | ✅⚠️ E1 |" in matrix
     assert "| **0.92** | – | – | ✅ |" in matrix
     assert "<summary>ZenML 0.85 to 0.85</summary>" in matrix
 
@@ -92,7 +92,7 @@ def test_compatible_release_adds_a_row_and_a_matrix_column() -> None:
     assert update.new_breaking_point is None
     rows = compat._table_rows(update.page, compat.RELEASES_HEADING)
     assert rows[0] == ["0.93.0", "✅ Compatible", "Server impact text.", "–"]
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1 |" in update.page
+    assert "| **0.90** | ✅ | ✅ | ✅⚠️ E1 | ✅⚠️ E1 |" in update.page
 
 
 def test_adding_a_listed_release_changes_nothing() -> None:
@@ -118,7 +118,7 @@ def test_release_with_exceptions_adds_the_next_exception() -> None:
         "Listing runs per pipeline fails.",
     ]
     assert compat._table_rows(update.page, compat.RELEASES_HEADING)[0][1] == "⚠️ Exceptions (E2)"
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1–E2 |" in update.page
+    assert "| **0.90** | ✅ | ✅ | ✅⚠️ E1 | ✅⚠️ E1–E2 |" in update.page
 
 
 def test_hard_break_starts_a_new_era() -> None:
@@ -171,6 +171,24 @@ def test_upgrade_impact_section_is_read_until_the_next_heading() -> None:
 def test_matrix_cells_collapse_consecutive_exception_ids() -> None:
     assert compat._compact_ids(["E4", "E2", "E3", "E6", "E9", "E8"]) == "E2–E4, E6, E8–E9"
     assert compat._compact_ids(["E5"]) == "E5"
+
+
+def test_matrix_cell_is_not_recommended_from_the_threshold() -> None:
+    points = [
+        compat.BreakingPoint(
+            id=f"E{number}",
+            since=f"0.{90 + number}.0",
+            kind=compat.BreakingPointKind.EXCEPTION,
+            description="Something breaks.",
+        )
+        for number in range(1, compat.NOT_RECOMMENDED_THRESHOLD + 1)
+    ]
+    below_threshold = (0, 90 + compat.NOT_RECOMMENDED_THRESHOLD - 1)
+    at_threshold = (0, 90 + compat.NOT_RECOMMENDED_THRESHOLD)
+
+    assert compat._matrix_cell((0, 90), below_threshold, points) == "✅⚠️ E1–E3"
+    assert compat._matrix_cell((0, 90), at_threshold, points) == "❌"
+    assert compat._matrix_cell((0, 91), at_threshold, points) == "✅⚠️ E2–E4"
 
 
 def test_upgrade_impact_section_ignores_the_template_placeholder() -> None:

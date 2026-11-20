@@ -26,7 +26,7 @@ layout:
 
 ## Client and server matrix
 
-Rows are the client version: the `zenml` package your team runs, including the one in your snapshot images. Columns are the server version. Versions are grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the listed breaking points. – the client is newer than the server, which is not supported. A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that same minor release; check its Since column.
+Rows are the client version: the `zenml` package your team runs, including the one in your snapshot images. Columns are the server version. Versions are grouped by minor release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ✅⚠️ works, except for the listed breaking points. ❌ not recommended: 4 or more breaking points apply, so upgrade the client. – the client is newer than the server, which is not supported. A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that same minor release; check its Since column.
 
 Each hard break starts a new era. A client and a server from different eras do not work together: upgrade both at the same time.
 
@@ -34,15 +34,15 @@ Each hard break starts a new era. A client and a server from different eras do n
 
 | Client ↓ / Server → | 0.90 | 0.91 | 0.92 | 0.93 | 0.94 | 0.95 | 0.96 | 0.97 | 0.98 | 0.99 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| **0.90** | ✅ | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 | ⚠️ E2–E10 |
-| **0.91** | – | ✅ | ⚠️ E2 | ⚠️ E2–E4 | ⚠️ E2–E7 | ⚠️ E2–E8 | ⚠️ E2–E8 | ⚠️ E2–E9 | ⚠️ E2–E9 | ⚠️ E2–E10 |
-| **0.92** | – | – | ✅ | ⚠️ E3–E4 | ⚠️ E3–E7 | ⚠️ E3–E8 | ⚠️ E3–E8 | ⚠️ E3–E9 | ⚠️ E3–E9 | ⚠️ E3–E10 |
-| **0.93** | – | – | – | ✅ | ⚠️ E5–E7 | ⚠️ E5–E8 | ⚠️ E5–E8 | ⚠️ E5–E9 | ⚠️ E5–E9 | ⚠️ E5–E10 |
-| **0.94** | – | – | – | – | ✅ | ⚠️ E8 | ⚠️ E8 | ⚠️ E8–E9 | ⚠️ E8–E9 | ⚠️ E8–E10 |
-| **0.95** | – | – | – | – | – | ✅ | ✅ | ⚠️ E9 | ⚠️ E9 | ⚠️ E9–E10 |
-| **0.96** | – | – | – | – | – | – | ✅ | ⚠️ E9 | ⚠️ E9 | ⚠️ E9–E10 |
-| **0.97** | – | – | – | – | – | – | – | ✅ | ✅ | ⚠️ E10 |
-| **0.98** | – | – | – | – | – | – | – | – | ✅ | ⚠️ E10 |
+| **0.90** | ✅ | ✅ | ✅⚠️ E2 | ✅⚠️ E2–E4 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **0.91** | – | ✅ | ✅⚠️ E2 | ✅⚠️ E2–E4 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **0.92** | – | – | ✅ | ✅⚠️ E3–E4 | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **0.93** | – | – | – | ✅ | ✅⚠️ E5–E7 | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **0.94** | – | – | – | – | ✅ | ✅⚠️ E8 | ✅⚠️ E8 | ✅⚠️ E8–E9 | ✅⚠️ E8–E9 | ✅⚠️ E8–E10 |
+| **0.95** | – | – | – | – | – | ✅ | ✅ | ✅⚠️ E9 | ✅⚠️ E9 | ✅⚠️ E9–E10 |
+| **0.96** | – | – | – | – | – | – | ✅ | ✅⚠️ E9 | ✅⚠️ E9 | ✅⚠️ E9–E10 |
+| **0.97** | – | – | – | – | – | – | – | ✅ | ✅ | ✅⚠️ E10 |
+| **0.98** | – | – | – | – | – | – | – | – | ✅ | ✅⚠️ E10 |
 | **0.99** | – | – | – | – | – | – | – | – | – | ✅ |
 
 <details>
@@ -50,8 +50,8 @@ Each hard break starts a new era. A client and a server from different eras do n
 
 | Client ↓ / Server → | 0.83 | 0.84 | 0.85 |
 | --- | --- | --- | --- |
-| **0.83** | ✅ | ✅ | ⚠️ E1 |
-| **0.84** | – | ✅ | ⚠️ E1 |
+| **0.83** | ✅ | ✅ | ✅⚠️ E1 |
+| **0.84** | – | ✅ | ✅⚠️ E1 |
 | **0.85** | – | – | ✅ |
 
 </details>
