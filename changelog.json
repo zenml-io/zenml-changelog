@@ -1,5 +1,73 @@
 [
   {
+    "id": 106,
+    "slug": "check-client-and-server-compatibility",
+    "title": "Check client and server compatibility before upgrading",
+    "description": "Upgrade guides now point to the release-maintained Compatibility page at [docs.zenml.io/changelog/compatibility](https://docs.zenml.io/changelog/compatibility). Use it before upgrading a ZenML server or ZenML Pro workspace to verify whether your local clients and snapshot images will keep working across versions.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/changelog/compatibility",
+    "should_highlight": false
+  },
+  {
+    "id": 105,
+    "slug": "kubernetes-image-pull-policy",
+    "title": "Control Kubernetes image pulls with `image_pull_policy`",
+    "description": "Set `image_pull_policy` in `KubernetesPodSettings` to `Always`, `IfNotPresent`, or `Never` for pods created by ZenML. This is especially useful when reusing a fixed tag like `:dev` with `DockerSettings(skip_build=True)` and you want Kubernetes to pull the updated image instead of running a cached one. Existing pods stay unchanged when the field is left unset.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "docs_url": "https://docs.zenml.io/stacks/stack-components/orchestrators/kubernetes",
+    "should_highlight": false
+  },
+  {
+    "id": 104,
+    "slug": "faster-run-queries-and-deployment-filtering",
+    "title": "Faster run queries and deployment-run filtering",
+    "description": "Run polling, list views, permission checks, and status events now read directly from SQL columns instead of parsing full configuration JSON, and large tag or run-metadata filters avoid slow MySQL query planning as filter counts grow. `PipelineRunFilter` and `Client.list_pipeline_runs` also accept `triggered_by_deployment` so you can separate deployment-triggered runs from batch runs in listings and statistics.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "improvement"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 103,
+    "slug": "pro-attach-permission-stack-components-connectors",
+    "title": "Custom roles now need `attach` to use stack components and connectors",
+    "description": "**Breaking (ZenML Pro):** Custom roles that only grant `read` on stack components or service connectors can no longer reference those resources when creating or updating stacks or stack components. Grant the new `attach` action alongside `read` to preserve existing access.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "breaking change"
+    ],
+    "should_highlight": false
+  },
+  {
+    "id": 102,
+    "slug": "security-updates-and-reliability-fixes-0-99-0",
+    "title": "Security updates and reliability fixes in 0.99.0",
+    "description": "**Breaking:** ZenML now upgrades OpenTelemetry (custom log exporters must implement `force_flush()`) and requires `certifi>=2026.10.19` to address security advisories, alongside a PyJWT security update. This release also fixes completed Kubernetes steps failing after Job cleanup, retries transient Kubernetes sandbox exec handshakes, marks unretried dynamic steps as failed instead of hanging, preserves stopped/stopping run statuses, redacts environment values in Vertex job logs, stops mangling Kubernetes cluster names during auto-configuration, preserves your application's random state when generating names (with an opt-in to follow your seed), and switches the ChatGPT failure hook to a supported model.",
+    "published_at": "2026-11-19T17:24:17Z",
+    "published": true,
+    "audience": "all",
+    "labels": [
+      "breaking change",
+      "bugfix"
+    ],
+    "should_highlight": false
+  },
+  {
     "id": 101,
     "slug": "bots-and-refreshed-ui",
     "title": "Bots are live, with a refreshed UI",
