@@ -37,13 +37,10 @@ MATRIX_INTRO = (
     "Rows are the client version: the `zenml` package your team runs, including the one in "
     "your snapshot images. Columns are the server version. Versions are grouped by minor "
     "release (0.98 covers 0.98.0, 0.98.1, and so on). ✅ works. ⚠️ works, except for the "
-    "listed breaking points. – the client is newer than the server, which is not supported. "
-    "A breaking point from a patch release (such as 0.94.3) doesn't show for clients of that "
-    "same minor release; check its Since column."
-)
-OLDER_ERAS_NOTE = (
-    "Each hard break starts a new era. A client and a server from different eras do not "
-    "work together: upgrade both at the same time."
+    "listed breaking points. ❌ does not work because of the listed hard breaks: upgrade the "
+    "client together with the server. – the client is newer than the server, which is not "
+    "supported. A breaking point from a patch release (such as 0.94.3) doesn't show for "
+    "clients of that same minor release; check its Since column."
 )
 
 Series = Tuple[int, int]
@@ -195,14 +192,6 @@ def parse_release_versions(page: str) -> List[str]:
     return versions
 
 
-def _split_into_eras(series: Sequence[Series], hard_breaks: Sequence[Series]) -> List[List[Series]]:
-    eras: dict[int, List[Series]] = {}
-    for current in sorted(series):
-        era_index = sum(1 for hard_break in hard_breaks if hard_break <= current)
-        eras.setdefault(era_index, []).append(current)
-    return [eras[index] for index in sorted(eras)]
-
-
 def _compact_ids(ids: Sequence[str]) -> str:
     """Collapse runs of consecutive IDs ("E2", "E3", "E4", "E6") into "E2–E4, E6".
 
@@ -218,46 +207,32 @@ def _compact_ids(ids: Sequence[str]) -> str:
     return ", ".join(run[0][1] if len(run) == 1 else f"{run[0][1]}–{run[-1][1]}" for run in runs)
 
 
-def _matrix_cell(client: Series, server: Series, exceptions: Sequence[BreakingPoint]) -> str:
+def _matrix_cell(client: Series, server: Series, breaking_points: Sequence[BreakingPoint]) -> str:
     if client > server:
         return EMPTY_CELL
-    applying = [point.id for point in exceptions if client < point.series <= server]
-    return f"⚠️ {_compact_ids(applying)}" if applying else "✅"
-
-
-def _render_era_table(era: Sequence[Series], exceptions: Sequence[BreakingPoint]) -> str:
-    header = "| Client ↓ / Server → | " + " | ".join(format_series(server) for server in era) + " |"
-    separator = "| --- " * (len(era) + 1) + "|"
-    rows = [
-        f"| **{format_series(client)}** | "
-        + " | ".join(_matrix_cell(client, server, exceptions) for server in era)
-        + " |"
-        for client in era
-    ]
-    return "\n".join([header, separator, *rows])
+    applying = [point for point in breaking_points if client < point.series <= server]
+    # Across a hard break the pair doesn't work at all, so listing exceptions would only add noise.
+    hard_breaks = [point.id for point in applying if point.kind is BreakingPointKind.HARD_BREAK]
+    if hard_breaks:
+        return f"❌ {_compact_ids(hard_breaks)}"
+    exceptions = [point.id for point in applying]
+    return f"⚠️ {_compact_ids(exceptions)}" if exceptions else "✅"
 
 
 def render_matrix(series: Sequence[Series], breaking_points: Sequence[BreakingPoint]) -> str:
-    """Render the matrix section body: the current era open, older eras collapsed."""
+    """Render the matrix section body as one table covering every listed release series."""
     if not series:
         return MATRIX_INTRO + "\n"
-    hard_breaks = sorted({point.series for point in breaking_points if point.kind is BreakingPointKind.HARD_BREAK})
-    exceptions = [point for point in breaking_points if point.kind is BreakingPointKind.EXCEPTION]
-    *older_eras, current_era = _split_into_eras(series, hard_breaks)
-
-    parts = [MATRIX_INTRO]
-    if older_eras:
-        parts.append(OLDER_ERAS_NOTE)
-    parts.append(f"**ZenML {format_series(current_era[0])} and later**")
-    parts.append(_render_era_table(current_era, exceptions))
-    for era in reversed(older_eras):
-        parts.append(
-            "<details>\n"
-            f"<summary>ZenML {format_series(era[0])} to {format_series(era[-1])}</summary>\n\n"
-            f"{_render_era_table(era, exceptions)}\n\n"
-            "</details>"
-        )
-    return "\n\n".join(parts) + "\n"
+    header = "| Client ↓ / Server → | " + " | ".join(format_series(server) for server in series) + " |"
+    separator = "| --- " * (len(series) + 1) + "|"
+    rows = [
+        f"| **{format_series(client)}** | "
+        + " | ".join(_matrix_cell(client, server, breaking_points) for server in series)
+        + " |"
+        for client in series
+    ]
+    table = "\n".join([header, separator, *rows])
+    return f"{MATRIX_INTRO}\n\n{table}\n"
 
 
 def _replace_section_body(page: str, heading: str, body: str) -> str:
