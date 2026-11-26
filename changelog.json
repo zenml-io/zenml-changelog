@@ -1,5 +1,39 @@
 [
   {
+    "id": 108,
+    "slug": "automatically-manage-inactive-workspaces",
+    "title": "Automatically manage inactive workspaces",
+    "description": "Kitaru workspaces now follow the same inactivity checks as ZenML workspaces, helping keep unused workspaces from remaining active indefinitely.",
+    "published_at": "2026-11-26T13:21:08Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
+    "id": 107,
+    "slug": "keep-release-management-aligned-with-operations",
+    "title": "Keep release management aligned with operations",
+    "description": "On-prem deployments can manage externally operated workspaces and Resource Managers without Cloud API release-catalog constraints. In SaaS, the catalog continues to provide default versions and validate versions for services managed by the control plane.",
+    "published_at": "2026-11-26T13:21:08Z",
+    "published": true,
+    "audience": "pro",
+    "labels": [
+      "improvement"
+    ],
+    "feature_image_url": "",
+    "video_url": "",
+    "learn_more_url": "https://example.com/REPLACE-ME",
+    "docs_url": "https://docs.zenml.io/REPLACE-ME",
+    "should_highlight": false
+  },
+  {
     "id": 106,
     "slug": "check-client-and-server-compatibility",
     "title": "Check client and server compatibility before upgrading",
