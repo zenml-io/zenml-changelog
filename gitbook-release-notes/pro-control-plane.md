@@ -7,6 +7,17 @@ icon: clock-rotate-left
 
 Stay up to date with the latest features, improvements, and fixes in ZenML Pro.
 
+## 0.16.7 (2026-11-26)
+
+See what's new and improved in version 0.16.7.
+
+<img src="https://public-flavor-logos.s3.eu-central-1.amazonaws.com/projects/24.jpg" align="left" alt="ZenML Pro 0.16.7" width="800">
+
+- **Kitaru workspace inactivity checks**: Kitaru workspaces are now included in the daily inactivity checks used to deactivate inactive ZenML workspaces. This helps keep workspace lifecycle management consistent across both workspace types.
+- **Release management limited to SaaS**: The release catalog now applies only to SaaS, where it provides default versions and validates versions for services managed by the control plane. On-prem deployments can continue to use operator-controlled versions; attempts to create managed workspaces or Resource Managers, or make release-backed version changes, are rejected there.
+
+***
+
 ## Bots and a refreshed UI (2026-11-06)
 
 Bots are live in ZenML Pro, alongside a refreshed UI.
