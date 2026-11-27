@@ -68,14 +68,15 @@ def test_committed_page_parses() -> None:
     compat.redraw_matrix(page)
 
 
-def test_redraw_follows_breaking_points_and_eras() -> None:
+def test_redraw_follows_breaking_points_in_one_table() -> None:
     matrix = matrix_section(compat.redraw_matrix(PAGE))
 
     assert "Stale matrix" not in matrix
-    assert "**ZenML 0.90 and later**" in matrix
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 |" in matrix
-    assert "| **0.92** | – | – | ✅ |" in matrix
-    assert "<summary>ZenML 0.85 to 0.85</summary>" in matrix
+    assert matrix.count("| Client ↓ / Server →") == 1
+    assert "| Client ↓ / Server → | 0.85 | 0.90 | 0.91 | 0.92 |" in matrix
+    assert "| **0.85** | ✅ | ❌ H1 | ❌ H1 | ❌ H1 |" in matrix
+    assert "| **0.90** | – | ✅ | ✅ | ⚠️ E1 |" in matrix
+    assert "| **0.92** | – | – | – | ✅ |" in matrix
 
 
 def test_redraw_keeps_the_rest_of_the_page() -> None:
@@ -92,7 +93,7 @@ def test_compatible_release_adds_a_row_and_a_matrix_column() -> None:
     assert update.new_breaking_point is None
     rows = compat._table_rows(update.page, compat.RELEASES_HEADING)
     assert rows[0] == ["0.93.0", "✅ Compatible", "Server impact text.", "–"]
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1 |" in update.page
+    assert "| **0.90** | – | ✅ | ✅ | ⚠️ E1 | ⚠️ E1 |" in update.page
 
 
 def test_adding_a_listed_release_changes_nothing() -> None:
@@ -118,17 +119,18 @@ def test_release_with_exceptions_adds_the_next_exception() -> None:
         "Listing runs per pipeline fails.",
     ]
     assert compat._table_rows(update.page, compat.RELEASES_HEADING)[0][1] == "⚠️ Exceptions (E2)"
-    assert "| **0.90** | ✅ | ✅ | ⚠️ E1 | ⚠️ E1–E2 |" in update.page
+    assert "| **0.90** | – | ✅ | ✅ | ⚠️ E1 | ⚠️ E1–E2 |" in update.page
 
 
-def test_hard_break_starts_a_new_era() -> None:
+def test_hard_break_marks_every_older_client() -> None:
     update = compat.add_release(PAGE, release("1.0.0", CompatibilityStatus.BREAKING, "Old clients stop working."))
     matrix = matrix_section(update.page)
 
     assert update.new_breaking_point is not None
     assert update.new_breaking_point.id == "H2"
-    assert "**ZenML 1.0 and later**" in matrix
-    assert "<summary>ZenML 0.90 to 0.92</summary>" in matrix
+    assert "| **0.85** | ✅ | ❌ H1 | ❌ H1 | ❌ H1 | ❌ H1–H2 |" in matrix
+    assert "| **0.90** | – | ✅ | ✅ | ⚠️ E1 | ❌ H2 |" in matrix
+    assert "| **1.0** | – | – | – | – | ✅ |" in matrix
     assert compat._table_rows(update.page, compat.RELEASES_HEADING)[0][1] == "❌ Hard break (H2)"
 
 
